@@ -62,6 +62,11 @@ jobs:
           chmod +x ./database/apply-migrations-ci.sh
           ./database/apply-migrations-ci.sh
 
+      - name: Debug workspace
+        run: |
+          pwd
+          ls -la
+          find . -name "*.sln*" -maxdepth 4
       # ------------------------------------------------------------
       # 6️⃣ Build API
       # ------------------------------------------------------------
