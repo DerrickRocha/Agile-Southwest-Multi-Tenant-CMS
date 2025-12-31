@@ -37,7 +37,7 @@ jobs:
       - name: Checkout DB repo
         uses: actions/checkout@v4
         with:
-          repository: https://github.com/DerrickRocha/Agile-Southwest-CMS-Database.git
+          repository: DerrickRocha/Agile-Southwest-Multi-Tenant-CMS.git   # 🔁 CHANGE THIS
           path: database
           token: ${{ secrets.GITHUB_TOKEN }}
 
