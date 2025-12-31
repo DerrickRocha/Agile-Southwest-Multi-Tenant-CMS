@@ -1,0 +1,83 @@
+﻿name: API CI
+
+on:
+  pull_request:
+    branches: [ main ]
+  push:
+    branches: [ main ]
+
+jobs:
+  api-ci:
+    runs-on: ubuntu-22.04
+
+    services:
+      sqlserver:
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        env:
+          SA_PASSWORD: YourStrong!Passw0rd
+          ACCEPT_EULA: "Y"
+        ports:
+          - 1433:1433
+        options: >-
+          --health-cmd="pgrep sqlservr"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    steps:
+      # ------------------------------------------------------------
+      # 1️⃣ Checkout API repository
+      # ------------------------------------------------------------
+      - name: Checkout API repo
+        uses: actions/checkout@v4
+
+      # ------------------------------------------------------------
+      # 2️⃣ Checkout Database repository
+      # ------------------------------------------------------------
+      - name: Checkout DB repo
+        uses: actions/checkout@v4
+        with:
+          repository: https://github.com/DerrickRocha/Agile-Southwest-CMS-Database.git
+          path: database
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      # ------------------------------------------------------------
+      # 3️⃣ Install sqlcmd
+      # ------------------------------------------------------------
+      - name: Install sqlcmd
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y mssql-tools unixodbc-dev
+          echo "/opt/mssql-tools/bin" >> $GITHUB_PATH
+
+      # ------------------------------------------------------------
+      # 4️⃣ Wait for SQL Server to be ready
+      # ------------------------------------------------------------
+      - name: Wait for SQL Server
+        run: sleep 15
+
+      # ------------------------------------------------------------
+      # 5️⃣ Apply database migrations (from DB repo)
+      # ------------------------------------------------------------
+      - name: Apply database migrations
+        run: |
+          chmod +x ./database/apply-migrations-ci.sh
+          ./database/apply-migrations-ci.sh
+
+      # ------------------------------------------------------------
+      # 6️⃣ Build API
+      # ------------------------------------------------------------
+      - name: Build API
+        run: dotnet build --configuration Release
+
+      # ------------------------------------------------------------
+      # 7️⃣ Run API tests (against migrated DB)
+      # ------------------------------------------------------------
+      - name: Run API tests
+        env:
+          DB_HOST: localhost
+          DB_PORT: 1433
+          DB_NAME: AppDb
+          DB_USER: sa
+          DB_PASSWORD: YourStrong!Passw0rd
+        run: dotnet test --configuration Release
