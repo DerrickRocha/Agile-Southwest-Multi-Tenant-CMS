@@ -60,8 +60,8 @@ jobs:
       # ------------------------------------------------------------
       - name: Apply database migrations
         run: |
-          chmod +x ./database/apply-migrations-ci.sh
-          ./database/apply-migrations-ci.sh
+          chmod +x ./database/database/apply-migrations-ci.sh
+          ./database/database/apply-migrations-ci.sh
 
       - name: Debug workspace
         run: |
