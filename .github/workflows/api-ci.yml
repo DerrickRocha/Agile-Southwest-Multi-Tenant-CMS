@@ -38,6 +38,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: DerrickRocha/Agile-Southwest-CMS-Database
+          path: database
 
       # ------------------------------------------------------------
       # 3️⃣ Install sqlcmd
@@ -59,9 +60,14 @@ jobs:
       # ------------------------------------------------------------
       - name: Apply database migrations
         run: |
-          chmod +x ./database/apply-migrations-ci.sh
-          ./database/apply-migrations-ci.sh
+          chmod +x ./database/database/apply-migrations-ci.sh
+          ./database/database/apply-migrations-ci.sh
 
+      - name: Debug workspace
+        run: |
+          pwd
+          ls -la
+          find . -name "*.sln*" -maxdepth 4
       # ------------------------------------------------------------
       # 6️⃣ Build API
       # ------------------------------------------------------------
