@@ -60,8 +60,8 @@ jobs:
       # ------------------------------------------------------------
       - name: Apply database migrations
         run: |
-          chmod +x ./database/apply-migrations-ci.sh
-          ./database/apply-migrations-ci.sh
+          chmod +x apply-migrations-ci.sh
+          apply-migrations-ci.sh
 
       # ------------------------------------------------------------
       # 6️⃣ Build API
