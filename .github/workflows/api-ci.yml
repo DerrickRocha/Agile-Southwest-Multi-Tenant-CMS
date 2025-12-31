@@ -38,6 +38,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: DerrickRocha/Agile-Southwest-CMS-Database
+          path: database
 
       # ------------------------------------------------------------
       # 3️⃣ Install sqlcmd
