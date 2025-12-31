@@ -37,9 +37,8 @@ jobs:
       - name: Checkout DB repo
         uses: actions/checkout@v4
         with:
-          repository: DerrickRocha/Agile-Southwest-Multi-Tenant-CMS.git   # 🔁 CHANGE THIS
+          repository: DerrickRocha/Agile-Southwest-CMS-Database
           path: database
-          token: ${{ secrets.GITHUB_TOKEN }}
 
       # ------------------------------------------------------------
       # 3️⃣ Install sqlcmd
