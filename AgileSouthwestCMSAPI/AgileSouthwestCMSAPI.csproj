@@ -17,4 +17,22 @@
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.1" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="src\Api\Filters\" />
+    <Folder Include="src\Api\Middleware\" />
+    <Folder Include="src\Application\Commands\" />
+    <Folder Include="src\Application\DTOs\" />
+    <Folder Include="src\Application\Interfaces\" />
+    <Folder Include="src\Application\Queries\" />
+    <Folder Include="src\Application\Validators\" />
+    <Folder Include="src\Domain\Entities\" />
+    <Folder Include="src\Domain\Enums\" />
+    <Folder Include="src\Domain\ValueObjects\" />
+    <Folder Include="src\Infrastructure\Persistence\" />
+    <Folder Include="src\Infrastructure\Repositories\" />
+    <Folder Include="src\Infrastructure\Services\" />
+    <Folder Include="src\Tests\Api.Tests\" />
+    <Folder Include="src\Tests\Application.Tests\" />
+  </ItemGroup>
+
 </Project>
