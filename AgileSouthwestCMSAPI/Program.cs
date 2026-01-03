@@ -1,7 +1,15 @@
 using AgileSouthwestCMSAPI.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddHealthChecks()
+    .AddDbContextCheck<CmsDbContext>(
+        name: "sqlserver",
+        failureStatus: HealthStatus.Unhealthy,
+        tags: ["db", "sql"]
+    );
 
 // --------------------------------------------
 // Configuration
@@ -44,5 +52,7 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 
 app.MapControllers();
+
+app.MapHealthChecks("/health");
 
 app.Run();
