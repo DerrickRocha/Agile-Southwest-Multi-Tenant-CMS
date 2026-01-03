@@ -3,20 +3,37 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-var connectionString = builder.Configuration["Database:ConnectionString"];
+// --------------------------------------------
+// Configuration
+// --------------------------------------------
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
+if (string.IsNullOrWhiteSpace(connectionString))
+{
+    throw new InvalidOperationException(
+        "Database connection string 'DefaultConnection' is not configured.");
+}
+
+// --------------------------------------------
+// Services
+// --------------------------------------------
 builder.Services.AddDbContext<CmsDbContext>(options =>
 {
-    options.UseSqlServer(connectionString);
+    options.UseSqlServer(connectionString, sql =>
+    {
+        sql.EnableRetryOnFailure();
+    });
 });
+
 builder.Services.AddControllers();
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddOpenApi();
 
+// --------------------------------------------
+// App
+// --------------------------------------------
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
