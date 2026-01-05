@@ -1,0 +1,82 @@
+name: API CD
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Target environment"
+        required: true
+        type: choice
+        options:
+          - dev
+          - prod
+
+jobs:
+  deploy:
+    runs-on: ubuntu-22.04
+
+    env:
+      AWS_REGION: us-east-1
+      APP_NAME: AgileSouthwestCMSAPI
+
+    steps:
+      # --------------------------------------------
+      # Checkout
+      # --------------------------------------------
+      - uses: actions/checkout@v4
+
+      # --------------------------------------------
+      # Setup .NET
+      # --------------------------------------------
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      # --------------------------------------------
+      # Publish
+      # --------------------------------------------
+      - name: Publish API
+        run: |
+          dotnet publish AgileSouthwestCMSAPI/AgileSouthwestCMSAPI.csproj \
+            -c Release \
+            -o publish
+
+      # --------------------------------------------
+      # Package for Elastic Beanstalk
+      # --------------------------------------------
+      - name: Zip artifact
+        run: |
+          cd publish
+          zip -r ../app.zip .
+
+      # --------------------------------------------
+      # Configure AWS
+      # --------------------------------------------
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      # --------------------------------------------
+      # Deploy to Elastic Beanstalk
+      # --------------------------------------------
+      - name: Deploy
+        run: |
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            ENV_NAME="agilesouthwest-dev"
+          else
+            ENV_NAME="agilesouthwest-prod"
+          fi
+
+          aws elasticbeanstalk create-application-version \
+            --application-name $APP_NAME \
+            --version-label $GITHUB_SHA \
+            --source-bundle S3Bucket=elasticbeanstalk-${AWS_REGION}-${{ secrets.AWS_ACCOUNT_ID }},S3Key=app.zip
+
+          aws elasticbeanstalk update-environment \
+            --environment-name $ENV_NAME \
+            --version-label $GITHUB_SHA
