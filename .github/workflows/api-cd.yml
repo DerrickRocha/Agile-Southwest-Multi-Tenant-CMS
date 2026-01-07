@@ -81,16 +81,19 @@ jobs:
             ENV_NAME="Multi-Tenant-CMS-Development-env"
           fi
 
-          echo "Deploying $GITHUB_SHA to $ENV_NAME"
+          VERSION_LABEL="${GITHUB_SHA}-$(date +%s)"
+
+          echo "Deploying $VERSION_LABEL to $ENV_NAME"
 
           aws elasticbeanstalk create-application-version \
             --application-name $APP_NAME \
-            --version-label $GITHUB_SHA \
+            --version-label $VERSION_LABEL \
             --source-bundle S3Bucket=$S3_BUCKET,S3Key=app-$GITHUB_SHA.zip
 
           aws elasticbeanstalk update-environment \
             --environment-name $ENV_NAME \
-            --version-label $GITHUB_SHA
+            --version-label $VERSION_LABEL
+
 
 
 
