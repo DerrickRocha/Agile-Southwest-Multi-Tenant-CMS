@@ -66,11 +66,13 @@ jobs:
       # --------------------------------------------
       - name: Deploy
         run: |
-          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
-            ENV_NAME="agilesouthwest-dev"
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            ENV_NAME="agilesouthwest-${{ inputs.environment }}"
           else
-            ENV_NAME="agilesouthwest-prod"
+            ENV_NAME="agilesouthwest-dev"
           fi
+
+          echo "Deploying to $ENV_NAME"
 
           aws elasticbeanstalk create-application-version \
             --application-name $APP_NAME \
@@ -80,3 +82,4 @@ jobs:
           aws elasticbeanstalk update-environment \
             --environment-name $ENV_NAME \
             --version-label $GITHUB_SHA
+      
