@@ -21,7 +21,7 @@ jobs:
 
     env:
       AWS_REGION: us-east-1
-      APP_NAME: AgileSouthwestCMSAPI
+      APP_NAME: Multi-Tenant-CMS-Development
       S3_BUCKET: elasticbeanstalk-us-east-1-899303943903
 
     steps:
