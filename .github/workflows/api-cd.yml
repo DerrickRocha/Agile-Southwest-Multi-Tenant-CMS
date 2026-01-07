@@ -76,9 +76,9 @@ jobs:
       - name: Deploy
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            ENV_NAME="agilesouthwest-${{ inputs.environment }}"
+            ENV_NAME="Multi-Tenant-CMS-env-${{ inputs.environment }}"
           else
-            ENV_NAME="agilesouthwest-dev"
+            ENV_NAME="Multi-Tenant-CMS-Development-env"
           fi
 
           echo "Deploying $GITHUB_SHA to $ENV_NAME"
