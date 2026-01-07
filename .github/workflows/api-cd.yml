@@ -66,19 +66,15 @@ jobs:
       # --------------------------------------------
       - name: Deploy
         run: |
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            ENV_NAME="agilesouthwest-${{ inputs.environment }}"
-          else
-            ENV_NAME="agilesouthwest-dev"
-          fi
-
+          ENV_NAME="agilesouthwest-${{ job.environment }}"
           echo "Deploying commit $GITHUB_SHA to $ENV_NAME"
-
+      
           aws elasticbeanstalk create-application-version \
             --application-name $APP_NAME \
             --version-label $GITHUB_SHA \
             --source-bundle fileb://app.zip
-
+      
           aws elasticbeanstalk update-environment \
             --environment-name $ENV_NAME \
             --version-label $GITHUB_SHA
+
