@@ -16,13 +16,13 @@ jobs:
   deploy:
     runs-on: ubuntu-22.04
 
+    # GitHub Environment protection (approvals, secrets)
     environment: ${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'dev' }}
 
     env:
       AWS_REGION: us-east-1
       APP_NAME: AgileSouthwestCMSAPI
-      DEPLOY_ENV: ${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'dev' }}
-      S3_BUCKET: elasticbeanstalk-us-east-1-${{ secrets.AWS_ACCOUNT_ID }}
+      S3_BUCKET: elasticbeanstalk-us-east-1-899303943903
 
     steps:
       # --------------------------------------------
@@ -61,10 +61,10 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
+          aws-region: us-east-1
 
       # --------------------------------------------
-      # Upload to S3
+      # Upload bundle to S3
       # --------------------------------------------
       - name: Upload bundle to S3
         run: |
@@ -75,18 +75,22 @@ jobs:
       # --------------------------------------------
       - name: Deploy
         run: |
-          ENV_NAME="agilesouthwest-$DEPLOY_ENV"
-          VERSION_LABEL="$GITHUB_SHA"
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            ENV_NAME="agilesouthwest-${{ inputs.environment }}"
+          else
+            ENV_NAME="agilesouthwest-dev"
+          fi
 
-          echo "Deploying $VERSION_LABEL to $ENV_NAME"
+          echo "Deploying $GITHUB_SHA to $ENV_NAME"
 
           aws elasticbeanstalk create-application-version \
             --application-name $APP_NAME \
-            --version-label $VERSION_LABEL \
-            --source-bundle S3Bucket=$S3_BUCKET,S3Key=app-$VERSION_LABEL.zip
+            --version-label $GITHUB_SHA \
+            --source-bundle S3Bucket=$S3_BUCKET,S3Key=app-$GITHUB_SHA.zip
 
           aws elasticbeanstalk update-environment \
             --environment-name $ENV_NAME \
-            --version-label $VERSION_LABEL
+            --version-label $GITHUB_SHA
+
 
 
