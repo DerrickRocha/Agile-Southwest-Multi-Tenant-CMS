@@ -16,13 +16,13 @@ jobs:
   deploy:
     runs-on: ubuntu-22.04
 
-    # This is for GitHub Environment protection (approvals, secrets)
     environment: ${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'dev' }}
 
     env:
       AWS_REGION: us-east-1
       APP_NAME: AgileSouthwestCMSAPI
       DEPLOY_ENV: ${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'dev' }}
+      S3_BUCKET: elasticbeanstalk-us-east-1-${{ secrets.AWS_ACCOUNT_ID }}
 
     steps:
       # --------------------------------------------
@@ -47,7 +47,7 @@ jobs:
             -o publish
 
       # --------------------------------------------
-      # Package for Elastic Beanstalk
+      # Package
       # --------------------------------------------
       - name: Zip artifact
         run: |
@@ -64,19 +64,29 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
 
       # --------------------------------------------
+      # Upload to S3
+      # --------------------------------------------
+      - name: Upload bundle to S3
+        run: |
+          aws s3 cp app.zip s3://$S3_BUCKET/app-$GITHUB_SHA.zip
+
+      # --------------------------------------------
       # Deploy to Elastic Beanstalk
       # --------------------------------------------
       - name: Deploy
         run: |
           ENV_NAME="agilesouthwest-$DEPLOY_ENV"
-          echo "Deploying commit $GITHUB_SHA to $ENV_NAME"
+          VERSION_LABEL="$GITHUB_SHA"
+
+          echo "Deploying $VERSION_LABEL to $ENV_NAME"
 
           aws elasticbeanstalk create-application-version \
             --application-name $APP_NAME \
-            --version-label $GITHUB_SHA \
-            --source-bundle fileb://app.zip
+            --version-label $VERSION_LABEL \
+            --source-bundle S3Bucket=$S3_BUCKET,S3Key=app-$VERSION_LABEL.zip
 
           aws elasticbeanstalk update-environment \
             --environment-name $ENV_NAME \
-            --version-label $GITHUB_SHA
+            --version-label $VERSION_LABEL
+
 
