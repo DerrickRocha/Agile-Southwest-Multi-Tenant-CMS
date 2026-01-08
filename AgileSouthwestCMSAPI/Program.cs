@@ -4,6 +4,39 @@ using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// --------------------------------------------------
+// REQUIRED: Elastic Beanstalk port binding
+// --------------------------------------------------
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.ListenAnyIP(5000);
+});
+
+// --------------------------------------------------
+// Configuration
+// --------------------------------------------------
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
+// DO NOT crash the app at startup in EB
+if (string.IsNullOrWhiteSpace(connectionString))
+{
+    Console.WriteLine("WARNING: DefaultConnection is not configured");
+}
+
+// --------------------------------------------------
+// Services
+// --------------------------------------------------
+builder.Services.AddDbContext<CmsDbContext>(options =>
+{
+    if (!string.IsNullOrWhiteSpace(connectionString))
+    {
+        options.UseSqlServer(connectionString, sql =>
+        {
+            sql.EnableRetryOnFailure();
+        });
+    }
+});
+
 builder.Services.AddHealthChecks()
     .AddDbContextCheck<CmsDbContext>(
         name: "sqlserver",
@@ -11,48 +44,26 @@ builder.Services.AddHealthChecks()
         tags: ["db", "sql"]
     );
 
-// --------------------------------------------
-// Configuration
-// --------------------------------------------
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-
-if (string.IsNullOrWhiteSpace(connectionString))
-{
-    throw new InvalidOperationException(
-        "Database connection string 'DefaultConnection' is not configured.");
-}
-
-// --------------------------------------------
-// Services
-// --------------------------------------------
-builder.Services.AddDbContext<CmsDbContext>(options =>
-{
-    options.UseSqlServer(connectionString, sql =>
-    {
-        sql.EnableRetryOnFailure();
-    });
-});
-
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddOpenApi();
 
-// --------------------------------------------
+// --------------------------------------------------
 // App
-// --------------------------------------------
+// --------------------------------------------------
 var app = builder.Build();
 
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi();
-}
-
-app.UseHttpsRedirection();
+// ❌ REMOVE HTTPS REDIRECTION FOR EB
+// app.UseHttpsRedirection();
 
 app.UseAuthorization();
 
 app.MapControllers();
 
+// REQUIRED for EB health checks
 app.MapHealthChecks("/health");
+
+// Simple root endpoint for verification
+app.MapGet("/", () => "Multi-Tenant CMS API is running");
 
 app.Run();
