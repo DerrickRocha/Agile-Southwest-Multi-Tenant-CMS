@@ -53,17 +53,12 @@ builder.Services.AddOpenApi();
 // --------------------------------------------------
 var app = builder.Build();
 
-// ❌ REMOVE HTTPS REDIRECTION FOR EB
-// app.UseHttpsRedirection();
-
 app.UseAuthorization();
 
 app.MapControllers();
 
-// REQUIRED for EB health checks
 app.MapHealthChecks("/health");
 
-// Simple root endpoint for verification
 app.MapGet("/", () => "Multi-Tenant CMS API is running");
 
 app.Run();
