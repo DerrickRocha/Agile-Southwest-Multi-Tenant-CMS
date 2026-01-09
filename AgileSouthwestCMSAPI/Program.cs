@@ -5,14 +5,6 @@ using Microsoft.Extensions.Diagnostics.HealthChecks;
 var builder = WebApplication.CreateBuilder(args);
 
 // --------------------------------------------------
-// REQUIRED: Elastic Beanstalk port binding
-// --------------------------------------------------
-builder.WebHost.ConfigureKestrel(options =>
-{
-    options.ListenAnyIP(5000);
-});
-
-// --------------------------------------------------
 // Configuration
 // --------------------------------------------------
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
