@@ -51,7 +51,7 @@ jobs:
       # --------------------------------------------
       - name: Zip artifact
         run: |
-          cp AgileSouthwestCMSAPI/Procfile publish/Procfile
+          cp Procfile publish/Procfile
           cd publish
           zip -r ../app.zip .
       
