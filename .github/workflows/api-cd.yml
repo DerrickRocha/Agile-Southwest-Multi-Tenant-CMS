@@ -51,9 +51,10 @@ jobs:
       # --------------------------------------------
       - name: Zip artifact
         run: |
+          cp AgileSouthwestCMSAPI/Procfile publish/Procfile
           cd publish
           zip -r ../app.zip .
-
+      
       # --------------------------------------------
       # Configure AWS Credentials
       # --------------------------------------------
