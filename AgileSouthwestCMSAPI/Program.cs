@@ -9,7 +9,6 @@ var builder = WebApplication.CreateBuilder(args);
 // --------------------------------------------------
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
-// DO NOT crash the app at startup in EB
 if (string.IsNullOrWhiteSpace(connectionString))
 {
     Console.WriteLine("WARNING: DefaultConnection is not configured");
@@ -22,7 +21,7 @@ builder.Services.AddDbContext<CmsDbContext>(options =>
 {
     if (!string.IsNullOrWhiteSpace(connectionString))
     {
-        options.UseSqlServer(connectionString, sql =>
+        options.UseMySQL(connectionString, sql =>
         {
             sql.EnableRetryOnFailure();
         });
@@ -31,7 +30,7 @@ builder.Services.AddDbContext<CmsDbContext>(options =>
 
 builder.Services.AddHealthChecks()
     .AddDbContextCheck<CmsDbContext>(
-        name: "sqlserver",
+        name: "mysql",
         failureStatus: HealthStatus.Unhealthy,
         tags: ["db", "sql"]
     );
