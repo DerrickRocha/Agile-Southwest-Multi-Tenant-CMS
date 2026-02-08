@@ -76,7 +76,13 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddOpenApi();
 
 // Compression
-builder.Services.AddResponseCompression();
+builder.Services.AddResponseCompression(options =>
+{
+    options.MimeTypes =
+    [
+        "application/json"
+    ];
+});
 
 
 // Custom middleware DI
