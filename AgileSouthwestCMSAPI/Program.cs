@@ -1,6 +1,8 @@
 using System.Text.Json;
 using AgileSouthwestCMSAPI.Infrastructure.Persistence;
 using AgileSouthwestCMSAPI.Middleware;
+using Microsoft.AspNetCore.Diagnostics;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 
@@ -55,6 +57,8 @@ builder.Services.AddOpenApi();
 // App
 // --------------------------------------------------
 var app = builder.Build();
+
+app.UseApiExceptionHandling();
 
 app.UseAuthorization();
 
