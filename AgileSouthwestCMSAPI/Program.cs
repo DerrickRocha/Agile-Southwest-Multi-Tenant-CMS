@@ -84,13 +84,16 @@ builder.Services.AddResponseCompression(options =>
     ];
 });
 
-
 // Custom middleware DI
 builder.Services.AddScoped<RequestLoggingMiddleware>();
+
 // --------------------------------------------------
 // App
 // --------------------------------------------------
 var app = builder.Build();
+
+app.UseForwardedHeaders(); 
+app.UseMiddleware<IpAllowListMiddleware>();
 
 app.UseApiExceptionHandling();
 
