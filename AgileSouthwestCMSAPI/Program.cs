@@ -58,23 +58,9 @@ builder.Services.AddCors(options =>
             .AllowAnyMethod());
 });
 
-// Auth
-var authority = builder.Configuration["Auth:Authority"]
-                ?? throw new InvalidOperationException("Auth:Authority is missing");
-
-var audience = builder.Configuration["Auth:Audience"]
-               ?? throw new InvalidOperationException("Auth:Audience is missing");
-
-builder.Services.AddAuthentication("Bearer")
-    .AddJwtBearer("Bearer", options =>
-    {
-        options.Authority = authority;
-        options.Audience = audience;
-    });
-
+builder.Services.AddAuthentication();
 
 builder.Services.AddAuthorization();
-
 
 // Rate limiting (built-in)
 builder.Services.AddRateLimiter(options =>
@@ -101,14 +87,20 @@ builder.Services.AddScoped<RequestLoggingMiddleware>();
 var app = builder.Build();
 
 app.UseApiExceptionHandling();
+
+app.UseHttpsRedirection();
+
+app.UseRouting();
+
 app.UseCors("Default");
 
+app.UseRateLimiter();
+
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
 
 app.MapHealthChecks("/health");
-
-app.MapGet("/", () => "Multi-Tenant CMS API is running");
 
 app.Run();
