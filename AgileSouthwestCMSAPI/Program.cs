@@ -16,7 +16,8 @@ var builder = WebApplication.CreateBuilder(args);
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 if (string.IsNullOrWhiteSpace(connectionString))
 {
-    Console.WriteLine("WARNING: DefaultConnection is not configured");
+    throw new InvalidOperationException("DefaultConnection is not configured");
+    
 }
 
 // --------------------------------------------------
