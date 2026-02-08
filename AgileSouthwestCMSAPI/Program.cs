@@ -7,8 +7,11 @@ var builder = WebApplication.CreateBuilder(args);
 // --------------------------------------------------
 // Configuration
 // --------------------------------------------------
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
+
+
+// Load database connectionString
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 if (string.IsNullOrWhiteSpace(connectionString))
 {
     Console.WriteLine("WARNING: DefaultConnection is not configured");
@@ -17,6 +20,10 @@ if (string.IsNullOrWhiteSpace(connectionString))
 // --------------------------------------------------
 // Services
 // --------------------------------------------------
+
+// Logging (Serilog / OpenTelemetry-friendly)
+builder.Services.AddLogging();
+
 builder.Services.AddDbContext<CmsDbContext>(options =>
 {
     if (!string.IsNullOrWhiteSpace(connectionString))
