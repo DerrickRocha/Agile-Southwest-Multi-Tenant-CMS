@@ -11,15 +11,15 @@ jobs:
     runs-on: ubuntu-22.04
 
     services:
-      sqlserver:
-        image: mcr.microsoft.com/mssql/server:2022-latest
+      mysql:
+        image: mysql:8.0
         env:
-          SA_PASSWORD: YourStrong!Passw0rd
-          ACCEPT_EULA: "Y"
+          MYSQL_ROOT_PASSWORD: rootpassword
+          MYSQL_DATABASE: agile_cms_dev
         ports:
-          - 1433:1433
+          - 3306:3306
         options: >-
-          --health-cmd="pgrep sqlservr"
+          --health-cmd="mysqladmin ping -h localhost"
           --health-interval=10s
           --health-timeout=5s
           --health-retries=5
@@ -46,22 +46,16 @@ jobs:
       - name: Install sqlcmd
         run: |
           sudo apt-get update
-          sudo apt-get install -y mssql-tools unixodbc-dev
+          sudo apt-get install -y mysql-client
           echo "/opt/mssql-tools/bin" >> $GITHUB_PATH
-
-      # ------------------------------------------------------------
-      # 4️⃣ Wait for SQL Server to be ready
-      # ------------------------------------------------------------
-      - name: Wait for SQL Server
-        run: sleep 15
 
       # ------------------------------------------------------------
       # 5️⃣ Apply database migrations (from DB repo)
       # ------------------------------------------------------------
       - name: Apply database migrations
         run: |
-          chmod +x ./database/database/apply-migrations-ci.sh
-          ./database/database/apply-migrations-ci.sh
+          chmod +x ./database/mysql/apply-migrations-ci.sh
+          ./database/mysql/apply-migrations-ci.sh
 
       - name: Debug workspace
         run: |
