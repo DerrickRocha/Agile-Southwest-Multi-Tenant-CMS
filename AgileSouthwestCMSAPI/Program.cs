@@ -35,6 +35,7 @@ builder.Services.AddDbContext<CmsDbContext>(options =>
     }
 });
 
+// Health checks
 builder.Services.AddHealthChecks()
     .AddDbContextCheck<CmsDbContext>(
         name: "mysql",
@@ -42,12 +43,23 @@ builder.Services.AddHealthChecks()
         tags: ["db", "sql"]
     );
 
+// Controllers + validation
 builder.Services.AddControllers(options => 
         options.Filters.Add<ApiExceptionFilter>()
 )
 .AddJsonOptions(opts =>
 {
     opts.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+});
+
+// CORS
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("Default", policy =>
+        policy
+            .WithOrigins("https://agilesouthwest.com")
+            .AllowAnyHeader()
+            .AllowAnyMethod());
 });
 
 builder.Services.AddEndpointsApiExplorer();
@@ -59,6 +71,7 @@ builder.Services.AddOpenApi();
 var app = builder.Build();
 
 app.UseApiExceptionHandling();
+app.UseCors("Default");
 
 app.UseAuthorization();
 
