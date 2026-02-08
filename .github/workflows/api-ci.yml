@@ -41,22 +41,29 @@ jobs:
           path: database
 
       # ------------------------------------------------------------
-      # 3️⃣ Install sqlcmd
+      # 3️⃣ Install mysql client
       # ------------------------------------------------------------
       - name: Install sqlcmd
         run: |
           sudo apt-get update
           sudo apt-get install -y mysql-client
-          echo "/opt/mssql-tools/bin" >> $GITHUB_PATH
-
       # ------------------------------------------------------------
       # 5️⃣ Apply database migrations (from DB repo)
       # ------------------------------------------------------------
-      - name: Apply database migrations
+      - name: Apply database migrations executable
         run: |
           chmod +x ./database/database/mysql/apply-migrations-ci.sh
-          ./database/database/mysql/apply-migrations-ci.sh
 
+      - name: Wait for MySQL to be ready
+          run: sleep 20
+          
+      - name: Apply migrations
+          env:
+            DB_HOST: 127.0.0.1
+            DB_USER: root
+            DB_PASSWORD: rootpassword
+            DB_NAME: agile_cms_dev
+          run: ./database/database/mysql/apply-migrations-ci.sh
       - name: Debug workspace
         run: |
           pwd
