@@ -59,13 +59,19 @@ builder.Services.AddCors(options =>
 });
 
 // Auth
-builder.Services
-    .AddAuthentication("Bearer")
+var authority = builder.Configuration["Auth:Authority"]
+                ?? throw new InvalidOperationException("Auth:Authority is missing");
+
+var audience = builder.Configuration["Auth:Audience"]
+               ?? throw new InvalidOperationException("Auth:Audience is missing");
+
+builder.Services.AddAuthentication("Bearer")
     .AddJwtBearer("Bearer", options =>
     {
-        options.Authority = builder.Configuration["Auth:Authority"];
-        options.Audience = builder.Configuration["Auth:Audience"];
+        options.Authority = authority;
+        options.Audience = audience;
     });
+
 
 builder.Services.AddAuthorization();
 
