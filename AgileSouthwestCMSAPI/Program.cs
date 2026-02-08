@@ -1,3 +1,4 @@
+using System.Text.Json;
 using AgileSouthwestCMSAPI.Infrastructure.Persistence;
 using AgileSouthwestCMSAPI.Middleware;
 using Microsoft.EntityFrameworkCore;
@@ -41,7 +42,12 @@ builder.Services.AddHealthChecks()
 
 builder.Services.AddControllers(options => 
         options.Filters.Add<ApiExceptionFilter>()
-);
+)
+.AddJsonOptions(opts =>
+{
+    opts.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+});
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddOpenApi();
 
