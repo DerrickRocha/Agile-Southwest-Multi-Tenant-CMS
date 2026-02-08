@@ -89,9 +89,6 @@ builder.Services.AddRateLimiter(options =>
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddOpenApi();
 
-// Health checks
-builder.Services.AddHealthChecks();
-
 // Compression
 builder.Services.AddResponseCompression();
 
