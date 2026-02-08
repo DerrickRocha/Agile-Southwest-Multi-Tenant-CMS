@@ -15,11 +15,13 @@ jobs:
         image: mysql:8.0
         env:
           MYSQL_ROOT_PASSWORD: rootpassword
-          MYSQL_DATABASE: agile_cms_dev
+          MYSQL_DATABASE: AppDb
+          MYSQL_USER: appuser
+          MYSQL_PASSWORD: apppassword
         ports:
           - 3306:3306
         options: >-
-          --health-cmd="mysqladmin ping -h localhost"
+          --health-cmd="mysqladmin ping -h localhost -u root -prootpassword"
           --health-interval=10s
           --health-timeout=5s
           --health-retries=5
@@ -41,37 +43,37 @@ jobs:
           path: database
 
       # ------------------------------------------------------------
-      # 3️⃣ Install mysql client
+      # 3️⃣ Install MySQL client
       # ------------------------------------------------------------
-      - name: Install sqlcmd
+      - name: Install MySQL client
         run: |
           sudo apt-get update
           sudo apt-get install -y mysql-client
+
+      # ------------------------------------------------------------
+      # 4️⃣ Wait for MySQL to be ready
+      # ------------------------------------------------------------
+      - name: Wait for MySQL
+        run: |
+          for i in {1..30}; do
+            mysqladmin ping -h 127.0.0.1 -u root -prootpassword && break
+            sleep 2
+          done
+
       # ------------------------------------------------------------
       # 5️⃣ Apply database migrations (from DB repo)
       # ------------------------------------------------------------
-      steps:
-        - name: Checkout repo
-          uses: actions/checkout@v4
+      - name: Apply database migrations
+        env:
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_NAME: AppDb
+          DB_USER: appuser
+          DB_PASSWORD: apppassword
+        run: |
+          chmod +x ./database/database/mysql/apply-migrations-ci.sh
+          ./database/database/mysql/apply-migrations-ci.sh
 
-        - name: Install MySQL client
-          run: |
-            sudo apt-get update
-            sudo apt-get install -y mysql-client
-
-        - name: Make migration script executable
-          run: chmod +x ./database/database/mysql/apply-migrations-ci.sh
-
-        - name: Wait for MySQL to be ready
-          run: sleep 20
-
-        - name: Apply migrations
-          env:
-            DB_HOST: 127.0.0.1
-            DB_USER: root
-            DB_PASSWORD: rootpassword
-            DB_NAME: agile_cms_dev
-          run: ./database/mysql/apply-migrations-ci.sh
       # ------------------------------------------------------------
       # 6️⃣ Build API
       # ------------------------------------------------------------
@@ -83,9 +85,10 @@ jobs:
       # ------------------------------------------------------------
       - name: Run API tests
         env:
-          DB_HOST: localhost
-          DB_PORT: 1433
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
           DB_NAME: AppDb
-          DB_USER: sa
-          DB_PASSWORD: YourStrong!Passw0rd
+          DB_USER: appuser
+          DB_PASSWORD: apppassword
         run: dotnet test AgileSouthwestCMSAPI.slnx --configuration Release
+
