@@ -88,6 +88,10 @@ builder.Services.AddHealthChecks();
 
 // Compression
 builder.Services.AddResponseCompression();
+
+
+// Custom middleware DI
+builder.Services.AddScoped<RequestLoggingMiddleware>();
 // --------------------------------------------------
 // App
 // --------------------------------------------------
