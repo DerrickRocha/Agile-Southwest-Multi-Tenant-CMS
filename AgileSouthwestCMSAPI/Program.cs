@@ -1,6 +1,7 @@
 using System.Text.Json;
 using AgileSouthwestCMSAPI.Infrastructure.Persistence;
 using AgileSouthwestCMSAPI.Middleware;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
@@ -111,6 +112,7 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-app.MapHealthChecks("/health");
+app.MapHealthChecks("/health")
+    .WithMetadata(new AllowAnonymousAttribute());
 
 app.Run();
