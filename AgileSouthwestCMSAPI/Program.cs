@@ -1,6 +1,7 @@
 using System.Text.Json;
 using AgileSouthwestCMSAPI.Infrastructure.Persistence;
 using AgileSouthwestCMSAPI.Middleware;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 
@@ -67,6 +68,17 @@ builder.Services
     });
 
 builder.Services.AddAuthorization();
+
+
+// Rate limiting (built-in)
+builder.Services.AddRateLimiter(options =>
+{
+    options.AddFixedWindowLimiter("api", limiter =>
+    {
+        limiter.Window = TimeSpan.FromSeconds(10);
+        limiter.PermitLimit = 100;
+    });
+});
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddOpenApi();
