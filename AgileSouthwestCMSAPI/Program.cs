@@ -1,8 +1,6 @@
 using System.Text.Json;
 using AgileSouthwestCMSAPI.Infrastructure.Persistence;
 using AgileSouthwestCMSAPI.Middleware;
-using Microsoft.AspNetCore.Diagnostics;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 
@@ -44,13 +42,10 @@ builder.Services.AddHealthChecks()
     );
 
 // Controllers + validation
-builder.Services.AddControllers(options => 
+builder.Services.AddControllers(options =>
         options.Filters.Add<ApiExceptionFilter>()
-)
-.AddJsonOptions(opts =>
-{
-    opts.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
-});
+    )
+    .AddJsonOptions(opts => { opts.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase; });
 
 // CORS
 builder.Services.AddCors(options =>
@@ -61,6 +56,17 @@ builder.Services.AddCors(options =>
             .AllowAnyHeader()
             .AllowAnyMethod());
 });
+
+// Auth
+builder.Services
+    .AddAuthentication("Bearer")
+    .AddJwtBearer("Bearer", options =>
+    {
+        options.Authority = builder.Configuration["Auth:Authority"];
+        options.Audience = builder.Configuration["Auth:Audience"];
+    });
+
+builder.Services.AddAuthorization();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddOpenApi();
