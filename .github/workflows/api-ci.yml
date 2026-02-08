@@ -55,7 +55,7 @@ jobs:
           chmod +x ./database/database/mysql/apply-migrations-ci.sh
 
       - name: Wait for MySQL to be ready
-          run: sleep 20
+        run: sleep 20
           
       - name: Apply migrations
           env:
