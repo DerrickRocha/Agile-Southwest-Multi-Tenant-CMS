@@ -50,25 +50,28 @@ jobs:
       # ------------------------------------------------------------
       # 5️⃣ Apply database migrations (from DB repo)
       # ------------------------------------------------------------
-      - name: Apply database migrations executable
-        run: |
-          chmod +x ./database/database/mysql/apply-migrations-ci.sh
+      steps:
+        - name: Checkout repo
+          uses: actions/checkout@v4
 
-      - name: Wait for MySQL to be ready
-        run: sleep 20
-          
-      - name: Apply migrations
+        - name: Install MySQL client
+          run: |
+            sudo apt-get update
+            sudo apt-get install -y mysql-client
+
+        - name: Make migration script executable
+          run: chmod +x ./database/database/mysql/apply-migrations-ci.sh
+
+        - name: Wait for MySQL to be ready
+          run: sleep 20
+
+        - name: Apply migrations
           env:
             DB_HOST: 127.0.0.1
             DB_USER: root
             DB_PASSWORD: rootpassword
             DB_NAME: agile_cms_dev
-          run: ./database/database/mysql/apply-migrations-ci.sh
-      - name: Debug workspace
-        run: |
-          pwd
-          ls -la
-          find . -name "*.sln*" -maxdepth 4
+          run: ./database/mysql/apply-migrations-ci.sh
       # ------------------------------------------------------------
       # 6️⃣ Build API
       # ------------------------------------------------------------
