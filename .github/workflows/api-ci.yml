@@ -54,8 +54,8 @@ jobs:
       # ------------------------------------------------------------
       - name: Apply database migrations
         run: |
-          chmod +x ./database/mysql/apply-migrations-ci.sh
-          ./database/mysql/apply-migrations-ci.sh
+          chmod +x ./database/database/mysql/apply-migrations-ci.sh
+          ./database/database/mysql/apply-migrations-ci.sh
 
       - name: Debug workspace
         run: |
