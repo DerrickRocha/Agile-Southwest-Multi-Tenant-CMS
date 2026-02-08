@@ -1,4 +1,5 @@
 using AgileSouthwestCMSAPI.Infrastructure.Persistence;
+using AgileSouthwestCMSAPI.Middleware;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 
@@ -7,7 +8,6 @@ var builder = WebApplication.CreateBuilder(args);
 // --------------------------------------------------
 // Configuration
 // --------------------------------------------------
-
 
 
 // Load database connectionString
@@ -28,10 +28,7 @@ builder.Services.AddDbContext<CmsDbContext>(options =>
 {
     if (!string.IsNullOrWhiteSpace(connectionString))
     {
-        options.UseMySQL(connectionString, sql =>
-        {
-            sql.EnableRetryOnFailure();
-        });
+        options.UseMySQL(connectionString, sql => { sql.EnableRetryOnFailure(); });
     }
 });
 
@@ -42,7 +39,9 @@ builder.Services.AddHealthChecks()
         tags: ["db", "sql"]
     );
 
-builder.Services.AddControllers();
+builder.Services.AddControllers(options => 
+        options.Filters.Add<ApiExceptionFilter>()
+);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddOpenApi();
 

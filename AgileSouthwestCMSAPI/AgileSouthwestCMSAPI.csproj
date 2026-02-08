@@ -41,7 +41,6 @@
     <Folder Include="Filters\" />
     <Folder Include="Infrastructure\Repositories\" />
     <Folder Include="Infrastructure\Services\" />
-    <Folder Include="Middleware\" />
     <Folder Include="Tests\Api.Tests\" />
     <Folder Include="Tests\Application.Tests\" />
   </ItemGroup>
