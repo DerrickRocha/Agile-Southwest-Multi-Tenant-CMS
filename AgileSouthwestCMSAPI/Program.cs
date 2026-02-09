@@ -20,7 +20,6 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 if (string.IsNullOrWhiteSpace(connectionString))
 {
     throw new InvalidOperationException("DefaultConnection is not configured");
-    
 }
 
 // --------------------------------------------------
@@ -47,9 +46,7 @@ builder.Services.AddHealthChecks()
     );
 
 // Controllers + validation
-builder.Services.AddControllers(options =>
-        options.Filters.Add<ApiExceptionFilter>()
-    )
+builder.Services.AddControllers()
     .AddJsonOptions(opts => { opts.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase; });
 
 // CORS
