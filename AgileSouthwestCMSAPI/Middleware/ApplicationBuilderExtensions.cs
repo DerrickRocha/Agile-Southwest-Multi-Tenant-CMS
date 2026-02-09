@@ -18,11 +18,19 @@ public static class ApplicationBuilderExtensions
                     .Get<IExceptionHandlerFeature>();
 
                 var exception = feature?.Error;
+                
+                var statusCode = exception switch
+                {
+                    ArgumentException => StatusCodes.Status400BadRequest,
+                    UnauthorizedAccessException => StatusCodes.Status401Unauthorized,
+                    KeyNotFoundException => StatusCodes.Status404NotFound,
+                    _ => StatusCodes.Status500InternalServerError
+                };
 
                 var problem = new ProblemDetails
                 {
                     Title = "An unexpected error occurred",
-                    Status = StatusCodes.Status500InternalServerError,
+                    Status = statusCode,
                     Instance = context.Request.Path
                 };
 
