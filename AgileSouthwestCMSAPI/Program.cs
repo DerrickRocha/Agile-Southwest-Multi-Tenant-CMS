@@ -94,8 +94,7 @@ builder.Services.AddScoped<RequestLoggingMiddleware>();
 // --------------------------------------------------
 var app = builder.Build();
 
-app.UseForwardedHeaders(); 
-app.UseMiddleware<IpAllowListMiddleware>();
+app.UseForwardedHeaders();
 
 app.UseApiExceptionHandling();
 
@@ -103,9 +102,25 @@ app.UseHttpsRedirection();
 
 app.UseRouting();
 
+// 🔒 Security headers AFTER routing, BEFORE endpoints
+app.Use(async (context, next) =>
+{
+    context.Response.Headers.TryAdd("X-Content-Type-Options", "nosniff");
+    context.Response.Headers.TryAdd("X-Frame-Options", "DENY");
+    context.Response.Headers.TryAdd("Referrer-Policy", "no-referrer");
+    context.Response.Headers.TryAdd(
+        "Content-Security-Policy",
+        "default-src 'none'; frame-ancestors 'none';"
+    );
+
+    await next();
+});
+
 app.UseCors("Default");
 
 app.UseRateLimiter();
+
+app.UseMiddleware<IpAllowListMiddleware>();
 
 app.UseAuthentication();
 app.UseAuthorization();
