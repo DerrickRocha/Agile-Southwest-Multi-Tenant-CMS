@@ -44,6 +44,8 @@ public static class ApplicationBuilderExtensions
                         exception.StackTrace
                     };
                 }
+                
+                problem.Type = "https://httpstatuses.com/500";
 
                 problem.Extensions["traceId"] =
                     context.TraceIdentifier;

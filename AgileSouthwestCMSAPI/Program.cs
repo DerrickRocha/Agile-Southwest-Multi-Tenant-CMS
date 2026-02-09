@@ -1,7 +1,9 @@
+using System.Net;
 using System.Text.Json;
 using AgileSouthwestCMSAPI.Infrastructure.Persistence;
 using AgileSouthwestCMSAPI.Middleware;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
@@ -84,6 +86,15 @@ builder.Services.AddResponseCompression(options =>
     [
         "application/json"
     ];
+});
+
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders =
+        ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+
+    // Explicitly trust known proxies / load balancers
+    options.KnownProxies.Add(IPAddress.Parse("10.0.0.10"));
 });
 
 // Custom middleware DI
