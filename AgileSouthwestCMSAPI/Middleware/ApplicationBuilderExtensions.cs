@@ -49,8 +49,7 @@ public static class ApplicationBuilderExtensions
                 problem.Extensions["traceId"] =
                     context.TraceIdentifier;
 
-                context.Response.StatusCode =
-                    problem.Status.Value;
+                context.Response.StatusCode = statusCode;
 
                 context.Response.ContentType =
                     "application/problem+json";
