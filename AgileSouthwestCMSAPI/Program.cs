@@ -91,10 +91,11 @@ builder.Services.AddResponseCompression(options =>
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
     options.ForwardedHeaders =
-        ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+        ForwardedHeaders.XForwardedFor |
+        ForwardedHeaders.XForwardedProto;
 
-    // Explicitly trust known proxies / load balancers
-    options.KnownProxies.Add(IPAddress.Parse("10.0.0.10"));
+    options.KnownIPNetworks.Clear();
+    options.KnownProxies.Clear();
 });
 
 // Custom middleware DI

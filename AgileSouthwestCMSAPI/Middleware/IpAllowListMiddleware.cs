@@ -9,17 +9,32 @@ public sealed class IpAllowListMiddleware
 
     public IpAllowListMiddleware(
         RequestDelegate next,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        ILogger<IpAllowListMiddleware> logger)
     {
         _next = next;
+        _allowedIps = [];
 
         var ips = configuration
             .GetSection("HealthChecks:AllowedIPs")
             .Get<string[]>() ?? [];
 
-        _allowedIps = ips
-            .Select(IPAddress.Parse)
-            .ToHashSet();
+        foreach (var ip in ips)
+        {
+            if (IPAddress.TryParse(ip, out var parsed))
+            {
+                if (parsed.IsIPv4MappedToIPv6)
+                {
+                    parsed = parsed.MapToIPv4();
+                }
+
+                _allowedIps.Add(parsed);
+            }
+            else
+            {
+                logger.LogWarning("Invalid IP address in HealthChecks:AllowedIPs: {Ip}", ip);
+            }
+        }
     }
 
     public async Task InvokeAsync(HttpContext context)
@@ -46,6 +61,10 @@ public sealed class IpAllowListMiddleware
         if (!_allowedIps.Contains(remoteIp))
         {
             context.Response.StatusCode = StatusCodes.Status403Forbidden;
+            return;
         }
+
+        await _next(context);
     }
 }
+
