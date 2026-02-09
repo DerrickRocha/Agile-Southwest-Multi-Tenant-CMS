@@ -32,12 +32,20 @@ public sealed class IpAllowListMiddleware
 
         var remoteIp = context.Connection.RemoteIpAddress;
 
-        if (remoteIp is null || !_allowedIps.Contains(remoteIp))
+        if (remoteIp is null)
         {
             context.Response.StatusCode = StatusCodes.Status403Forbidden;
             return;
         }
 
-        await _next(context);
+        if (remoteIp.IsIPv4MappedToIPv6)
+        {
+            remoteIp = remoteIp.MapToIPv4();
+        }
+
+        if (!_allowedIps.Contains(remoteIp))
+        {
+            context.Response.StatusCode = StatusCodes.Status403Forbidden;
+        }
     }
 }
