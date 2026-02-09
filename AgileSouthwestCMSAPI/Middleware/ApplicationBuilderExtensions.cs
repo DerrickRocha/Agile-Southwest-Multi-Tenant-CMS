@@ -31,6 +31,7 @@ public static class ApplicationBuilderExtensions
                 {
                     Title = "An unexpected error occurred",
                     Status = statusCode,
+                    Type = $"https://httpstatuses.com/{statusCode}",
                     Instance = context.Request.Path
                 };
 
@@ -45,8 +46,6 @@ public static class ApplicationBuilderExtensions
                     };
                 }
                 
-                problem.Type = "https://httpstatuses.com/500";
-
                 problem.Extensions["traceId"] =
                     context.TraceIdentifier;
 
