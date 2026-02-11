@@ -38,7 +38,6 @@
     <Folder Include="Application\Validators\" />
     <Folder Include="Domain\Entities\" />
     <Folder Include="Domain\Enums\" />
-    <Folder Include="Domain\ValueObjects\" />
     <Folder Include="Filters\" />
     <Folder Include="Infrastructure\Repositories\" />
     <Folder Include="Infrastructure\Services\" />

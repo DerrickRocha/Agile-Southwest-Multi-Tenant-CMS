@@ -1,4 +1,5 @@
 using System.Text.Json;
+using AgileSouthwestCMSAPI.Domain.ValueObjects;
 using AgileSouthwestCMSAPI.Infrastructure.Persistence;
 using AgileSouthwestCMSAPI.Middleware;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -114,6 +115,9 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
 
 // Custom middleware DI
 builder.Services.AddScoped<RequestLoggingMiddleware>();
+
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ITenantContext, TenantContext>();
 
 // --------------------------------------------------
 // App
