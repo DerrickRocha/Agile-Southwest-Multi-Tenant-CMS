@@ -1,12 +1,13 @@
-using System.Net;
 using System.Text.Json;
 using AgileSouthwestCMSAPI.Infrastructure.Persistence;
 using AgileSouthwestCMSAPI.Middleware;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -36,6 +37,22 @@ builder.Services.AddDbContext<CmsDbContext>(options =>
         options.UseMySQL(connectionString, sql => { sql.EnableRetryOnFailure(); });
     }
 });
+
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.Authority = "https://cognito-idp.us-east-1.amazonaws.com/us-east-1_R0b1zUu0r";
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidIssuer = "https://cognito-idp.us-east-1.amazonaws.com/us-east-1_R0b1zUu0r",
+            ValidateAudience = true,
+            ValidAudience = "5hhk72kedlh43ufip6m61sckh4",
+            ValidateLifetime = true
+        };
+    });
+
 
 // Health checks
 builder.Services.AddHealthChecks()
