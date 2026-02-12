@@ -7,8 +7,8 @@ namespace AgileSouthwestCMSAPI.Controllers;
 [Produces("application/json")]
 public class AuthController(): ControllerBase
 {
-    [HttpPost("login")]
-    public Task<IActionResult> Login()
+    [HttpPost("register")]
+    public Task<IActionResult> Register()
     {
         return Task.FromResult<IActionResult>(Ok());
     }

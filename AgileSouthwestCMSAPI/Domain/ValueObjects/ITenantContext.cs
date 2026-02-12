@@ -16,7 +16,8 @@ class TenantContext : ITenantContext
     public TenantContext(IHttpContextAccessor accessor)
     {
         var user = accessor.HttpContext?.User;
-        TenantId = user?.FindFirst("custom:tenant_id")?.Value ?? throw new UnauthorizedAccessException("Tenant not found");
+        TenantId = user?.FindFirst("custom:tenant_id")?.Value ??
+                   throw new UnauthorizedAccessException("Tenant not found");
         UserId = (user.FindFirst(ClaimTypes.NameIdentifier)?.Value
                   ?? user.FindFirst("sub")?.Value) ?? throw new UnauthorizedAccessException("User not found");
     }
