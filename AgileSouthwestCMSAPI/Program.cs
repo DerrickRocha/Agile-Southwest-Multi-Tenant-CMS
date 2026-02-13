@@ -1,6 +1,7 @@
 using System.Text.Json;
 using AgileSouthwestCMSAPI.Domain.ValueObjects;
 using AgileSouthwestCMSAPI.Infrastructure.Persistence;
+using AgileSouthwestCMSAPI.Infrastructure.Services;
 using AgileSouthwestCMSAPI.Middleware;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -113,11 +114,11 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
     options.KnownProxies.Clear();
 });
 
-// Custom middleware DI
 builder.Services.AddScoped<RequestLoggingMiddleware>();
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ITenantContext, TenantContext>();
+builder.Services.AddScoped<IAuthService, AuthService>();
 
 // --------------------------------------------------
 // App

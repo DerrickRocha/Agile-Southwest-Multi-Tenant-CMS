@@ -1,3 +1,5 @@
+using AgileSouthwestCMSAPI.Domain.DTOs;
+using AgileSouthwestCMSAPI.Infrastructure.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AgileSouthwestCMSAPI.Controllers;
@@ -5,12 +7,14 @@ namespace AgileSouthwestCMSAPI.Controllers;
 [ApiController]
 [Route("[controller]")]
 [Produces("application/json")]
-public class AuthController(): ControllerBase
+public class AuthController(
+    IAuthService service
+) : ControllerBase
 {
     [HttpPost("register")]
-    public Task<IActionResult> Register()
+    public async Task<IActionResult> Register([FromBody] SignupRequest request)
     {
-        return Task.FromResult<IActionResult>(Ok());
+        var result = await service.SignupAsync(request);
+        return StatusCode(result.StatusCode, result);
     }
-    
 }

@@ -22,10 +22,6 @@ public static class ApplicationBuilderExtensions
                 var exception = context.Features
                     .Get<IExceptionHandlerFeature>()?
                     .Error;
-
-                var feature = context.Features
-                    .Get<IExceptionHandlerFeature>();
-
                 
                 var statusCode = exception switch
                 {

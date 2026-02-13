@@ -5,7 +5,7 @@ namespace AgileSouthwestCMSAPI.Infrastructure.Persistence;
 
 public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(options)
 {
-     public DbSet<User> Users => Set<User>();
+    public DbSet<User> Users => Set<User>();
     public DbSet<Tenant> Tenants => Set<Tenant>();
 
     protected override void OnModelCreating(ModelBuilder builder)
