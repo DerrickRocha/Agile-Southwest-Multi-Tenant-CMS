@@ -2,7 +2,6 @@ using System.Security.Cryptography;
 using System.Text;
 using AgileSouthwestCMSAPI.Domain.DTOs;
 using AgileSouthwestCMSAPI.Infrastructure.Exceptions;
-using Amazon;
 using Amazon.CognitoIdentityProvider;
 using Amazon.CognitoIdentityProvider.Model;
 using Microsoft.Extensions.Options;
@@ -17,16 +16,13 @@ public interface ICognitoService
 }
 
 public class CognitoService(
+    IAmazonCognitoIdentityProvider provider,
     IOptions<CognitoSettings> settingsOptions
-)
-    : ICognitoService
+) : ICognitoService
 {
-    private readonly CognitoSettings _settings = settingsOptions.Value;
-    private readonly IAmazonCognitoIdentityProvider _provider = new AmazonCognitoIdentityProviderClient(
-        RegionEndpoint.GetBySystemName(settingsOptions.Value.Region)
-    );
-    
 
+    private readonly CognitoSettings _settings = settingsOptions.Value;
+    
     public async Task<CognitoSignupResult> SignUpAsync(string email, string password, string tenantIdentifier)
     {
         try
@@ -37,14 +33,14 @@ public class CognitoService(
                 Username = email,
                 Password = password,
                 SecretHash = CalculateSecretHash(email),
-                UserAttributes = new List<AttributeType>
-                {
-                    new() { Name = "email", Value = email },
-                    new() { Name = "custom:tenant", Value = tenantIdentifier }
-                }
+                UserAttributes =
+                [
+                    new AttributeType { Name = "email", Value = email },
+                    new AttributeType { Name = "custom:tenant", Value = tenantIdentifier }
+                ]
             };
 
-            var response = await _provider.SignUpAsync(request);
+            var response = await provider.SignUpAsync(request);
 
             return new CognitoSignupResult
             {

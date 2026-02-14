@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.IdentityModel.Tokens;
+using Amazon.CognitoIdentityProvider;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -119,6 +120,12 @@ builder.Services.AddScoped<RequestLoggingMiddleware>();
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ITenantContext, TenantContext>();
+
+builder.Services.AddDefaultAWSOptions(
+    builder.Configuration.GetAWSOptions()
+);
+builder.Services.AddAWSService<IAmazonCognitoIdentityProvider>();
+
 builder.Services.Configure<CognitoSettings>(
     builder.Configuration.GetSection("Cognito")
 );
