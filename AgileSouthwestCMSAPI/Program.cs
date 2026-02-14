@@ -1,4 +1,5 @@
 using System.Text.Json;
+using AgileSouthwestCMSAPI.Domain.DTOs;
 using AgileSouthwestCMSAPI.Domain.ValueObjects;
 using AgileSouthwestCMSAPI.Infrastructure.Persistence;
 using AgileSouthwestCMSAPI.Infrastructure.Services;
@@ -118,6 +119,10 @@ builder.Services.AddScoped<RequestLoggingMiddleware>();
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ITenantContext, TenantContext>();
+builder.Services.Configure<CognitoSettings>(
+    builder.Configuration.GetSection("Cognito")
+);
+builder.Services.AddSingleton<ICognitoService, CognitoService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 
 // --------------------------------------------------

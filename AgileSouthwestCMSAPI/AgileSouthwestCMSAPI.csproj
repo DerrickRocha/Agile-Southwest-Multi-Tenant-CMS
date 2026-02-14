@@ -33,6 +33,7 @@
 
   <ItemGroup>
     <Folder Include="Application\Commands\" />
+    <Folder Include="Application\DTOs\" />
     <Folder Include="Application\Interfaces\" />
     <Folder Include="Application\Queries\" />
     <Folder Include="Application\Validators\" />
