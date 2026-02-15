@@ -52,7 +52,7 @@ builder.Services
             ValidateIssuer = true,
             ValidIssuer = "https://cognito-idp.us-east-1.amazonaws.com/us-east-1_R0b1zUu0r",
             ValidateAudience = true,
-            ValidAudience = "5hhk72kedlh43ufip6m61sckh4",
+            ValidAudience = "7sif4nesaud83g9bnm0d183j5n",
             ValidateLifetime = true
         };
     });
