@@ -32,11 +32,10 @@ public class CognitoService(
                 ClientId = _settings.ClientId,
                 Username = email,
                 Password = password,
-                SecretHash = CalculateSecretHash(email),
                 UserAttributes =
                 [
                     new AttributeType { Name = "email", Value = email },
-                    new AttributeType { Name = "custom:tenant", Value = tenantIdentifier }
+                    new AttributeType { Name = "custom:tenant_id", Value = tenantIdentifier }
                 ]
             };
 
@@ -70,20 +69,5 @@ public class CognitoService(
     public Task DeleteUserBySubAsync(string sub)
     {
         throw new NotImplementedException();
-    }
-
-    private string CalculateSecretHash(string username)
-    {
-        if (string.IsNullOrEmpty(_settings.ClientSecret))
-            return string.Empty;
-
-        var message = username + _settings.ClientId;
-        var keyBytes = Encoding.UTF8.GetBytes(_settings.ClientSecret);
-        var messageBytes = Encoding.UTF8.GetBytes(message);
-
-        using var hmac = new HMACSHA256(keyBytes);
-        var hash = hmac.ComputeHash(messageBytes);
-
-        return Convert.ToBase64String(hash);
     }
 }
