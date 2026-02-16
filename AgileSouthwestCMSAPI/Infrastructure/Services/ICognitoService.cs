@@ -20,9 +20,8 @@ public class CognitoService(
     IOptions<CognitoSettings> settingsOptions
 ) : ICognitoService
 {
-
     private readonly CognitoSettings _settings = settingsOptions.Value;
-    
+
     public async Task<CognitoSignupResult> SignUpAsync(string email, string password, string tenantIdentifier)
     {
         try
@@ -66,8 +65,22 @@ public class CognitoService(
         throw new NotImplementedException();
     }
 
-    public Task DeleteUserBySubAsync(string sub)
+    public async Task DeleteUserBySubAsync(string sub)
     {
-        throw new NotImplementedException();
+        try
+        {
+            var request = new AdminDeleteUserRequest
+            {
+                UserPoolId = _settings.UserPoolId,
+                Username = sub
+            };
+
+            await provider.AdminDeleteUserAsync(request);
+        }
+        catch
+        {
+            // We intentionally swallow errors here
+            // because this is compensation logic
+        }
     }
 }

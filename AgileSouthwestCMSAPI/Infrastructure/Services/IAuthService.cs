@@ -22,69 +22,74 @@ public class AuthService(CmsDbContext database, ICognitoService cognito) : IAuth
         if (await database.Tenants.AnyAsync(t => t.SubDomain == normalizedSubdomain))
             throw new InvalidOperationException("Subdomain already taken.");
 
-        await using var transaction = await database.Database.BeginTransactionAsync();
-
         string? cognitoSub = null;
 
-        try
+        var strategy = database.Database.CreateExecutionStrategy();
+
+        return await strategy.ExecuteAsync(async () =>
         {
-            // 1️⃣ Create Cognito user
-            var cognitoResult = await cognito.SignUpAsync(
-                request.Email,
-                request.Password,
-                normalizedSubdomain
-            );
+            await using var transaction = await database.Database.BeginTransactionAsync();
 
-            cognitoSub = cognitoResult.CognitoSub;
-
-            // 2️⃣ Create Tenant
-            var tenant = new Tenant
+            try
             {
-                Id = Guid.NewGuid(),
-                Name = request.CompanyName,
-                SubDomain = normalizedSubdomain,
-                Status = TenantStatus.Active,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
-            };
+                // 1️⃣ Create Cognito user
+                var cognitoResult = await cognito.SignUpAsync(
+                    request.Email,
+                    request.Password,
+                    normalizedSubdomain
+                );
 
-            database.Tenants.Add(tenant);
+                cognitoSub = cognitoResult.CognitoSub;
 
-            // 3️⃣ Create User
-            var user = new User
+                // 2️⃣ Create Tenant
+                var tenant = new Tenant
+                {
+                    Id = Guid.NewGuid(),
+                    Name = request.CompanyName,
+                    SubDomain = normalizedSubdomain,
+                    Status = TenantStatus.Active,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                };
+
+                database.Tenants.Add(tenant);
+
+                // 3️⃣ Create User
+                var user = new User
+                {
+                    Id = Guid.NewGuid(),
+                    TenantId = tenant.Id,
+                    CognitoSub = cognitoSub,
+                    Email = request.Email,
+                    Role = UserRole.Admin,
+                    Status = UserStatus.Active,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                };
+
+                database.Users.Add(user);
+
+                await database.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                return new SignupResult
+                {
+                    TenantId = tenant.Id,
+                    UserId = user.Id,
+                    CognitoSub = cognitoSub,
+                    UserConfirmed = cognitoResult.UserConfirmed
+                };
+            }
+            catch
             {
-                Id = Guid.NewGuid(),
-                TenantId = tenant.Id,
-                CognitoSub = cognitoSub,
-                Email = request.Email,
-                Role = UserRole.Admin,
-                Status = UserStatus.Active,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
-            };
+                await transaction.RollbackAsync();
 
-            database.Users.Add(user);
+                if (!string.IsNullOrEmpty(cognitoSub))
+                    await cognito.DeleteUserBySubAsync(cognitoSub);
 
-            await database.SaveChangesAsync();
-            await transaction.CommitAsync();
-
-            return new SignupResult
-            {
-                TenantId = tenant.Id,
-                UserId = user.Id,
-                CognitoSub = cognitoSub,
-                UserConfirmed = cognitoResult.UserConfirmed
-            };
-        }
-        catch
-        {
-            await transaction.RollbackAsync();
-
-            if (!string.IsNullOrEmpty(cognitoSub))
-                await cognito.DeleteUserBySubAsync(cognitoSub);
-
-            throw;
-        }
+                throw;
+            }
+        });
     }
     
     public async Task<TokenResult> AuthenticateAsync(string email, string password)
