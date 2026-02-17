@@ -142,6 +142,8 @@ app.UseForwardedHeaders();
 app.UseApiExceptionHandling();
 
 app.UseMiddleware<RequestLoggingMiddleware>();
+app.UseMiddleware<ExceptionHandlingMiddleware>();
+
 
 app.UseHttpsRedirection();
 
