@@ -155,10 +155,30 @@ public class CognitoService(
         }
     }
 
-    public Task ResendConfirmationCodeAsync(string email)
+    public async Task ResendConfirmationCodeAsync(string email)
     {
-        throw new NotImplementedException();
-    }
+        try
+        {
+            var request = new ResendConfirmationCodeRequest
+            {
+                ClientId = _settings.ClientId,
+                Username = email,
+            };
+
+            await provider.ResendConfirmationCodeAsync(request);
+        }
+        catch (UserNotFoundException)
+        {
+            throw new CognitoValidationException("User not found.");
+        }
+        catch (InvalidParameterException ex)
+        {
+            throw new CognitoValidationException(ex.Message);
+        }
+        catch (TooManyRequestsException)
+        {
+            throw new CognitoValidationException("Too many requests. Please try again later.");
+        }    }
 
     public async Task DeleteUserBySubAsync(string sub)
     {
