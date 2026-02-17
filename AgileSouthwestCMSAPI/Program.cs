@@ -1,12 +1,17 @@
-using System.Net;
 using System.Text.Json;
+using AgileSouthwestCMSAPI.Domain.DTOs;
+using AgileSouthwestCMSAPI.Domain.ValueObjects;
 using AgileSouthwestCMSAPI.Infrastructure.Persistence;
+using AgileSouthwestCMSAPI.Infrastructure.Services;
 using AgileSouthwestCMSAPI.Middleware;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.IdentityModel.Tokens;
+using Amazon.CognitoIdentityProvider;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -36,6 +41,22 @@ builder.Services.AddDbContext<CmsDbContext>(options =>
         options.UseMySQL(connectionString, sql => { sql.EnableRetryOnFailure(); });
     }
 });
+
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.Authority = "https://cognito-idp.us-east-1.amazonaws.com/us-east-1_R0b1zUu0r";
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidIssuer = "https://cognito-idp.us-east-1.amazonaws.com/us-east-1_R0b1zUu0r",
+            ValidateAudience = true,
+            ValidAudience = "7sif4nesaud83g9bnm0d183j5n",
+            ValidateLifetime = true
+        };
+    });
+
 
 // Health checks
 builder.Services.AddHealthChecks()
@@ -95,8 +116,21 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
     options.KnownProxies.Clear();
 });
 
-// Custom middleware DI
 builder.Services.AddScoped<RequestLoggingMiddleware>();
+
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ITenantContext, TenantContext>();
+
+builder.Services.AddDefaultAWSOptions(
+    builder.Configuration.GetAWSOptions()
+);
+builder.Services.AddAWSService<IAmazonCognitoIdentityProvider>();
+
+builder.Services.Configure<CognitoSettings>(
+    builder.Configuration.GetSection("Cognito")
+);
+builder.Services.AddSingleton<ICognitoService, CognitoService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
 
 // --------------------------------------------------
 // App
@@ -108,6 +142,8 @@ app.UseForwardedHeaders();
 app.UseApiExceptionHandling();
 
 app.UseMiddleware<RequestLoggingMiddleware>();
+app.UseMiddleware<ExceptionHandlingMiddleware>();
+
 
 app.UseHttpsRedirection();
 

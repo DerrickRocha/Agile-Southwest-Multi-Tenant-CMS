@@ -1,0 +1,121 @@
+using AgileSouthwestCMSAPI.Domain.DTOs;
+using AgileSouthwestCMSAPI.Domain.Entities;
+using AgileSouthwestCMSAPI.Domain.Enums;
+using AgileSouthwestCMSAPI.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore;
+
+namespace AgileSouthwestCMSAPI.Infrastructure.Services;
+
+public interface IAuthService
+{
+    public Task<SignupResult> SignupAsync(SignupRequest request);
+
+    Task<TokenResult> AuthenticateAsync(string email, string password);
+}
+
+public class AuthService(CmsDbContext database, ICognitoService cognito) : IAuthService
+{
+    public async Task<SignupResult> SignupAsync(SignupRequest request)
+    {
+        var normalizedSubdomain = Normalize(request.SubDomain);
+
+        if (await database.Tenants.AnyAsync(t => t.SubDomain == normalizedSubdomain))
+            throw new InvalidOperationException("Subdomain already taken.");
+
+        string? cognitoSub = null;
+
+        var strategy = database.Database.CreateExecutionStrategy();
+
+        return await strategy.ExecuteAsync(async () =>
+        {
+            await using var transaction = await database.Database.BeginTransactionAsync();
+
+            try
+            {
+                // 1️⃣ Create Cognito user
+                var cognitoResult = await cognito.SignUpAsync(
+                    request.Email,
+                    request.Password,
+                    normalizedSubdomain
+                );
+
+                cognitoSub = cognitoResult.CognitoSub;
+
+                // 2️⃣ Create Tenant
+                var guid = Guid.NewGuid();
+                var tenant = new Tenant
+                {
+                    TenantId = guid,
+                    Name = request.CompanyName,
+                    SubDomain = normalizedSubdomain,
+                    Status = TenantStatus.Active,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                };
+
+                database.Tenants.Add(tenant);
+
+                // 3️⃣ Create User
+                var user = new CmsUser
+                {
+                    CmsUserId = Guid.NewGuid(),
+                    TenantId = tenant.TenantId,
+                    CognitoUserId = cognitoSub,
+                    Email = request.Email,
+                    Role = UserRole.Admin,
+                    Status = UserStatus.Active,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                };
+
+                database.CmsUsers.Add(user);
+
+                await database.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                return new SignupResult
+                {
+                    TenantId = tenant.TenantId,
+                    UserId = user.CmsUserId,
+                    CognitoSub = cognitoSub,
+                    UserConfirmed = cognitoResult.UserConfirmed
+                };
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+
+                if (!string.IsNullOrEmpty(cognitoSub))
+                    await cognito.DeleteUserBySubAsync(cognitoSub);
+
+                throw;
+            }
+        });
+    }
+
+    public async Task<TokenResult> AuthenticateAsync(string email, string password)
+    {
+        var tokens = await cognito.AuthenticateAsync(email, password);
+        var user = await database.CmsUsers
+            .Include(u => u.Tenant)
+            .FirstOrDefaultAsync(u => u.Email == email);
+
+        if (user == null)
+            throw new InvalidOperationException("User not found.");
+
+        if (user.Status != UserStatus.Active)
+            throw new InvalidOperationException("User is inactive.");
+
+        return user.Tenant.Status != TenantStatus.Active
+            ? throw new InvalidOperationException("Tenant is inactive.")
+            : tokens;
+    }
+
+    private string Normalize(string input)
+    {
+        return input
+            .Trim()
+            .ToLower()
+            .Replace(" ", "-");
+    }
+}
