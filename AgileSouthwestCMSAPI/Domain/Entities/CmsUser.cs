@@ -2,13 +2,13 @@ using AgileSouthwestCMSAPI.Domain.Enums;
 
 namespace AgileSouthwestCMSAPI.Domain.Entities;
 
-public class User
+public class CmsUser
 {
-    public Guid Id { get; set; }
+    public Guid CmsUserId { get; set; }
     
     public Guid TenantId { get; set; } 
     
-    public string CognitoSub { get; set; }
+    public string CognitoUserId { get; set; }
     
     public string Email { get; set; }
     

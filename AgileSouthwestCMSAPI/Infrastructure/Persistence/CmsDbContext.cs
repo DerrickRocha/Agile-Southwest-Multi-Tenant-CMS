@@ -1,24 +1,31 @@
 using AgileSouthwestCMSAPI.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace AgileSouthwestCMSAPI.Infrastructure.Persistence;
 
 public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(options)
 {
-    public DbSet<User> Users => Set<User>();
+    public DbSet<CmsUser> CmsUsers => Set<CmsUser>();
     public DbSet<Tenant> Tenants => Set<Tenant>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
-
+        var guidConverter = new ValueConverter<Guid, byte[]>(
+            guid => guid.ToByteArray(),
+            bytes => new Guid(bytes));
         // =========================
         // Tenant Configuration
         // =========================
         builder.Entity<Tenant>(entity =>
         {
-            entity.HasKey(t => t.Id);
+            entity.HasKey(t => t.TenantId);
 
+            entity.Property(t => t.TenantId)
+                .HasConversion(guidConverter)
+                .HasColumnType("binary(16)")
+                .ValueGeneratedNever();
             entity.Property(t => t.Name)
                 .IsRequired()
                 .HasMaxLength(200);
@@ -57,11 +64,17 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
         // =========================
         // User Configuration
         // =========================
-        builder.Entity<User>(entity =>
+        builder.Entity<CmsUser>(entity =>
         {
-            entity.HasKey(u => u.Id);
+            entity.HasKey(u => u.CmsUserId);
+            
+            entity.Property(u => u.CmsUserId)
+                .HasConversion(guidConverter)
+                .HasColumnType("binary(16)")
+                .ValueGeneratedNever(); 
 
-            entity.Property(u => u.CognitoSub)
+
+            entity.Property(u => u.CognitoUserId)
                 .IsRequired()
                 .HasMaxLength(100);
 
@@ -88,7 +101,7 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
                 .OnDelete(DeleteBehavior.Restrict);
 
             // Indexes
-            entity.HasIndex(u => u.CognitoSub)
+            entity.HasIndex(u => u.CognitoUserId)
                 .IsUnique();
 
             entity.HasIndex(u => new { u.TenantId, u.Email })

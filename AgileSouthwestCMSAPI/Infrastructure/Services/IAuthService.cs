@@ -9,7 +9,7 @@ namespace AgileSouthwestCMSAPI.Infrastructure.Services;
 public interface IAuthService
 {
     public Task<SignupResult> SignupAsync(SignupRequest request);
-    
+
     Task<TokenResult> AuthenticateAsync(string email, string password);
 }
 
@@ -42,9 +42,10 @@ public class AuthService(CmsDbContext database, ICognitoService cognito) : IAuth
                 cognitoSub = cognitoResult.CognitoSub;
 
                 // 2️⃣ Create Tenant
+                var guid = Guid.NewGuid();
                 var tenant = new Tenant
                 {
-                    Id = Guid.NewGuid(),
+                    TenantId = guid,
                     Name = request.CompanyName,
                     SubDomain = normalizedSubdomain,
                     Status = TenantStatus.Active,
@@ -55,11 +56,11 @@ public class AuthService(CmsDbContext database, ICognitoService cognito) : IAuth
                 database.Tenants.Add(tenant);
 
                 // 3️⃣ Create User
-                var user = new User
+                var user = new CmsUser
                 {
-                    Id = Guid.NewGuid(),
-                    TenantId = tenant.Id,
-                    CognitoSub = cognitoSub,
+                    CmsUserId = Guid.NewGuid(),
+                    TenantId = tenant.TenantId,
+                    CognitoUserId = cognitoSub,
                     Email = request.Email,
                     Role = UserRole.Admin,
                     Status = UserStatus.Active,
@@ -67,15 +68,15 @@ public class AuthService(CmsDbContext database, ICognitoService cognito) : IAuth
                     UpdatedAt = DateTime.UtcNow
                 };
 
-                database.Users.Add(user);
+                database.CmsUsers.Add(user);
 
                 await database.SaveChangesAsync();
                 await transaction.CommitAsync();
 
                 return new SignupResult
                 {
-                    TenantId = tenant.Id,
-                    UserId = user.Id,
+                    TenantId = tenant.TenantId,
+                    UserId = user.CmsUserId,
                     CognitoSub = cognitoSub,
                     UserConfirmed = cognitoResult.UserConfirmed
                 };
@@ -91,11 +92,11 @@ public class AuthService(CmsDbContext database, ICognitoService cognito) : IAuth
             }
         });
     }
-    
+
     public async Task<TokenResult> AuthenticateAsync(string email, string password)
     {
         var tokens = await cognito.AuthenticateAsync(email, password);
-        var user = await database.Users
+        var user = await database.CmsUsers
             .Include(u => u.Tenant)
             .FirstOrDefaultAsync(u => u.Email == email);
 
@@ -105,9 +106,11 @@ public class AuthService(CmsDbContext database, ICognitoService cognito) : IAuth
         if (user.Status != UserStatus.Active)
             throw new InvalidOperationException("User is inactive.");
 
-        return user.Tenant.Status != TenantStatus.Active ? throw new InvalidOperationException("Tenant is inactive.") : tokens;
+        return user.Tenant.Status != TenantStatus.Active
+            ? throw new InvalidOperationException("Tenant is inactive.")
+            : tokens;
     }
-    
+
     private string Normalize(string input)
     {
         return input

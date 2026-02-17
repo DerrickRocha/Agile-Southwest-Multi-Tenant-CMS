@@ -4,7 +4,7 @@ namespace AgileSouthwestCMSAPI.Domain.Entities;
 
 public class Tenant
 {
-    public Guid Id { set; get; }
+    public Guid TenantId { set; get; }
     
     public string Name { set; get; }
     
@@ -25,5 +25,5 @@ public class Tenant
     public DateTime? DeletedAt { get; set; }
     
     // Navigation
-    public ICollection<User> Users { get; set; } = new List<User>();
+    public ICollection<CmsUser> Users { get; set; } = new List<CmsUser>();
 }
