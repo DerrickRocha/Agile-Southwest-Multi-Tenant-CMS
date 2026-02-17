@@ -96,7 +96,7 @@ public class CognitoService(
         }
         catch (UserNotConfirmedException)
         {
-            throw new CognitoValidationException("USER_NOT_CONFIRMED");
+            throw new UserNotConfirmedAuthException("Please confirm your email before logging in.");
         }
         catch (UserNotFoundException)
         {
@@ -178,7 +178,8 @@ public class CognitoService(
         catch (TooManyRequestsException)
         {
             throw new CognitoValidationException("Too many requests. Please try again later.");
-        }    }
+        }
+    }
 
     public async Task DeleteUserBySubAsync(string sub)
     {

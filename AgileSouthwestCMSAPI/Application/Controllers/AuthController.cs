@@ -9,7 +9,8 @@ namespace AgileSouthwestCMSAPI.Application.Controllers;
 [Route("[controller]")]
 [Produces("application/json")]
 public class AuthController(
-    IAuthService service
+    IAuthService service,
+    ICognitoService cognito
 ) : ControllerBase
 {
     [HttpPost("register")]
@@ -38,6 +39,38 @@ public class AuthController(
         {
             var tokens = await service.AuthenticateAsync(request.Email, request.Password);
             return Ok(tokens);
+        }
+        catch (UserNotConfirmedAuthException ex)
+        {
+            return StatusCode(403, new { code = "USER_NOT_CONFIRMED", message = ex.Message });
+        }
+        catch (CognitoValidationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+    
+    [HttpPost("confirm")]
+    public async Task<IActionResult> Confirm([FromBody] ConfirmSignupRequest request)
+    {
+        try
+        {
+            await cognito.ConfirmSignUpAsync(request.Email, request.ConfirmationCode);
+            return Ok(new { message = "Confirmed." });
+        }
+        catch (CognitoValidationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [HttpPost("resend-confirmation")]
+    public async Task<IActionResult> ResendConfirmation([FromBody] ResendConfirmationRequest request)
+    {
+        try
+        {
+            await cognito.ResendConfirmationCodeAsync(request.Email);
+            return Ok(new { message = "Confirmation code resent." });
         }
         catch (CognitoValidationException ex)
         {
