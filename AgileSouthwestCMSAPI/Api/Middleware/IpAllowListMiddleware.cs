@@ -1,6 +1,6 @@
 using System.Net;
 
-namespace AgileSouthwestCMSAPI.Middleware;
+namespace AgileSouthwestCMSAPI.Api.Middleware;
 
 public sealed class IpAllowListMiddleware
 {

@@ -1,6 +1,6 @@
 using System.Diagnostics;
 
-namespace AgileSouthwestCMSAPI.Middleware;
+namespace AgileSouthwestCMSAPI.Api.Middleware;
 
 public sealed class RequestLoggingMiddleware(ILogger<RequestLoggingMiddleware> logger) : IMiddleware
 {

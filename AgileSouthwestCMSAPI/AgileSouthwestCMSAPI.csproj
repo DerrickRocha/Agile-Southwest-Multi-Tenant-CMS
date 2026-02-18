@@ -32,16 +32,4 @@
     <PackageReference Include="MySql.EntityFrameworkCore" Version="10.0.1" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Application\Commands\" />
-    <Folder Include="Application\DTOs\" />
-    <Folder Include="Application\Interfaces\" />
-    <Folder Include="Application\Queries\" />
-    <Folder Include="Application\Validators\" />
-    <Folder Include="Filters\" />
-    <Folder Include="Infrastructure\Repositories\" />
-    <Folder Include="Tests\Api.Tests\" />
-    <Folder Include="Tests\Application.Tests\" />
-  </ItemGroup>
-
 </Project>

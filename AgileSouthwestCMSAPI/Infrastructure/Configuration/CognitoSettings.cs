@@ -1,4 +1,4 @@
-namespace AgileSouthwestCMSAPI.Domain.DTOs;
+namespace AgileSouthwestCMSAPI.Infrastructure.Configuration;
 
 public class CognitoSettings
 {

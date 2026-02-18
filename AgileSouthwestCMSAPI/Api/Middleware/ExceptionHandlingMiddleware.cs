@@ -1,7 +1,7 @@
 using System.Text.Json;
-using AgileSouthwestCMSAPI.Infrastructure.Exceptions;
+using AgileSouthwestCMSAPI.Application.Exceptions;
 
-namespace AgileSouthwestCMSAPI.Middleware;
+namespace AgileSouthwestCMSAPI.Api.Middleware;
 
 public class ExceptionHandlingMiddleware(RequestDelegate next)
 {

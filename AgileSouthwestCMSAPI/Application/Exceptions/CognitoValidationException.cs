@@ -1,4 +1,4 @@
-namespace AgileSouthwestCMSAPI.Infrastructure.Exceptions;
+namespace AgileSouthwestCMSAPI.Application.Exceptions;
 
 public class CognitoValidationException : Exception
 {

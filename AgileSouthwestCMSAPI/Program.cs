@@ -1,9 +1,9 @@
 using System.Text.Json;
-using AgileSouthwestCMSAPI.Domain.DTOs;
+using AgileSouthwestCMSAPI.Api.Middleware;
+using AgileSouthwestCMSAPI.Application.Services;
 using AgileSouthwestCMSAPI.Domain.ValueObjects;
+using AgileSouthwestCMSAPI.Infrastructure.Configuration;
 using AgileSouthwestCMSAPI.Infrastructure.Persistence;
-using AgileSouthwestCMSAPI.Infrastructure.Services;
-using AgileSouthwestCMSAPI.Middleware;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.HttpOverrides;
