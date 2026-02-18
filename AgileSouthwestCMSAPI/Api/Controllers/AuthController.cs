@@ -3,6 +3,7 @@ using AgileSouthwestCMSAPI.Application.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AgileSouthwestCMSAPI.Api.Controllers;
+
 [ApiController]
 [Route("[controller]")]
 [Produces("application/json")]
