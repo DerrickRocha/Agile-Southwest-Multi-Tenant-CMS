@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 
-namespace AgileSouthwestCMSAPI.Middleware;
+namespace AgileSouthwestCMSAPI.Api.Middleware;
 
 public static class ApplicationBuilderExtensions
 {

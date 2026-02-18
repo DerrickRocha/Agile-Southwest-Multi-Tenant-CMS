@@ -1,4 +1,4 @@
-namespace AgileSouthwestCMSAPI.Domain.DTOs;
+namespace AgileSouthwestCMSAPI.Application.DTOs.Auth;
 
 public class TokenResult
 {

@@ -1,12 +1,12 @@
-using System.Security.Cryptography;
-using System.Text;
+using AgileSouthwestCMSAPI.Application.DTOs.Auth;
+using AgileSouthwestCMSAPI.Application.Exceptions;
 using AgileSouthwestCMSAPI.Domain.DTOs;
-using AgileSouthwestCMSAPI.Infrastructure.Exceptions;
+using AgileSouthwestCMSAPI.Infrastructure.Configuration;
 using Amazon.CognitoIdentityProvider;
 using Amazon.CognitoIdentityProvider.Model;
 using Microsoft.Extensions.Options;
 
-namespace AgileSouthwestCMSAPI.Infrastructure.Services;
+namespace AgileSouthwestCMSAPI.Application.Services;
 
 public interface ICognitoService
 {

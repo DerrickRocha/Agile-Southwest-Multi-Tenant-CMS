@@ -1,8 +1,9 @@
+using AgileSouthwestCMSAPI.Application.DTOs.Auth;
+using AgileSouthwestCMSAPI.Application.Services;
 using AgileSouthwestCMSAPI.Domain.DTOs;
-using AgileSouthwestCMSAPI.Infrastructure.Services;
 using Microsoft.AspNetCore.Mvc;
 
-namespace AgileSouthwestCMSAPI.Application.Controllers;
+namespace AgileSouthwestCMSAPI.Api.Controllers;
 
 [ApiController]
 [Route("[controller]")]
