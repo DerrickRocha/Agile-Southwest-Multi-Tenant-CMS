@@ -3,22 +3,19 @@ using AgileSouthwestCMSAPI.Application.Services;
 using AgileSouthwestCMSAPI.Domain.Entities;
 using AgileSouthwestCMSAPI.Domain.Enums;
 using AgileSouthwestCMSAPI.Infrastructure.Persistence;
-
-namespace Tests.Api.Application.Services;
-
-using System;
-using System.Threading.Tasks;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Moq;
 using Xunit;
+using Assert = Xunit.Assert;
+
+namespace Tests.Application.Services;
 
 public class AuthServiceTests
 {
     private readonly Mock<ICognitoService> _cognitoMock = new();
 
-    private AuthService CreateService(CmsDbContext db)
-        => new AuthService(db, _cognitoMock.Object);
+    private AuthService CreateService(CmsDbContext db) => new(db, _cognitoMock.Object, true);
 
     private static CmsDbContext CreateDbContext()
     {
@@ -143,6 +140,7 @@ public class AuthServiceTests
         db.CmsUsers.Add(new CmsUser
         {
             CmsUserId = Guid.NewGuid(),
+            CognitoUserId = "123445555",
             TenantId = tenant.TenantId,
             Email = "test@test.com",
             Role = UserRole.Admin,
@@ -187,6 +185,7 @@ public class AuthServiceTests
         db.CmsUsers.Add(new CmsUser
         {
             CmsUserId = Guid.NewGuid(),
+            CognitoUserId = "1234567",
             TenantId = tenant.TenantId,
             Email = "test@test.com",
             Role = UserRole.Admin,
