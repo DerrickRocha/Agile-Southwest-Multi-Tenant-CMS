@@ -1,5 +1,4 @@
 using AgileSouthwestCMSAPI.Application.DTOs.Auth;
-using AgileSouthwestCMSAPI.Domain.DTOs;
 using AgileSouthwestCMSAPI.Domain.Entities;
 using AgileSouthwestCMSAPI.Domain.Enums;
 using AgileSouthwestCMSAPI.Infrastructure.Persistence;

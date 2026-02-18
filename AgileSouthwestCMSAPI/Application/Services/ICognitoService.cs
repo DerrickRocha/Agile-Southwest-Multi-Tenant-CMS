@@ -1,6 +1,5 @@
 using AgileSouthwestCMSAPI.Application.DTOs.Auth;
 using AgileSouthwestCMSAPI.Application.Exceptions;
-using AgileSouthwestCMSAPI.Domain.DTOs;
 using AgileSouthwestCMSAPI.Infrastructure.Configuration;
 using Amazon.CognitoIdentityProvider;
 using Amazon.CognitoIdentityProvider.Model;
