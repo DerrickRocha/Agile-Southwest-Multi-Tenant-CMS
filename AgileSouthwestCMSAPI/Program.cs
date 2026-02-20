@@ -1,5 +1,6 @@
 using System.Text.Json;
 using AgileSouthwestCMSAPI.Api.Middleware;
+using AgileSouthwestCMSAPI.Application.Interfaces;
 using AgileSouthwestCMSAPI.Application.Services;
 using AgileSouthwestCMSAPI.Domain.ValueObjects;
 using AgileSouthwestCMSAPI.Infrastructure.Configuration;
@@ -131,6 +132,7 @@ builder.Services.Configure<CognitoSettings>(
 );
 builder.Services.AddSingleton<ICognitoService, CognitoService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<ITenantsService, TenantsService>();
 
 // --------------------------------------------------
 // App

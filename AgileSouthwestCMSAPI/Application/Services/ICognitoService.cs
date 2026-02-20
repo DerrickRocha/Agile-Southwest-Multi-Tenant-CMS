@@ -1,4 +1,5 @@
 using AgileSouthwestCMSAPI.Application.DTOs.Auth;
+using AgileSouthwestCMSAPI.Application.DTOs.Cognito;
 using AgileSouthwestCMSAPI.Application.Exceptions;
 using AgileSouthwestCMSAPI.Infrastructure.Configuration;
 using Amazon.CognitoIdentityProvider;
@@ -13,6 +14,8 @@ public interface ICognitoService
     Task<TokenResult> AuthenticateAsync(string email, string password);
     Task ConfirmSignUpAsync(string email, string confirmationCode);
     Task ResendConfirmationCodeAsync(string email);
+
+    public Task<GetCognitoUserResult> GetUserAsync(string token);
     Task DeleteUserBySubAsync(string sub);
 }
 
@@ -177,6 +180,21 @@ public class CognitoService(
         catch (TooManyRequestsException)
         {
             throw new CognitoValidationException("Too many requests. Please try again later.");
+        }
+    }
+
+    public async Task<GetCognitoUserResult> GetUserAsync(string token)
+    {
+        try
+        {
+            var request = new GetUserRequest { AccessToken = token };
+            var result = await provider.GetUserAsync(request);
+            return new GetCognitoUserResult { Email = result.Username };
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            throw;
         }
     }
 
