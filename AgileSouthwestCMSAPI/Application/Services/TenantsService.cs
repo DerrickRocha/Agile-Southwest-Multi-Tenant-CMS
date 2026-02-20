@@ -1,26 +1,33 @@
 using System.Security.Claims;
 using AgileSouthwestCMSAPI.Application.DTOs.Tenants;
 using AgileSouthwestCMSAPI.Application.Interfaces;
+using AgileSouthwestCMSAPI.Domain.ValueObjects;
 using AgileSouthwestCMSAPI.Infrastructure.Persistence;
-using Amazon.CognitoIdentityProvider.Model;
 using Microsoft.EntityFrameworkCore;
 
 namespace AgileSouthwestCMSAPI.Application.Services;
 
-public class TenantsService(CmsDbContext database, IHttpContextAccessor accessor) : ITenantsService
+public class TenantsService(CmsDbContext database, ICmsUserContext context) : ITenantsService
 {
-    public async Task<GetTenantResult> GetTenant()
+    public async Task<GetTenantResult> GetTenant(GetTenantRequest request)
     {
-        var httpContext = accessor.HttpContext 
-                          ?? throw new InvalidOperationException("No active HTTP context");
-        var email = httpContext.User.FindFirstValue(ClaimTypes.Email);
-        if (string.IsNullOrWhiteSpace(email)) throw new InvalidEmailRoleAccessPolicyException("Email is invalid");
+        if (!Guid.TryParse(request.Id, out var tenantId))
+            throw new ArgumentException("Invalid tenant id");
+        if (!Guid.TryParse(context.UserId, out var userId))
+            throw new UnauthorizedAccessException("Invalid user id");
 
-        var user = await database.CmsUsers.FirstOrDefaultAsync(u => u.Email == email)?? throw new InvalidOperationException("User not found");
-        var tenant = await database.Tenants.FirstOrDefaultAsync(t => t.TenantId == user.TenantId)?? throw new InvalidOperationException("Tenant not found");
+        var userTenant = await database.UserTenants
+                             .AsNoTracking().Include(userTenant => userTenant.Tenant)
+                             .FirstOrDefaultAsync(t => t.TenantId == tenantId && t.UserId == userId) ??
+                         throw new InvalidOperationException("Tenant not found");
+        var tenant = userTenant.Tenant;
         return new GetTenantResult
         {
-            TenantId = tenant.TenantId.ToString()
+            TenantId = tenant.TenantId.ToString(),
+            Name = tenant.Name,
+            CustomDomain = tenant.CustomDomain,
+            SubDomain = tenant.SubDomain,
+            PlanTier = tenant.PlanTier.ToString()
         };
     }
 

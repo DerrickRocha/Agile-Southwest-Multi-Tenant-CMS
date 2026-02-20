@@ -45,9 +45,7 @@ public class AuthService(
                 // 1️⃣ Create Cognito user
                 var cognitoResult = await cognito.SignUpAsync(
                     request.Email,
-                    request.Password,
-                    normalizedSubdomain
-                );
+                    request.Password);
 
                 cognitoSub = cognitoResult.CognitoSub;
 
@@ -69,7 +67,6 @@ public class AuthService(
                 var user = new CmsUser
                 {
                     CmsUserId = Guid.NewGuid(),
-                    TenantId = tenant.TenantId,
                     CognitoUserId = cognitoSub,
                     Email = request.Email,
                     Role = UserRole.Admin,
@@ -108,9 +105,7 @@ public class AuthService(
         // 1️⃣ Create Cognito user
         var cognitoResult = await cognito.SignUpAsync(
             request.Email,
-            request.Password,
-            normalizedSubdomain
-        );
+            request.Password);
 
         var cognitoSub = cognitoResult.CognitoSub;
 
@@ -130,7 +125,6 @@ public class AuthService(
         var user = new CmsUser
         {
             CmsUserId = Guid.NewGuid(),
-            TenantId = tenant.TenantId,
             CognitoUserId = cognitoSub,
             Email = request.Email,
             Role = UserRole.Admin,
@@ -155,7 +149,6 @@ public class AuthService(
     {
         var tokens = await cognito.AuthenticateAsync(email, password);
         var user = await database.CmsUsers
-            .Include(u => u.Tenant)
             .FirstOrDefaultAsync(u => u.Email == email);
 
         if (user == null)
@@ -164,9 +157,7 @@ public class AuthService(
         if (user.Status != UserStatus.Active)
             throw new InvalidOperationException("User is inactive.");
 
-        return user.Tenant.Status != TenantStatus.Active
-            ? throw new InvalidOperationException("Tenant is inactive.")
-            : tokens;
+        return tokens;
     }
 
     private string Normalize(string input)

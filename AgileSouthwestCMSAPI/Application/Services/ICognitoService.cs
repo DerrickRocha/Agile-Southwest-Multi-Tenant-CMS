@@ -10,7 +10,7 @@ namespace AgileSouthwestCMSAPI.Application.Services;
 
 public interface ICognitoService
 {
-    Task<CognitoSignupResult> SignUpAsync(string email, string password, string tenantIdentifier);
+    Task<CognitoSignupResult> SignUpAsync(string email, string password);
     Task<TokenResult> AuthenticateAsync(string email, string password);
     Task ConfirmSignUpAsync(string email, string confirmationCode);
     Task ResendConfirmationCodeAsync(string email);
@@ -26,7 +26,7 @@ public class CognitoService(
 {
     private readonly CognitoSettings _settings = settingsOptions.Value;
 
-    public async Task<CognitoSignupResult> SignUpAsync(string email, string password, string tenantIdentifier)
+    public async Task<CognitoSignupResult> SignUpAsync(string email, string password)
     {
         try
         {
@@ -38,7 +38,6 @@ public class CognitoService(
                 UserAttributes =
                 [
                     new AttributeType { Name = "email", Value = email },
-                    new AttributeType { Name = "custom:tenant_id", Value = tenantIdentifier }
                 ]
             };
 

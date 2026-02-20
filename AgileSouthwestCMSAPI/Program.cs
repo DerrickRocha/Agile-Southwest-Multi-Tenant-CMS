@@ -120,7 +120,7 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
 builder.Services.AddScoped<RequestLoggingMiddleware>();
 
 builder.Services.AddHttpContextAccessor();
-builder.Services.AddScoped<ITenantContext, TenantContext>();
+builder.Services.AddScoped<ICmsUserContext, CmsUserContext>();
 
 builder.Services.AddDefaultAWSOptions(
     builder.Configuration.GetAWSOptions()

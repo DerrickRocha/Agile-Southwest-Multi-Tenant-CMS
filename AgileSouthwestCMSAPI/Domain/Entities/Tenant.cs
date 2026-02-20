@@ -25,5 +25,4 @@ public class Tenant
     public DateTime? DeletedAt { get; set; }
     
     // Navigation
-    public ICollection<CmsUser> Users { get; set; } = new List<CmsUser>();
-}
+    public ICollection<UserTenant> UserTenants { get; set; } = new List<UserTenant>();}

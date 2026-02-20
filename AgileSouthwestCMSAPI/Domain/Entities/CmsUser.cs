@@ -6,8 +6,6 @@ public class CmsUser
 {
     public Guid CmsUserId { get; set; }
     
-    public Guid TenantId { get; set; } 
-    
     public string CognitoUserId { get; set; }
     
     public string Email { get; set; }
@@ -23,5 +21,5 @@ public class CmsUser
     public DateTime? DeletedAt { get; set; }
     
     // Navigation
-    public Tenant Tenant { get; set; }
+    public ICollection<UserTenant> UserTenants { get; set; } = new List<UserTenant>();
 }

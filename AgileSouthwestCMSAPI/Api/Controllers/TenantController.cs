@@ -13,9 +13,9 @@ public class TenantController(ITenantsService service): ControllerBase
 {
 
     [HttpGet]
-    public async Task<IActionResult> GetTenant()
+    public async Task<IActionResult> GetTenant(GetTenantRequest request)
     {
-        var result = await service.GetTenant();
+        var result = await service.GetTenant(request);
         return Ok(result);
     }
 
