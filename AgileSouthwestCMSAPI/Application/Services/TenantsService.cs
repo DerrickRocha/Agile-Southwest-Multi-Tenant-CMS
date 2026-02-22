@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using AgileSouthwestCMSAPI.Application.DTOs.Tenants;
 using AgileSouthwestCMSAPI.Application.Interfaces;
 using AgileSouthwestCMSAPI.Domain.ValueObjects;
@@ -11,24 +10,34 @@ public class TenantsService(CmsDbContext database, ICmsUserContext context) : IT
 {
     public async Task<GetTenantResult> GetTenant(GetTenantRequest request)
     {
-        if (!Guid.TryParse(request.Id, out var tenantId))
-            throw new ArgumentException("Invalid tenant id");
-        if (!Guid.TryParse(context.UserId, out var userId))
-            throw new UnauthorizedAccessException("Invalid user id");
-
-        var userTenant = await database.UserTenants
-                             .AsNoTracking().Include(userTenant => userTenant.Tenant)
-                             .FirstOrDefaultAsync(t => t.TenantId == tenantId && t.UserId == userId) ??
-                         throw new InvalidOperationException("Tenant not found");
-        var tenant = userTenant.Tenant;
-        return new GetTenantResult
+        try
         {
-            TenantId = tenant.TenantId.ToString(),
-            Name = tenant.Name,
-            CustomDomain = tenant.CustomDomain,
-            SubDomain = tenant.SubDomain,
-            PlanTier = tenant.PlanTier.ToString()
-        };
+            if (!Guid.TryParse(request.Id, out var tenantId))
+                throw new ArgumentException("Invalid tenant id");
+            if (string.IsNullOrEmpty(context.UserId))
+                throw new UnauthorizedAccessException("Invalid user id");
+
+            var userTenant = await database.UserTenants
+                                 .AsNoTracking().Include(userTenant => userTenant.Tenant)
+                                 .Include(userTenant => userTenant.User)
+                                 .FirstOrDefaultAsync() ??
+                             throw new InvalidOperationException("UserTenant not found");
+            var tenant = userTenant.Tenant;
+            return new GetTenantResult
+            {
+                TenantId = tenant.TenantId.ToString(),
+                Name = tenant.Name,
+                CustomDomain = tenant.CustomDomain,
+                SubDomain = tenant.SubDomain,
+                PlanTier = tenant.PlanTier.ToString()
+            };
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            throw;
+        }
+        
     }
 
     public Task<UpdateTenantResult> UpdateTenant(UpdateTenantRequest request)

@@ -76,6 +76,18 @@ public class AuthService(
                 };
 
                 database.CmsUsers.Add(user);
+                
+                tenant.UserTenants = new List<UserTenant>
+                {
+                    new()
+                    {
+                        UserId = user.CmsUserId,
+                        User = user,
+                        TenantId = tenant.TenantId,
+                        Tenant = tenant,
+                        Role = nameof(UserRole.Admin), 
+                    }
+                };
 
                 await database.SaveChangesAsync();
                 await transaction.CommitAsync();
