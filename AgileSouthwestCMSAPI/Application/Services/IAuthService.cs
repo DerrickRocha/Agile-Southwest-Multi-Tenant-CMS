@@ -23,8 +23,17 @@ public class AuthService(
     {
         var normalizedSubdomain = Normalize(request.SubDomain);
 
-        if (await database.Tenants.AnyAsync(t => t.SubDomain == normalizedSubdomain))
-            throw new InvalidOperationException("Subdomain already taken.");
+        try
+        {
+            if (await database.Tenants.AnyAsync(t => t.SubDomain == normalizedSubdomain))
+                throw new InvalidOperationException("Subdomain already taken.");
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            throw;
+        }
+        
 
         string? cognitoSub = null;
 
@@ -50,15 +59,11 @@ public class AuthService(
                 cognitoSub = cognitoResult.CognitoSub;
 
                 // 2️⃣ Create Tenant
-                var guid = Guid.NewGuid();
                 var tenant = new Tenant
                 {
-                    TenantId = guid,
                     Name = request.CompanyName,
                     SubDomain = normalizedSubdomain,
-                    Status = TenantStatus.Active,
-                    CreatedAt = DateTime.UtcNow,
-                    UpdatedAt = DateTime.UtcNow
+                    Status = TenantStatus.Active
                 };
 
                 database.Tenants.Add(tenant);
@@ -66,36 +71,25 @@ public class AuthService(
                 // 3️⃣ Create User
                 var user = new CmsUser
                 {
-                    CmsUserId = Guid.NewGuid(),
                     CognitoUserId = cognitoSub,
                     Email = request.Email,
                     Role = UserRole.Admin,
-                    Status = UserStatus.Active,
-                    CreatedAt = DateTime.UtcNow,
-                    UpdatedAt = DateTime.UtcNow
+                    Status = UserStatus.Active
                 };
-
+                
                 database.CmsUsers.Add(user);
                 
-                tenant.UserTenants = new List<UserTenant>
-                {
-                    new()
-                    {
-                        UserId = user.CmsUserId,
-                        User = user,
-                        TenantId = tenant.TenantId,
-                        Tenant = tenant,
-                        Role = nameof(UserRole.Admin), 
-                    }
-                };
+                var userTenant = new UserTenant { TenantId = tenant.Id, UserId = user.Id, Role = user.Role.ToString(), Tenant = tenant, User = user};
+                
+                database.UserTenants.Add(userTenant);
 
                 await database.SaveChangesAsync();
                 await transaction.CommitAsync();
 
                 return new SignupResult
                 {
-                    TenantId = tenant.TenantId,
-                    UserId = user.CmsUserId,
+                    TenantId = tenant.Id,
+                    UserId = user.Id,
                     CognitoSub = cognitoSub,
                     UserConfirmed = cognitoResult.UserConfirmed
                 };
@@ -124,34 +118,32 @@ public class AuthService(
         // 2️⃣ Create Tenant
         var tenant = new Tenant
         {
-            TenantId = Guid.NewGuid(),
             Name = request.CompanyName,
             SubDomain = normalizedSubdomain,
-            Status = TenantStatus.Active,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
+            Status = TenantStatus.Active
         };
         database.Tenants.Add(tenant);
 
         // 3️⃣ Create User
         var user = new CmsUser
         {
-            CmsUserId = Guid.NewGuid(),
             CognitoUserId = cognitoSub,
             Email = request.Email,
             Role = UserRole.Admin,
-            Status = UserStatus.Active,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
+            Status = UserStatus.Active
         };
         database.CmsUsers.Add(user);
+        
+        var userTenant = new UserTenant { TenantId = tenant.Id, UserId = user.Id, Role = user.Role.ToString()};
+                
+        database.UserTenants.Add(userTenant);
 
         await database.SaveChangesAsync();
 
         return new SignupResult
         {
-            TenantId = tenant.TenantId,
-            UserId = user.CmsUserId,
+            TenantId = tenant.Id,
+            UserId = user.Id,
             CognitoSub = cognitoSub,
             UserConfirmed = cognitoResult.UserConfirmed
         };

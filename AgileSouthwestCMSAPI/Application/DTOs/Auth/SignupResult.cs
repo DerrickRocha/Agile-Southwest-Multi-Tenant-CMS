@@ -2,9 +2,9 @@ namespace AgileSouthwestCMSAPI.Application.DTOs.Auth;
 
 public class SignupResult
 {
-    public Guid TenantId { get; init; }
+    public int TenantId { get; set; }
 
-    public Guid UserId { get; init; }
+    public int UserId { get; set; }
 
     public string CognitoSub { get; init; } = null!;
 

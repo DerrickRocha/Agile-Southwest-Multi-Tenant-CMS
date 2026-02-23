@@ -2,7 +2,7 @@ namespace AgileSouthwestCMSAPI.Application.DTOs.Tenants;
 
 public class GetTenantResult
 {
-    public string TenantId { set; get; }
+    public int TenantId { set; get; }
     
     public string Name { set; get; }
     

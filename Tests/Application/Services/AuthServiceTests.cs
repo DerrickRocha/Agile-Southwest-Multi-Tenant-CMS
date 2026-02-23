@@ -73,7 +73,7 @@ public class AuthServiceTests
 
         db.Tenants.Add(new Tenant
         {
-            TenantId = Guid.NewGuid(),
+            Id = Guid.NewGuid(),
             Name = "Existing",
             SubDomain = "test-co",
             Status = TenantStatus.Active,
@@ -127,7 +127,7 @@ public class AuthServiceTests
 
         var tenant = new Tenant
         {
-            TenantId = Guid.NewGuid(),
+            Id = Guid.NewGuid(),
             Name = "Test",
             SubDomain = "test",
             Status = TenantStatus.Active,
@@ -139,9 +139,9 @@ public class AuthServiceTests
 
         db.CmsUsers.Add(new CmsUser
         {
-            CmsUserId = Guid.NewGuid(),
+            Id = Guid.NewGuid(),
             CognitoUserId = "123445555",
-            TenantId = tenant.TenantId,
+            TenantId = tenant.Id,
             Email = "test@test.com",
             Role = UserRole.Admin,
             Status = UserStatus.Invited,
@@ -172,7 +172,7 @@ public class AuthServiceTests
 
         var tenant = new Tenant
         {
-            TenantId = Guid.NewGuid(),
+            Id = Guid.NewGuid(),
             Name = "Test",
             SubDomain = "test",
             Status = TenantStatus.Active,
@@ -184,9 +184,9 @@ public class AuthServiceTests
 
         db.CmsUsers.Add(new CmsUser
         {
-            CmsUserId = Guid.NewGuid(),
+            Id = Guid.NewGuid(),
             CognitoUserId = "1234567",
-            TenantId = tenant.TenantId,
+            TenantId = tenant.Id,
             Email = "test@test.com",
             Role = UserRole.Admin,
             Status = UserStatus.Active,

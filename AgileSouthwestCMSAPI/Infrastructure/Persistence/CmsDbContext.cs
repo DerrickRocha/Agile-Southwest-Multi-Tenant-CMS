@@ -1,136 +1,216 @@
 using AgileSouthwestCMSAPI.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace AgileSouthwestCMSAPI.Infrastructure.Persistence;
+
+using Microsoft.EntityFrameworkCore;
 
 public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(options)
 {
     public DbSet<CmsUser> CmsUsers => Set<CmsUser>();
     public DbSet<Tenant> Tenants => Set<Tenant>();
-
     public DbSet<UserTenant> UserTenants => Set<UserTenant>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
-        var guidConverter = new ValueConverter<Guid, byte[]>(
-            guid => guid.ToByteArray(),
-            bytes => new Guid(bytes));
+
         // =========================
-        // Tenant Configuration
+        // tenants
         // =========================
         builder.Entity<Tenant>(entity =>
         {
-            entity.HasKey(t => t.TenantId);
+            entity.ToTable("tenants");
 
-            entity.Property(t => t.TenantId)
-                .HasConversion(guidConverter)
-                .HasColumnType("binary(16)")
-                .ValueGeneratedNever();
+            entity.HasKey(t => t.Id);
+
+            entity.Property(t => t.Id)
+                .HasColumnName("id")
+                .ValueGeneratedOnAdd(); // AUTO_INCREMENT
+
             entity.Property(t => t.Name)
+                .HasColumnName("name")
                 .IsRequired()
                 .HasMaxLength(200);
 
             entity.Property(t => t.SubDomain)
+                .HasColumnName("sub_domain")
                 .IsRequired()
                 .HasMaxLength(100);
 
             entity.Property(t => t.CustomDomain)
+                .HasColumnName("custom_domain")
                 .HasMaxLength(255);
 
+            // Enums stored as VARCHAR(50) in your SQL
             entity.Property(t => t.PlanTier)
+                .HasColumnName("plan_tier")
+                .HasConversion<string>()
+                .HasMaxLength(50)
                 .IsRequired();
 
             entity.Property(t => t.SubscriptionStatus)
+                .HasColumnName("subscription_status")
+                .HasConversion<string>()
+                .HasMaxLength(50)
                 .IsRequired();
 
             entity.Property(t => t.Status)
+                .HasColumnName("status")
+                .HasConversion<string>()
+                .HasMaxLength(50)
                 .IsRequired();
 
             entity.Property(t => t.CreatedAt)
+                .HasColumnName("created_at")
+                .HasColumnType("DATETIME(6)")
+                .HasDefaultValueSql("CURRENT_TIMESTAMP(6)")
                 .IsRequired();
 
             entity.Property(t => t.UpdatedAt)
+                .HasColumnName("updated_at")
+                .HasColumnType("DATETIME(6)")
+                .HasDefaultValueSql("CURRENT_TIMESTAMP(6)")
                 .IsRequired();
 
-            // Unique constraints
             entity.HasIndex(t => t.SubDomain)
+                .HasDatabaseName("uq_tenants_subdomain")
                 .IsUnique();
 
+            // MySQL unique indexes allow multiple NULL values, so no filter needed.
             entity.HasIndex(t => t.CustomDomain)
-                .IsUnique()
-                .HasFilter("[CustomDomain] IS NOT NULL");
+                .HasDatabaseName("uq_tenants_custom_domain")
+                .IsUnique();
         });
 
         // =========================
-        // User Configuration
+        // cms_users
         // =========================
         builder.Entity<CmsUser>(entity =>
         {
-            entity.HasKey(u => u.CmsUserId);
+            entity.ToTable("cms_users");
 
-            entity.Property(u => u.CmsUserId)
-                .HasConversion(guidConverter)
-                .HasColumnType("binary(16)")
-                .ValueGeneratedNever();
+            entity.HasKey(u => u.Id);
+
+            entity.Property(u => u.Id)
+                .HasColumnName("id")
+                .ValueGeneratedOnAdd(); // AUTO_INCREMENT
 
             entity.Property(u => u.CognitoUserId)
+                .HasColumnName("cognito_user_id")
                 .IsRequired()
                 .HasMaxLength(100);
 
             entity.Property(u => u.Email)
+                .HasColumnName("email")
                 .IsRequired()
                 .HasMaxLength(255);
 
             entity.Property(u => u.Role)
+                .HasColumnName("role")
+                .HasConversion<string>()
+                .HasMaxLength(50)
                 .IsRequired();
 
             entity.Property(u => u.Status)
+                .HasColumnName("status")
+                .HasConversion<string>()
+                .HasMaxLength(50)
                 .IsRequired();
 
             entity.Property(u => u.CreatedAt)
+                .HasColumnName("created_at")
+                .HasColumnType("DATETIME(6)")
+                .HasDefaultValueSql("CURRENT_TIMESTAMP(6)")
                 .IsRequired();
 
             entity.Property(u => u.UpdatedAt)
+                .HasColumnName("updated_at")
+                .HasColumnType("DATETIME(6)")
+                .HasDefaultValueSql("CURRENT_TIMESTAMP(6)")
                 .IsRequired();
 
-            entity.HasIndex(u => u.CognitoUserId)
+            entity.HasIndex(u => u.Email)
+                .HasDatabaseName("uq_cms_users_email")
                 .IsUnique();
 
-            entity.HasIndex(u => u.Email)
+            // Optional but recommended if you rely on CognitoUserId uniqueness:
+            entity.HasIndex(u => u.CognitoUserId)
+                .HasDatabaseName("uq_cms_users_cognito_user_id")
                 .IsUnique();
         });
 
+        // =========================
+        // user_tenants (join table)
+        // =========================
         builder.Entity<UserTenant>(entity =>
+        {
+            entity.ToTable("user_tenants");
+
+            // Your SQL PK order is (tenant_id, user_id)
+            entity.HasKey(ut => new { ut.TenantId, ut.UserId });
+
+            entity.Property(ut => ut.TenantId)
+                .HasColumnName("tenant_id");
+
+            entity.Property(ut => ut.UserId)
+                .HasColumnName("user_id");
+
+            entity.Property(ut => ut.Role)
+                .HasColumnName("Role")
+                .HasMaxLength(50)
+                .IsRequired();
+
+            entity.HasOne(ut => ut.User)
+                .WithMany(u => u.UserTenants)
+                .HasForeignKey(ut => ut.UserId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("user_tenant_user_fk");
+
+            entity.HasOne(ut => ut.Tenant)
+                .WithMany(t => t.UserTenants)
+                .HasForeignKey(ut => ut.TenantId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("user_tenant_tenant_fk");
+
+            entity.HasIndex(ut => ut.UserId);
+            entity.HasIndex(ut => ut.TenantId);
+        });
+    }
+
+    // Optional: keep UpdatedAt accurate at app level (since your SQL default doesn’t auto-update it).
+    public override int SaveChanges()
+    {
+        ApplyTimestamps();
+        return base.SaveChanges();
+    }
+
+    public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        ApplyTimestamps();
+        return base.SaveChangesAsync(cancellationToken);
+    }
+
+    private void ApplyTimestamps()
+    {
+        var now = DateTime.UtcNow;
+
+        foreach (var entry in ChangeTracker.Entries())
+        {
+            if (entry.State == EntityState.Added)
             {
-                entity.HasKey(ut => new { ut.UserId, ut.TenantId });
+                if (entry.Properties.Any(p => p.Metadata.Name == nameof(Tenant.CreatedAt)))
+                    entry.Property(nameof(Tenant.CreatedAt)).CurrentValue = now;
 
-                entity.Property(ut => ut.UserId)
-                    .HasConversion(guidConverter)
-                    .HasColumnType("binary(16)");
-
-                entity.Property(ut => ut.TenantId)
-                    .HasConversion(guidConverter)
-                    .HasColumnType("binary(16)");
-
-                entity.HasOne(ut => ut.User)
-                    .WithMany(u => u.UserTenants)
-                    .HasForeignKey(ut => ut.UserId)
-                    .OnDelete(DeleteBehavior.Cascade);
-
-                entity.HasOne(ut => ut.Tenant)
-                    .WithMany(t => t.UserTenants)
-                    .HasForeignKey(ut => ut.TenantId)
-                    .OnDelete(DeleteBehavior.Cascade);
-
-                entity.Property(ut => ut.Role)
-                    .HasMaxLength(50)
-                    .IsRequired();
-
-                entity.HasIndex(ut => ut.TenantId);
+                if (entry.Properties.Any(p => p.Metadata.Name == nameof(Tenant.UpdatedAt)))
+                    entry.Property(nameof(Tenant.UpdatedAt)).CurrentValue = now;
             }
-            
-        );
+
+            if (entry.State == EntityState.Modified)
+            {
+                if (entry.Properties.Any(p => p.Metadata.Name == nameof(Tenant.UpdatedAt)))
+                    entry.Property(nameof(Tenant.UpdatedAt)).CurrentValue = now;
+            }
+        }
     }
 }

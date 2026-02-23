@@ -12,20 +12,21 @@ public class TenantsService(CmsDbContext database, ICmsUserContext context) : IT
     {
         try
         {
-            if (!Guid.TryParse(request.Id, out var tenantId))
+            if (request.Id <= 0)
                 throw new ArgumentException("Invalid tenant id");
             if (string.IsNullOrEmpty(context.UserId))
                 throw new UnauthorizedAccessException("Invalid user id");
 
             var userTenant = await database.UserTenants
-                                 .AsNoTracking().Include(userTenant => userTenant.Tenant)
-                                 .Include(userTenant => userTenant.User)
-                                 .FirstOrDefaultAsync() ??
+                                 .AsNoTracking()
+                                 .Include(ut => ut.User)
+                                 .Include(ut => ut.Tenant)
+                                 .FirstOrDefaultAsync(ut => ut.TenantId == request.Id) ??
                              throw new InvalidOperationException("UserTenant not found");
             var tenant = userTenant.Tenant;
             return new GetTenantResult
             {
-                TenantId = tenant.TenantId.ToString(),
+                TenantId = tenant.Id,
                 Name = tenant.Name,
                 CustomDomain = tenant.CustomDomain,
                 SubDomain = tenant.SubDomain,
@@ -37,7 +38,6 @@ public class TenantsService(CmsDbContext database, ICmsUserContext context) : IT
             Console.WriteLine(e);
             throw;
         }
-        
     }
 
     public Task<UpdateTenantResult> UpdateTenant(UpdateTenantRequest request)
