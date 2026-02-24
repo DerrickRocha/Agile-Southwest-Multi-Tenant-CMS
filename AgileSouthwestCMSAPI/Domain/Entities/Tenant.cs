@@ -18,15 +18,6 @@ public class Tenant
     [Column( "custom_domain" )]
     public string? CustomDomain { set; get; }
     
-    [Column( "plan_tier" )]
-    public PlanTier PlanTier { set; get; }
-    
-    [Column( "subscription_status" )]
-    public SubscriptionStatus SubscriptionStatus { set; get; }
-    
-    [Column( "status" )]
-    public TenantStatus Status { set; get; }
-    
     [Column( "created_at" )]
     public DateTime CreatedAt { get; set; }
     

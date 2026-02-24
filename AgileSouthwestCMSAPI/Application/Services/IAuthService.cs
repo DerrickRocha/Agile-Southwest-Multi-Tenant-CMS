@@ -63,7 +63,6 @@ public class AuthService(
                 {
                     Name = request.CompanyName,
                     SubDomain = normalizedSubdomain,
-                    Status = TenantStatus.Active
                 };
 
                 database.Tenants.Add(tenant);
@@ -79,7 +78,7 @@ public class AuthService(
                 
                 database.CmsUsers.Add(user);
                 
-                var userTenant = new UserTenant { TenantId = tenant.Id, UserId = user.Id, Role = user.Role, Tenant = tenant, User = user};
+                var userTenant = new UserTenant { TenantId = tenant.Id, UserId = user.Id, Role = UserTenantRole.Admin, Tenant = tenant, User = user};
                 
                 database.UserTenants.Add(userTenant);
 
@@ -120,7 +119,6 @@ public class AuthService(
         {
             Name = request.CompanyName,
             SubDomain = normalizedSubdomain,
-            Status = TenantStatus.Active
         };
         database.Tenants.Add(tenant);
 
@@ -134,7 +132,7 @@ public class AuthService(
         };
         database.CmsUsers.Add(user);
         
-        var userTenant = new UserTenant { TenantId = tenant.Id, UserId = user.Id, Role = user.Role};
+        var userTenant = new UserTenant { TenantId = tenant.Id, UserId = user.Id, Role = UserTenantRole.Admin};
                 
         database.UserTenants.Add(userTenant);
 

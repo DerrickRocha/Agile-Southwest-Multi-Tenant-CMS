@@ -17,18 +17,13 @@ public class TenantsService(CmsDbContext database, ICmsUserContext context) : IT
         return await strategy.ExecuteAsync(async () =>
         {
             await using var transaction = await database.Database.BeginTransactionAsync();
-            
-            //1. verify user is admin
+
             var user = await database.CmsUsers.SingleOrDefaultAsync(u => u.CognitoUserId == context.UserId);
-            if (user == null)
-            {
-                throw new InvalidOperationException("User not found.");
-            }
+
+            if (user == null) throw new InvalidOperationException("User not found.");
             if (user.Role != UserRole.Admin)
-            {
-               throw new UnauthorizedAccessException("User is not authorized to add tenants."); 
-            }
-            
+                throw new UnauthorizedAccessException("User is not authorized to add tenants.");
+
             var subdomainExists = await database.Tenants
                 .AnyAsync(t => t.SubDomain == request.SubDomain);
             if (subdomainExists) throw new InvalidOperationException("Subdomain already in use.");
@@ -36,20 +31,14 @@ public class TenantsService(CmsDbContext database, ICmsUserContext context) : IT
             if (request.CustomDomain != null)
             {
                 var customDomainExists = await database.Tenants.AnyAsync(t => t.CustomDomain == request.CustomDomain);
-                if (customDomainExists)
-                {
-                    throw new InvalidOperationException("Custom domain already in user.");
-                }
+                if (customDomainExists) throw new InvalidOperationException("Custom domain already in user.");
             }
-            
+
             var tenant = new Tenant
             {
                 Name = request.Name,
                 CustomDomain = request.CustomDomain,
-                SubDomain = request.SubDomain,
-                PlanTier = PlanTier.Free,
-                SubscriptionStatus = SubscriptionStatus.Active,
-                Status = TenantStatus.Active,
+                SubDomain = request.SubDomain
             };
             database.Tenants.Add(tenant);
 
@@ -57,60 +46,88 @@ public class TenantsService(CmsDbContext database, ICmsUserContext context) : IT
             {
                 User = user,
                 Tenant = tenant,
-                Role = UserRole.Admin
+                Role = UserTenantRole.Admin
             };
             database.UserTenants.Add(userTenant);
             await database.SaveChangesAsync();
             await transaction.CommitAsync();
-                
+
             return new AddTenantResult
             {
                 TenantId = tenant.Id,
                 Name = tenant.Name,
-                CustomDomain = tenant.CustomDomain?? "",
-                SubDomain = tenant.SubDomain,
-                PlanTier = tenant.PlanTier.ToString(),
-                Status = tenant.Status.ToString(),
-                SubscriptionStatus = tenant.SubscriptionStatus.ToString()
+                CustomDomain = tenant.CustomDomain ?? "",
+                SubDomain = tenant.SubDomain
             };
         });
     }
 
     public async Task<GetTenantResult> GetTenant(GetTenantRequest request)
     {
-        try
+        var tenant = await database.Tenants
+            .Where(t => t.Id == request.Id)
+            .Where(t => t.UserTenants.Any(ut => ut.User.CognitoUserId == context.UserId))
+            .Where(t => t.UserTenants.Any(ut => ut.Role == UserTenantRole.Admin))
+            .SingleOrDefaultAsync();
+        if (tenant == null) throw new UnauthorizedAccessException("Tenant not found or unauthorized.");
+        
+        return new GetTenantResult
         {
-            if (request.Id <= 0)
-                throw new ArgumentException("Invalid tenant id");
-            if (string.IsNullOrEmpty(context.UserId))
-                throw new UnauthorizedAccessException("Invalid user id");
-
-            var userTenant = await database.UserTenants
-                                 .AsNoTracking()
-                                 .Include(ut => ut.User)
-                                 .Include(ut => ut.Tenant)
-                                 .FirstOrDefaultAsync(ut => ut.TenantId == request.Id) ??
-                             throw new InvalidOperationException("UserTenant not found");
-            var tenant = userTenant.Tenant;
-            return new GetTenantResult
-            {
-                TenantId = tenant.Id,
-                Name = tenant.Name,
-                CustomDomain = tenant.CustomDomain,
-                SubDomain = tenant.SubDomain,
-                PlanTier = tenant.PlanTier.ToString()
-            };
-        }
-        catch (Exception e)
-        {
-            Console.WriteLine(e);
-            throw;
-        }
+            TenantId = tenant.Id,
+            Name = tenant.Name,
+            CustomDomain = tenant.CustomDomain ?? "",
+            SubDomain = tenant.SubDomain,
+        };
     }
 
-    public Task<UpdateTenantResult> UpdateTenant(UpdateTenantRequest request)
+    public async Task<UpdateTenantResult> UpdateTenant(UpdateTenantRequest request)
     {
-        throw new NotImplementedException();
+        var tenant = await database.Tenants
+            .Where(t => t.Id == request.Id)
+            .Where(t => t.UserTenants.Any(ut => ut.User.CognitoUserId == context.UserId))
+            .Where(t => t.UserTenants.Any(ut => ut.Role == UserTenantRole.Admin))
+            .SingleOrDefaultAsync();
+
+        if (tenant == null)
+            throw new UnauthorizedAccessException("Tenant not found or unauthorized.");
+        
+        var normalizedSubdomain = request.SubDomain.Trim().ToLowerInvariant();
+        var normalizedCustomDomain = request.CustomDomain?.Trim().ToLowerInvariant();
+
+        if (!string.Equals(tenant.SubDomain, normalizedSubdomain, StringComparison.OrdinalIgnoreCase))
+        {
+            var exists = await database.Tenants
+                .AnyAsync(t => t.SubDomain == request.SubDomain && t.Id != tenant.Id);
+
+            if (exists)
+                throw new InvalidOperationException("Subdomain already in use.");
+        }
+
+        if (!string.Equals(tenant.CustomDomain, normalizedCustomDomain, StringComparison.OrdinalIgnoreCase))
+        {
+            if (!string.IsNullOrWhiteSpace(request.CustomDomain))
+            {
+                var exists = await database.Tenants
+                    .AnyAsync(t => t.CustomDomain == request.CustomDomain && t.Id != tenant.Id);
+
+                if (exists)
+                    throw new InvalidOperationException("Custom domain already in use.");
+            }
+        }
+        
+        tenant.Name = request.Name;
+        tenant.SubDomain = request.SubDomain;
+        tenant.CustomDomain = request.CustomDomain;
+        
+        await database.SaveChangesAsync();
+        
+        return new UpdateTenantResult
+        {
+            Id = tenant.Id,
+            SubDomain = tenant.SubDomain,
+            CustomDomain = tenant.CustomDomain ?? "",
+            Name = tenant.Name
+        };
     }
 
     public Task<GetTenantSubscriptionResult> GetTenantSubscription(GetTenantSubscriptionRequest request)

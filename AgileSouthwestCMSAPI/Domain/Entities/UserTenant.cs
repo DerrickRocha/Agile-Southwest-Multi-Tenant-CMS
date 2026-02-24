@@ -15,5 +15,5 @@ public class UserTenant
     public Tenant Tenant { get; set; }
 
     [Column("role")]
-    public UserRole Role { get; set; } 
+    public UserTenantRole Role { get; set; } 
 }

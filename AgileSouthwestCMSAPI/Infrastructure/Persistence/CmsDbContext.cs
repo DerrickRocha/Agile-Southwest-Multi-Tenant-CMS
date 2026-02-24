@@ -42,24 +42,6 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
                 .HasColumnName("custom_domain")
                 .HasMaxLength(255);
 
-            entity.Property(t => t.PlanTier)
-                .HasColumnName("plan_tier")
-                .HasConversion<string>()
-                .HasMaxLength(50)
-                .IsRequired();
-
-            entity.Property(t => t.SubscriptionStatus)
-                .HasColumnName("subscription_status")
-                .HasConversion<string>()
-                .HasMaxLength(50)
-                .IsRequired();
-
-            entity.Property(t => t.Status)
-                .HasColumnName("status")
-                .HasConversion<string>()
-                .HasMaxLength(50)
-                .IsRequired();
-
             entity.Property(t => t.CreatedAt)
                 .HasColumnName("created_at")
                 .HasColumnType("DATETIME(6)")
