@@ -20,6 +20,13 @@ public class TenantController(ITenantsService service): ControllerBase
     }
 
     [HttpPost]
+    public async Task<IActionResult> AddTenant(AddTenantRequest request)
+    {
+        var result = await service.AddTenant(request);
+        return Ok(result);
+    }
+
+    [HttpPut]
     public async Task<IActionResult> UpdateTenant([FromBody] UpdateTenantRequest request)
     {
         var result = await service.UpdateTenant(request);

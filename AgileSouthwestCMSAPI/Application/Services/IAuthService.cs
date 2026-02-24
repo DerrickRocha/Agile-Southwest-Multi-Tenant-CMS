@@ -79,7 +79,7 @@ public class AuthService(
                 
                 database.CmsUsers.Add(user);
                 
-                var userTenant = new UserTenant { TenantId = tenant.Id, UserId = user.Id, Role = user.Role.ToString(), Tenant = tenant, User = user};
+                var userTenant = new UserTenant { TenantId = tenant.Id, UserId = user.Id, Role = user.Role, Tenant = tenant, User = user};
                 
                 database.UserTenants.Add(userTenant);
 
@@ -134,7 +134,7 @@ public class AuthService(
         };
         database.CmsUsers.Add(user);
         
-        var userTenant = new UserTenant { TenantId = tenant.Id, UserId = user.Id, Role = user.Role.ToString()};
+        var userTenant = new UserTenant { TenantId = tenant.Id, UserId = user.Id, Role = user.Role};
                 
         database.UserTenants.Add(userTenant);
 

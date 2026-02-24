@@ -42,7 +42,6 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
                 .HasColumnName("custom_domain")
                 .HasMaxLength(255);
 
-            // Enums stored as VARCHAR(50) in your SQL
             entity.Property(t => t.PlanTier)
                 .HasColumnName("plan_tier")
                 .HasConversion<string>()
@@ -155,9 +154,10 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
 
             entity.Property(ut => ut.UserId)
                 .HasColumnName("user_id");
-
+            
             entity.Property(ut => ut.Role)
                 .HasColumnName("Role")
+                .HasConversion<string>()
                 .HasMaxLength(50)
                 .IsRequired();
 

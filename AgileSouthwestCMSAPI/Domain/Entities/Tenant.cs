@@ -6,7 +6,7 @@ namespace AgileSouthwestCMSAPI.Domain.Entities;
 [Table( "tenants")]
 public class Tenant
 {
-    [Column( "id" )]
+    [Column( "id")]
     public int Id { set; get; }
     
     [Column( "name" )]

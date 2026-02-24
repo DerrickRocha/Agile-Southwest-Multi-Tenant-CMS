@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations.Schema;
+using AgileSouthwestCMSAPI.Domain.Enums;
 
 namespace AgileSouthwestCMSAPI.Domain.Entities;
 
@@ -14,5 +15,5 @@ public class UserTenant
     public Tenant Tenant { get; set; }
 
     [Column("role")]
-    public string Role { get; set; } 
+    public UserRole Role { get; set; } 
 }

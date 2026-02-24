@@ -8,4 +8,5 @@ public interface ITenantsService
     Task<UpdateTenantResult> UpdateTenant(UpdateTenantRequest request);
     Task<GetTenantSubscriptionResult> GetTenantSubscription(GetTenantSubscriptionRequest request);
     Task<ChangeTenantSubscriptionResult> UpdateTenantSubscription(ChangeTenantSubsciptionRequest request);
+    Task<AddTenantResult> AddTenant(AddTenantRequest request);
 }
