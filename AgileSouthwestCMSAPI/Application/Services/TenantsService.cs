@@ -138,7 +138,8 @@ public class TenantsService(CmsDbContext database, ICmsUserContext context) : IT
             Id = tenant.Id,
             SubDomain = tenant.SubDomain,
             CustomDomain = tenant.CustomDomain ?? "",
-            Name = tenant.Name
+            Name = tenant.Name,
+            RowVersion = tenant.RowVersion
         };
     }
 

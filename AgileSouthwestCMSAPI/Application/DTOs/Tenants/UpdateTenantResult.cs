@@ -6,4 +6,6 @@ public class UpdateTenantResult
     public string SubDomain { get; set; }
     public string CustomDomain { get; set; }
     public string Name { get; set; }
+    
+    public byte[] RowVersion { get; set; }
 }
