@@ -44,7 +44,7 @@ public class AuthServiceTests
         };
 
         _cognitoMock
-            .Setup(x => x.SignUpAsync(request.Email, request.Password, "test-co"))
+            .Setup(x => x.SignUpAsync(request.Email, request.Password))
             .ReturnsAsync(new CognitoSignupResult
             {
                 CognitoSub = "abc-123",
@@ -73,10 +73,9 @@ public class AuthServiceTests
 
         db.Tenants.Add(new Tenant
         {
-            Id = Guid.NewGuid(),
+            Id = 1,
             Name = "Existing",
             SubDomain = "test-co",
-            Status = TenantStatus.Active,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         });
@@ -127,10 +126,9 @@ public class AuthServiceTests
 
         var tenant = new Tenant
         {
-            Id = Guid.NewGuid(),
+            Id = 1,
             Name = "Test",
             SubDomain = "test",
-            Status = TenantStatus.Active,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
@@ -139,9 +137,8 @@ public class AuthServiceTests
 
         db.CmsUsers.Add(new CmsUser
         {
-            Id = Guid.NewGuid(),
+            Id = 1,
             CognitoUserId = "123445555",
-            TenantId = tenant.Id,
             Email = "test@test.com",
             Role = UserRole.Admin,
             Status = UserStatus.Invited,
@@ -172,10 +169,9 @@ public class AuthServiceTests
 
         var tenant = new Tenant
         {
-            Id = Guid.NewGuid(),
+            Id = 1,
             Name = "Test",
             SubDomain = "test",
-            Status = TenantStatus.Active,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
@@ -184,9 +180,8 @@ public class AuthServiceTests
 
         db.CmsUsers.Add(new CmsUser
         {
-            Id = Guid.NewGuid(),
+            Id = 1,
             CognitoUserId = "1234567",
-            TenantId = tenant.Id,
             Email = "test@test.com",
             Role = UserRole.Admin,
             Status = UserStatus.Active,
