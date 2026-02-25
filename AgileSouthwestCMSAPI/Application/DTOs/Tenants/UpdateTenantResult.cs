@@ -7,5 +7,5 @@ public class UpdateTenantResult
     public string CustomDomain { get; set; }
     public string Name { get; set; }
     
-    public byte[] RowVersion { get; set; }
+    public byte[]? RowVersion { get; set; }
 }

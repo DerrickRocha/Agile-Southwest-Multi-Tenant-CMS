@@ -26,7 +26,7 @@ public class Tenant
     public DateTime UpdatedAt { get; set; }
     
     [Column( "row_version")]
-    public byte[] RowVersion { get; set; }
+    public byte[]? RowVersion { get; set; }
     
     // Navigation
     public ICollection<UserTenant> UserTenants { get; set; } = new List<UserTenant>();}

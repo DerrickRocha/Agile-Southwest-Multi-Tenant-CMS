@@ -119,6 +119,7 @@ public class AuthService(
         {
             Name = request.CompanyName,
             SubDomain = normalizedSubdomain,
+            RowVersion = null
         };
         database.Tenants.Add(tenant);
 
