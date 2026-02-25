@@ -53,6 +53,9 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
                 .HasColumnType("DATETIME(6)")
                 .HasDefaultValueSql("CURRENT_TIMESTAMP(6)")
                 .IsRequired();
+            
+            entity.Property(t => t.RowVersion)
+                .IsRowVersion();
 
             entity.HasIndex(t => t.SubDomain)
                 .HasDatabaseName("uq_tenants_subdomain")

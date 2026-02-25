@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using AgileSouthwestCMSAPI.Domain.Enums;
 
@@ -23,6 +24,9 @@ public class Tenant
     
     [Column( "updated_at" )]
     public DateTime UpdatedAt { get; set; }
+    
+    [Column( "row_version")]
+    public byte[] RowVersion { get; set; }
     
     // Navigation
     public ICollection<UserTenant> UserTenants { get; set; } = new List<UserTenant>();}

@@ -1,4 +1,5 @@
 using AgileSouthwestCMSAPI.Application.DTOs.Tenants;
+using AgileSouthwestCMSAPI.Application.Exceptions;
 using AgileSouthwestCMSAPI.Application.Interfaces;
 using AgileSouthwestCMSAPI.Domain.Entities;
 using AgileSouthwestCMSAPI.Domain.Enums;
@@ -24,21 +25,24 @@ public class TenantsService(CmsDbContext database, ICmsUserContext context) : IT
             if (user.Role != UserRole.Admin)
                 throw new UnauthorizedAccessException("User is not authorized to add tenants.");
 
+            var normalizedSubdomain = request.SubDomain.Trim().ToLowerInvariant();
+            var normalizedCustomDomain = request.CustomDomain?.Trim().ToLowerInvariant();
+            
             var subdomainExists = await database.Tenants
-                .AnyAsync(t => t.SubDomain == request.SubDomain);
+                .AnyAsync(t => t.SubDomain == normalizedSubdomain);
             if (subdomainExists) throw new InvalidOperationException("Subdomain already in use.");
 
-            if (request.CustomDomain != null)
+            if (normalizedCustomDomain != null)
             {
-                var customDomainExists = await database.Tenants.AnyAsync(t => t.CustomDomain == request.CustomDomain);
+                var customDomainExists = await database.Tenants.AnyAsync(t => t.CustomDomain == normalizedCustomDomain);
                 if (customDomainExists) throw new InvalidOperationException("Custom domain already in user.");
             }
 
             var tenant = new Tenant
             {
                 Name = request.Name,
-                CustomDomain = request.CustomDomain,
-                SubDomain = request.SubDomain
+                CustomDomain = normalizedCustomDomain,
+                SubDomain = normalizedSubdomain
             };
             database.Tenants.Add(tenant);
 
@@ -49,7 +53,14 @@ public class TenantsService(CmsDbContext database, ICmsUserContext context) : IT
                 Role = UserTenantRole.Admin
             };
             database.UserTenants.Add(userTenant);
-            await database.SaveChangesAsync();
+            try
+            {
+                await database.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                throw new ConcurrencyException("This tenant was modified by another user. Please refresh and try again.");
+            }
             await transaction.CommitAsync();
 
             return new AddTenantResult
@@ -64,32 +75,20 @@ public class TenantsService(CmsDbContext database, ICmsUserContext context) : IT
 
     public async Task<GetTenantResult> GetTenant(GetTenantRequest request)
     {
-        var tenant = await database.Tenants
-            .Where(t => t.Id == request.Id)
-            .Where(t => t.UserTenants.Any(ut => ut.User.CognitoUserId == context.UserId))
-            .Where(t => t.UserTenants.Any(ut => ut.Role == UserTenantRole.Admin))
-            .SingleOrDefaultAsync();
-        if (tenant == null) throw new UnauthorizedAccessException("Tenant not found or unauthorized.");
-        
+        var tenant = await GetAuthorizedTenant(request.Id) ?? throw new UnauthorizedAccessException("Tenant not found or unauthorized.");
         return new GetTenantResult
         {
             TenantId = tenant.Id,
             Name = tenant.Name,
             CustomDomain = tenant.CustomDomain ?? "",
             SubDomain = tenant.SubDomain,
+            RowVersion = tenant.RowVersion
         };
     }
 
     public async Task<UpdateTenantResult> UpdateTenant(UpdateTenantRequest request)
     {
-        var tenant = await database.Tenants
-            .Where(t => t.Id == request.Id)
-            .Where(t => t.UserTenants.Any(ut => ut.User.CognitoUserId == context.UserId))
-            .Where(t => t.UserTenants.Any(ut => ut.Role == UserTenantRole.Admin))
-            .SingleOrDefaultAsync();
-
-        if (tenant == null)
-            throw new UnauthorizedAccessException("Tenant not found or unauthorized.");
+        var tenant = await GetAuthorizedTenant(request.Id) ?? throw new UnauthorizedAccessException("Tenant not found or unauthorized.");
         
         var normalizedSubdomain = request.SubDomain.Trim().ToLowerInvariant();
         var normalizedCustomDomain = request.CustomDomain?.Trim().ToLowerInvariant();
@@ -97,7 +96,7 @@ public class TenantsService(CmsDbContext database, ICmsUserContext context) : IT
         if (!string.Equals(tenant.SubDomain, normalizedSubdomain, StringComparison.OrdinalIgnoreCase))
         {
             var exists = await database.Tenants
-                .AnyAsync(t => t.SubDomain == request.SubDomain && t.Id != tenant.Id);
+                .AnyAsync(t => t.SubDomain == normalizedSubdomain && t.Id != tenant.Id);
 
             if (exists)
                 throw new InvalidOperationException("Subdomain already in use.");
@@ -105,10 +104,10 @@ public class TenantsService(CmsDbContext database, ICmsUserContext context) : IT
 
         if (!string.Equals(tenant.CustomDomain, normalizedCustomDomain, StringComparison.OrdinalIgnoreCase))
         {
-            if (!string.IsNullOrWhiteSpace(request.CustomDomain))
+            if (!string.IsNullOrWhiteSpace(normalizedCustomDomain))
             {
                 var exists = await database.Tenants
-                    .AnyAsync(t => t.CustomDomain == request.CustomDomain && t.Id != tenant.Id);
+                    .AnyAsync(t => t.CustomDomain == normalizedCustomDomain && t.Id != tenant.Id);
 
                 if (exists)
                     throw new InvalidOperationException("Custom domain already in use.");
@@ -116,10 +115,22 @@ public class TenantsService(CmsDbContext database, ICmsUserContext context) : IT
         }
         
         tenant.Name = request.Name;
-        tenant.SubDomain = request.SubDomain;
-        tenant.CustomDomain = request.CustomDomain;
+        tenant.SubDomain = normalizedSubdomain;
+        tenant.CustomDomain = normalizedCustomDomain;
         
-        await database.SaveChangesAsync();
+        database.Entry(tenant)
+            .Property(t => t.RowVersion)
+            .OriginalValue = request.RowVersion;
+        
+        try
+        {
+            await database.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            throw new InvalidOperationException(
+                "This tenant was modified by another user. Please refresh and try again.");
+        }
         
         return new UpdateTenantResult
         {
@@ -138,5 +149,14 @@ public class TenantsService(CmsDbContext database, ICmsUserContext context) : IT
     public Task<ChangeTenantSubscriptionResult> UpdateTenantSubscription(ChangeTenantSubsciptionRequest request)
     {
         throw new NotImplementedException();
+    }
+    
+    private Task<Tenant?> GetAuthorizedTenant(int tenantId)
+    {
+        return database.Tenants
+            .Where(t => t.Id == tenantId)
+            .Where(t => t.UserTenants
+                .Any(ut => ut.User.CognitoUserId == context.UserId && ut.Role == UserTenantRole.Admin))
+            .SingleOrDefaultAsync();
     }
 }

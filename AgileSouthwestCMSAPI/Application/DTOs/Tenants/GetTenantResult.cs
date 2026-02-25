@@ -11,4 +11,6 @@ public class GetTenantResult
     public string SubDomain { set; get; }
 
     public string CustomDomain { set; get; } = "";
+    
+    public byte[] RowVersion { get; set; }
 }
