@@ -13,70 +13,52 @@ public class TenantsService(CmsDbContext database, ICmsUserContext context) : IT
 {
     public async Task<AddTenantResult> AddTenant(AddTenantRequest request)
     {
-        var strategy = database.Database.CreateExecutionStrategy();
+        var user = await database.CmsUsers.SingleOrDefaultAsync(u => u.CognitoUserId == context.UserId);
 
-        return await strategy.ExecuteAsync(async () =>
+        if (user == null) throw new InvalidOperationException("User not found.");
+        if (user.Role != UserRole.Admin) throw new UnauthorizedAccessException("User is not authorized to add tenants.");
+
+        var normalizedSubdomain = request.SubDomain.Trim().ToLowerInvariant();
+        var normalizedCustomDomain = request.CustomDomain?.Trim().ToLowerInvariant();
+
+        var tenant = new Tenant
         {
-            await using var transaction = await database.Database.BeginTransactionAsync();
+            Name = request.Name,
+            CustomDomain = normalizedCustomDomain,
+            SubDomain = normalizedSubdomain
+        };
+        database.Tenants.Add(tenant);
 
-            var user = await database.CmsUsers.SingleOrDefaultAsync(u => u.CognitoUserId == context.UserId);
-
-            if (user == null) throw new InvalidOperationException("User not found.");
-            if (user.Role != UserRole.Admin)
-                throw new UnauthorizedAccessException("User is not authorized to add tenants.");
-
-            var normalizedSubdomain = request.SubDomain.Trim().ToLowerInvariant();
-            var normalizedCustomDomain = request.CustomDomain?.Trim().ToLowerInvariant();
-            
-            var subdomainExists = await database.Tenants
-                .AnyAsync(t => t.SubDomain == normalizedSubdomain);
-            if (subdomainExists) throw new InvalidOperationException("Subdomain already in use.");
-
-            if (normalizedCustomDomain != null)
-            {
-                var customDomainExists = await database.Tenants.AnyAsync(t => t.CustomDomain == normalizedCustomDomain);
-                if (customDomainExists) throw new InvalidOperationException("Custom domain already in user.");
-            }
-
-            var tenant = new Tenant
-            {
-                Name = request.Name,
-                CustomDomain = normalizedCustomDomain,
-                SubDomain = normalizedSubdomain
-            };
-            database.Tenants.Add(tenant);
-
-            var userTenant = new UserTenant
-            {
-                User = user,
-                Tenant = tenant,
-                Role = UserTenantRole.Admin
-            };
-            database.UserTenants.Add(userTenant);
-            try
-            {
-                await database.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                throw new ConcurrencyException("This tenant was modified by another user. Please refresh and try again.");
-            }
-            await transaction.CommitAsync();
-
-            return new AddTenantResult
-            {
-                TenantId = tenant.Id,
-                Name = tenant.Name,
-                CustomDomain = tenant.CustomDomain ?? "",
-                SubDomain = tenant.SubDomain,
-                RowVersion = tenant.RowVersion
-            };
-        });
+        var userTenant = new UserTenant
+        {
+            User = user,
+            Tenant = tenant,
+            Role = UserTenantRole.Admin
+        };
+        database.UserTenants.Add(userTenant);
+        
+        try
+        {
+            await database.SaveChangesAsync();
+        }
+        catch (DbUpdateException)
+        {
+            throw new InvalidOperationException("Subdomain or custom domain already in use.");
+        }
+        return new AddTenantResult
+        {
+            TenantId = tenant.Id,
+            Name = tenant.Name,
+            CustomDomain = tenant.CustomDomain ?? "",
+            SubDomain = tenant.SubDomain,
+            RowVersion = tenant.RowVersion
+        };
     }
 
     public async Task<GetTenantResult> GetTenant(GetTenantRequest request)
     {
-        var tenant = await GetAuthorizedTenant(request.Id) ?? throw new UnauthorizedAccessException("Tenant not found or unauthorized.");
+        var tenant = await GetAuthorizedTenant(request.Id) ??
+                     throw new UnauthorizedAccessException("Tenant not found or unauthorized.");
         return new GetTenantResult
         {
             TenantId = tenant.Id,
@@ -89,8 +71,9 @@ public class TenantsService(CmsDbContext database, ICmsUserContext context) : IT
 
     public async Task<UpdateTenantResult> UpdateTenant(UpdateTenantRequest request)
     {
-        var tenant = await GetAuthorizedTenant(request.Id) ?? throw new UnauthorizedAccessException("Tenant not found or unauthorized.");
-        
+        var tenant = await GetAuthorizedTenant(request.Id) ??
+                     throw new UnauthorizedAccessException("Tenant not found or unauthorized.");
+
         var normalizedSubdomain = request.SubDomain.Trim().ToLowerInvariant();
         var normalizedCustomDomain = request.CustomDomain?.Trim().ToLowerInvariant();
 
@@ -114,25 +97,25 @@ public class TenantsService(CmsDbContext database, ICmsUserContext context) : IT
                     throw new InvalidOperationException("Custom domain already in use.");
             }
         }
-        
+
         tenant.Name = request.Name;
         tenant.SubDomain = normalizedSubdomain;
         tenant.CustomDomain = normalizedCustomDomain;
-        
+
         database.Entry(tenant)
             .Property(t => t.RowVersion)
             .OriginalValue = request.RowVersion;
-        
+
         try
         {
             await database.SaveChangesAsync();
         }
         catch (DbUpdateConcurrencyException)
         {
-            throw new InvalidOperationException(
+            throw new ConcurrencyException(
                 "This tenant was modified by another user. Please refresh and try again.");
         }
-        
+
         return new UpdateTenantResult
         {
             Id = tenant.Id,
@@ -152,7 +135,7 @@ public class TenantsService(CmsDbContext database, ICmsUserContext context) : IT
     {
         throw new NotImplementedException();
     }
-    
+
     private Task<Tenant?> GetAuthorizedTenant(int tenantId)
     {
         return database.Tenants
