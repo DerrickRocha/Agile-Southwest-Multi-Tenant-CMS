@@ -3,20 +3,21 @@ using AgileSouthwestCMSAPI.Application.Exceptions;
 using AgileSouthwestCMSAPI.Application.Interfaces;
 using AgileSouthwestCMSAPI.Domain.Entities;
 using AgileSouthwestCMSAPI.Domain.Enums;
-using AgileSouthwestCMSAPI.Domain.ValueObjects;
 using AgileSouthwestCMSAPI.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
 namespace AgileSouthwestCMSAPI.Application.Services;
 
-public class TenantsService(CmsDbContext database, ICmsUserContext context) : ITenantsService
+public class TenantsService(CmsDbContext database, ITenantContext context) : ITenantsService
 {
     public async Task<AddTenantResult> AddTenant(AddTenantRequest request)
     {
-        var user = await database.CmsUsers.SingleOrDefaultAsync(u => u.CognitoUserId == context.UserId);
+        var user = context.User
+                   ?? throw new UnauthorizedAccessException("User not found.");
 
-        if (user == null) throw new InvalidOperationException("User not found.");
-        if (user.Role != UserRole.Admin) throw new UnauthorizedAccessException("User is not authorized to add tenants.");
+        if (context.Membership?.Role != UserTenantRole.Admin &&
+            user.Role != UserRole.Admin)
+            throw new UnauthorizedAccessException("Not authorized.");
 
         var normalizedSubdomain = request.SubDomain.Trim().ToLowerInvariant();
         var normalizedCustomDomain = request.CustomDomain?.Trim().ToLowerInvariant();
@@ -55,24 +56,28 @@ public class TenantsService(CmsDbContext database, ICmsUserContext context) : IT
         };
     }
 
-    public async Task<GetTenantResult> GetTenant(GetTenantRequest request)
+    public Task<GetTenantResult> GetTenant()
     {
-        var tenant = await GetAuthorizedTenant(request.Id) ??
-                     throw new UnauthorizedAccessException("Tenant not found or unauthorized.");
-        return new GetTenantResult
+        var tenant = context.Tenant
+                     ?? throw new UnauthorizedAccessException("Tenant not resolved.");
+        
+        return Task.FromResult(new GetTenantResult
         {
             TenantId = tenant.Id,
             Name = tenant.Name,
             CustomDomain = tenant.CustomDomain ?? "",
             SubDomain = tenant.SubDomain,
             RowVersion = tenant.RowVersion
-        };
+        });
     }
 
     public async Task<UpdateTenantResult> UpdateTenant(UpdateTenantRequest request)
     {
-        var tenant = await GetAuthorizedTenant(request.Id) ??
-                     throw new UnauthorizedAccessException("Tenant not found or unauthorized.");
+        var tenant = context.Tenant
+                     ?? throw new UnauthorizedAccessException("Tenant not resolved.");
+        
+        if (context.Membership?.Role != UserTenantRole.Admin)
+            throw new UnauthorizedAccessException("Admin role required.");
 
         var normalizedSubdomain = request.SubDomain.Trim().ToLowerInvariant();
         var normalizedCustomDomain = request.CustomDomain?.Trim().ToLowerInvariant();
@@ -134,14 +139,5 @@ public class TenantsService(CmsDbContext database, ICmsUserContext context) : IT
     public Task<ChangeTenantSubscriptionResult> UpdateTenantSubscription(ChangeTenantSubsciptionRequest request)
     {
         throw new NotImplementedException();
-    }
-
-    private Task<Tenant?> GetAuthorizedTenant(int tenantId)
-    {
-        return database.Tenants
-            .Where(t => t.Id == tenantId)
-            .Where(t => t.UserTenants
-                .Any(ut => ut.User.CognitoUserId == context.UserId && ut.Role == UserTenantRole.Admin))
-            .SingleOrDefaultAsync();
     }
 }

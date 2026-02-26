@@ -4,9 +4,9 @@ namespace AgileSouthwestCMSAPI.Application.Interfaces;
 
 public interface ITenantsService
 {
-    Task<GetTenantResult> GetTenant(GetTenantRequest request);
+    Task<AddTenantResult> AddTenant(AddTenantRequest request);
+    Task<GetTenantResult> GetTenant();
     Task<UpdateTenantResult> UpdateTenant(UpdateTenantRequest request);
     Task<GetTenantSubscriptionResult> GetTenantSubscription(GetTenantSubscriptionRequest request);
     Task<ChangeTenantSubscriptionResult> UpdateTenantSubscription(ChangeTenantSubsciptionRequest request);
-    Task<AddTenantResult> AddTenant(AddTenantRequest request);
 }
