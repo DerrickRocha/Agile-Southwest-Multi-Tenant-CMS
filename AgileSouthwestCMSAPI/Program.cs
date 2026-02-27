@@ -155,12 +155,9 @@ app.UseRateLimiter();
 
 app.UseMiddleware<IpAllowListMiddleware>();
 
-// 4️⃣ Auth BEFORE tenant resolution
 app.UseAuthentication();
-app.UseAuthorization();
-
-// 5️⃣ Tenant resolution AFTER auth
 app.UseMiddleware<TenantResolutionMiddleware>();
+app.UseAuthorization();
 
 app.MapControllers();
 
