@@ -1,4 +1,5 @@
-using AgileSouthwestCMSAPI.Application.DTOs.Tenants;
+using System.Security.Claims;
+using AgileSouthwestCMSAPI.Application.Interfaces;
 using AgileSouthwestCMSAPI.Infrastructure.Persistence;
 
 namespace AgileSouthwestCMSAPI.Api.Middleware;
@@ -10,7 +11,7 @@ public class TenantResolutionMiddleware(RequestDelegate next)
     public async Task InvokeAsync(
         HttpContext context,
         CmsDbContext db,
-        TenantContext tenantContext)
+        ITenantContext tenantContext)
     {
         var path = context.Request.Path.Value?.ToLower();
 
@@ -22,7 +23,10 @@ public class TenantResolutionMiddleware(RequestDelegate next)
         }
 
         // User must be authenticated at this point
-        var sub = context.User.FindFirst("sub")?.Value;
+        var user = context.User ?? throw new UnauthorizedAccessException("No user principal found");
+
+        var sub = (user.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                   ?? user.FindFirst("sub")?.Value);
 
         if (string.IsNullOrEmpty(sub))
         {
@@ -59,10 +63,7 @@ public class TenantResolutionMiddleware(RequestDelegate next)
             await context.Response.WriteAsync("User not in tenant");
             return;
         }
-
-        tenantContext.User = membership.User;
-        tenantContext.Tenant = membership.Tenant;
-        tenantContext.Membership = membership;
+        tenantContext.Set(membership.User, membership.Tenant, membership);
 
         await next(context);
     }

@@ -1,5 +1,4 @@
 using AgileSouthwestCMSAPI.Domain.Entities;
-using Microsoft.EntityFrameworkCore;
 
 namespace AgileSouthwestCMSAPI.Infrastructure.Persistence;
 
