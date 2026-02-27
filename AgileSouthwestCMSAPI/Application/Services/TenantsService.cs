@@ -3,16 +3,18 @@ using AgileSouthwestCMSAPI.Application.Exceptions;
 using AgileSouthwestCMSAPI.Application.Interfaces;
 using AgileSouthwestCMSAPI.Domain.Entities;
 using AgileSouthwestCMSAPI.Domain.Enums;
+using AgileSouthwestCMSAPI.Domain.ValueObjects;
 using AgileSouthwestCMSAPI.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
 namespace AgileSouthwestCMSAPI.Application.Services;
 
-public class TenantsService(CmsDbContext database, ITenantContext context) : ITenantsService
+public class TenantsService(CmsDbContext database, ITenantContext context, ICmsUserContext userContext) : ITenantsService
 {
     public async Task<AddTenantResult> AddTenant(AddTenantRequest request)
     {
-        var user = context.User
+        var user = await database.CmsUsers
+                       .SingleOrDefaultAsync(u => u.CognitoUserId == userContext.UserId)
                    ?? throw new UnauthorizedAccessException("User not found.");
 
         if (context.Membership?.Role != UserTenantRole.Admin &&

@@ -3,6 +3,7 @@ using AgileSouthwestCMSAPI.Api.Middleware;
 using AgileSouthwestCMSAPI.Application.DTOs.Tenants;
 using AgileSouthwestCMSAPI.Application.Interfaces;
 using AgileSouthwestCMSAPI.Application.Services;
+using AgileSouthwestCMSAPI.Domain.ValueObjects;
 using AgileSouthwestCMSAPI.Infrastructure.Configuration;
 using AgileSouthwestCMSAPI.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -111,6 +112,7 @@ builder.Services.AddSingleton<ICognitoService, CognitoService>();
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ITenantContext, TenantContext>();
+builder.Services.AddScoped<ICmsUserContext, CmsUserContext>();
 
 // Application services
 builder.Services.AddScoped<IAuthService, AuthService>();
