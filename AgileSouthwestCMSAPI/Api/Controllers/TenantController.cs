@@ -6,7 +6,8 @@ using Microsoft.AspNetCore.Mvc;
 namespace AgileSouthwestCMSAPI.Api.Controllers;
 
 [ApiController]
-[Route("[controller]")]
+
+[Route("tenants")]
 [Produces("application/json")]
 [Authorize]
 public class TenantController(ITenantsService service): ControllerBase
