@@ -133,6 +133,8 @@ app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 app.UseHttpsRedirection();
 
+app.UseCors("Default");
+
 app.UseRouting();
 
 // 3️⃣ Security headers
@@ -148,8 +150,6 @@ app.Use(async (context, next) =>
 
     await next();
 });
-
-app.UseCors("Default");
 
 app.UseRateLimiter();
 
