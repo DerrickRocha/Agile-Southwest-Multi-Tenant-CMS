@@ -17,9 +17,6 @@ public class TenantsService(CmsDbContext database, ITenantContext context, ICmsU
                        .SingleOrDefaultAsync(u => u.CognitoUserId == userContext.UserId)
                    ?? throw new UnauthorizedAccessException("User not found.");
 
-        if (user.Role != UserRole.Admin)
-            throw new UnauthorizedAccessException();
-
         var normalizedSubdomain = request.SubDomain.Trim().ToLowerInvariant();
         var normalizedCustomDomain = request.CustomDomain?.Trim().ToLowerInvariant();
 

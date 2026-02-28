@@ -14,6 +14,7 @@ public class TenantController(ITenantsService service): ControllerBase
 {
 
     [HttpGet]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> GetTenant()
     {
         var result = await service.GetTenant();
