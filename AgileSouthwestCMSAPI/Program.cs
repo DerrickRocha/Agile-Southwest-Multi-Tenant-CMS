@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Amazon.CognitoIdentityProvider;
+using Microsoft.AspNetCore.Authorization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -64,13 +65,19 @@ builder.Services
             ValidateIssuer = true,
             ValidIssuer = options.Authority,
             ValidateAudience = true,
+            RoleClaimType = "cognito:groups",   
             ValidAudience = "7sif4nesaud83g9bnm0d183j5n",
             ValidateLifetime = true
         };
     });
 
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("TenantAdmin",
+        policy => policy.Requirements.Add(new TenantAdminRequirement()));
+});
 
+builder.Services.AddScoped<IAuthorizationHandler, TenantAdminHandler>();
 // Rate Limiting
 builder.Services.AddRateLimiter(options =>
 {

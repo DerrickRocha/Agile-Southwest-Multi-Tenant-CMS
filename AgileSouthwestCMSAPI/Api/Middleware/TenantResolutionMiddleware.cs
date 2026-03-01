@@ -21,7 +21,10 @@ public class TenantResolutionMiddleware(RequestDelegate next)
             await next(context);
             return;
         }
-
+        foreach (var claim in context.User.Claims)
+        {
+            Console.WriteLine($"{claim.Type} : {claim.Value}");
+        }
         // User must be authenticated at this point
         var user = context.User ?? throw new UnauthorizedAccessException("No user principal found");
 
@@ -76,6 +79,6 @@ public class TenantResolutionMiddleware(RequestDelegate next)
         return path.StartsWith("/auth") ||
                path.StartsWith("/health") ||
                path.StartsWith("/me/tenants") ||
-        path.StartsWith("/tenant") && method == "POST";
+        path.StartsWith("/tenants") && method == "POST";
     }
 }
