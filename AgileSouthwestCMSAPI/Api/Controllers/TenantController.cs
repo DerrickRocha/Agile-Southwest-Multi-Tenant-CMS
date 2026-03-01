@@ -21,6 +21,7 @@ public class TenantController(ITenantsService service): ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles="Admin")]
     public async Task<IActionResult> AddTenant(AddTenantRequest request)
     {
         var result = await service.AddTenant(request);
