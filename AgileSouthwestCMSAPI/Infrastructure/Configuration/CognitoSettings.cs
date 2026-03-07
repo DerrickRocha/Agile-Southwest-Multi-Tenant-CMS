@@ -6,4 +6,5 @@ public class CognitoSettings
     public string ClientId { get; set; } = null!;
     public string ClientSecret { get; set; } = null!;
     public string Region { get; set; } = null!;
+    public string Audience { get; set; } = null!;
 }

@@ -39,8 +39,7 @@ public class TenantResolutionMiddleware(RequestDelegate next)
         if (!context.Request.Headers.TryGetValue("X-Tenant-Id", out var tenantHeader))
         {
             context.Response.StatusCode = StatusCodes.Status400BadRequest;
-            await context.Response.WriteAsync("Missing X-Tenant-Id header");
-            return;
+            throw new BadHttpRequestException("Missing X-Tenant-Id header");
         }
 
         if (!int.TryParse(tenantHeader, out var tenantId))
@@ -51,11 +50,14 @@ public class TenantResolutionMiddleware(RequestDelegate next)
         }
 
         var membership = await db.UserTenants
-            .Include(ut => ut.User)
-            .Include(ut => ut.Tenant)
-            .SingleOrDefaultAsync(ut =>
-                ut.User.CognitoUserId == sub &&
-                ut.TenantId == tenantId);
+            .Where(ut => ut.User.CognitoUserId == sub && ut.TenantId == tenantId)
+            .Select(ut => new
+            {
+                ut.User,
+                ut.Tenant,
+                ut
+            })
+            .SingleOrDefaultAsync();
 
         if (membership == null)
         {
@@ -63,7 +65,7 @@ public class TenantResolutionMiddleware(RequestDelegate next)
             await context.Response.WriteAsync("User not in tenant");
             return;
         }
-        tenantContext.Set(membership.User, membership.Tenant, membership);
+        tenantContext.Set(membership.User, membership.Tenant, membership.ut);
 
         await next(context);
     }
@@ -76,6 +78,6 @@ public class TenantResolutionMiddleware(RequestDelegate next)
         return path.StartsWith("/auth") ||
                path.StartsWith("/health") ||
                path.StartsWith("/me/tenants") ||
-        path.StartsWith("/tenants") && method == "POST";
+               (path.StartsWith("/tenants") && method == "POST");
     }
 }

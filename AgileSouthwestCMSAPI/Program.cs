@@ -66,7 +66,7 @@ builder.Services
             ValidIssuer = options.Authority,
             ValidateAudience = true,
             RoleClaimType = "cognito:groups",   
-            ValidAudience = "7sif4nesaud83g9bnm0d183j5n",
+            ValidAudience = builder.Configuration["Cognito:Audience"],
             ValidateLifetime = true
         };
     });
