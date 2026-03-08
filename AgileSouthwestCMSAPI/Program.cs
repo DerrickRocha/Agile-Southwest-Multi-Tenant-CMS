@@ -156,6 +156,8 @@ app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 app.UseHttpsRedirection();
 
+app.UseResponseCompression();
+
 app.UseCors("Default");
 
 app.UseRouting();
