@@ -48,9 +48,25 @@ builder.Services.AddControllers()
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("Default", policy =>
-        policy.WithOrigins("https://agilesouthwest.com")
-              .AllowAnyHeader()
-              .AllowAnyMethod());
+    {
+        if (builder.Environment.IsDevelopment())
+        {
+            policy
+                .WithOrigins(
+                    "http://localhost:3000",
+                    "http://localhost:5173"
+                )
+                .AllowAnyHeader()
+                .AllowAnyMethod();
+        }
+        else
+        {
+            policy
+                .WithOrigins("https://agilesouthwest.com")
+                .AllowAnyHeader()
+                .AllowAnyMethod();
+        }
+    });
 });
 
 // Authentication
