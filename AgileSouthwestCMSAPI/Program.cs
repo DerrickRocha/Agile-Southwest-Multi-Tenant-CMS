@@ -182,7 +182,7 @@ app.UseAuthentication();
 app.UseMiddleware<TenantResolutionMiddleware>();
 app.UseAuthorization();
 
-app.MapControllers();
+app.MapControllers().RequireRateLimiting("api");
 
 app.MapHealthChecks("/health")
    .AllowAnonymous();
