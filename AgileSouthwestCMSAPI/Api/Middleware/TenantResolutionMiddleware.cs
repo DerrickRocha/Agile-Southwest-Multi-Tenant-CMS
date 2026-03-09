@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using AgileSouthwestCMSAPI.Application.Interfaces;
 using AgileSouthwestCMSAPI.Infrastructure.Persistence;
+using Amazon.CognitoIdentityProvider.Model;
 
 namespace AgileSouthwestCMSAPI.Api.Middleware;
 
@@ -30,9 +31,7 @@ public class TenantResolutionMiddleware(RequestDelegate next)
 
         if (string.IsNullOrEmpty(sub))
         {
-            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-            await context.Response.WriteAsync("Unauthorized");
-            return;
+            throw new UnauthorizedAccessException("User not found");
         }
 
         // Tenant header required
@@ -44,13 +43,11 @@ public class TenantResolutionMiddleware(RequestDelegate next)
 
         if (!int.TryParse(tenantHeader, out var tenantId))
         {
-            context.Response.StatusCode = StatusCodes.Status400BadRequest;
-            await context.Response.WriteAsync("Invalid tenant id");
-            return;
+            throw new BadHttpRequestException("Invalid tenant id");
         }
 
         var membership = await db.UserTenants
-            .Where(ut => ut.User.CognitoUserId == sub && ut.TenantId == tenantId)
+            .Where(ut => ut.TenantId == tenantId && ut.User.CognitoUserId == sub)
             .Select(ut => new
             {
                 ut.User,
@@ -61,9 +58,7 @@ public class TenantResolutionMiddleware(RequestDelegate next)
 
         if (membership == null)
         {
-            context.Response.StatusCode = StatusCodes.Status403Forbidden;
-            await context.Response.WriteAsync("User not in tenant");
-            return;
+            throw new ForbiddenException("User is not a member of this tenant");
         }
         tenantContext.Set(membership.User, membership.Tenant, membership.ut);
 

@@ -13,6 +13,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Amazon.CognitoIdentityProvider;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.ResponseCompression;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,7 +22,7 @@ var builder = WebApplication.CreateBuilder(args);
 // --------------------------------------------------
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
-    ?? throw new InvalidOperationException("DefaultConnection is not configured");
+                       ?? throw new InvalidOperationException("DefaultConnection is not configured");
 
 // --------------------------------------------------
 // Services
@@ -31,18 +32,12 @@ builder.Services.AddLogging();
 
 builder.Services.AddDbContext<CmsDbContext>(options =>
 {
-    options.UseMySQL(connectionString, sql =>
-    {
-        sql.EnableRetryOnFailure();
-    });
+    options.UseMySQL(connectionString, sql => { sql.EnableRetryOnFailure(); });
 });
 
 // Controllers
 builder.Services.AddControllers()
-    .AddJsonOptions(opts =>
-    {
-        opts.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
-    });
+    .AddJsonOptions(opts => { opts.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase; });
 
 // CORS
 builder.Services.AddCors(options =>
@@ -81,7 +76,7 @@ builder.Services
             ValidateIssuer = true,
             ValidIssuer = options.Authority,
             ValidateAudience = true,
-            RoleClaimType = "cognito:groups",   
+            RoleClaimType = "cognito:groups",
             ValidAudience = builder.Configuration["Cognito:Audience"],
             ValidateLifetime = true
         };
@@ -111,7 +106,10 @@ builder.Services.AddHealthChecks()
 // Response Compression
 builder.Services.AddResponseCompression(options =>
 {
-    options.MimeTypes = new[] { "application/json" };
+    options.MimeTypes =
+        ResponseCompressionDefaults.MimeTypes.Concat([
+            "application/json"
+        ]);
 });
 
 // Forwarded Headers
@@ -187,6 +185,6 @@ app.UseAuthorization();
 app.MapControllers().RequireRateLimiting("api");
 
 app.MapHealthChecks("/health")
-   .AllowAnonymous();
+    .AllowAnonymous();
 
 app.Run();
