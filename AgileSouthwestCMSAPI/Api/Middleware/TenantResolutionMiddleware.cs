@@ -35,9 +35,8 @@ public class TenantResolutionMiddleware(RequestDelegate next)
         }
 
         // Tenant header required
-        if (!context.Request.Headers.TryGetValue("X-Tenant-Id", out var tenantHeader))
+        if (!context.Request.Headers.TryGetValue(TenantHeaders.TenantId, out var tenantHeader))
         {
-            context.Response.StatusCode = StatusCodes.Status400BadRequest;
             throw new BadHttpRequestException("Missing X-Tenant-Id header");
         }
 

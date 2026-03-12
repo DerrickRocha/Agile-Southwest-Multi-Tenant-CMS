@@ -1,5 +1,6 @@
-using System.Text.Json;
 using AgileSouthwestCMSAPI.Application.Exceptions;
+using Amazon.CognitoIdentityProvider.Model;
+using Microsoft.AspNetCore.Mvc;
 
 namespace AgileSouthwestCMSAPI.Api.Middleware;
 
@@ -13,56 +14,69 @@ public class ExceptionHandlingMiddleware(RequestDelegate next)
         }
         catch (UserNotConfirmedAuthException ex)
         {
+            context.Response.ContentType = "application/problem+json";
             context.Response.StatusCode = StatusCodes.Status403Forbidden;
-            context.Response.ContentType = "application/json";
-
-            var payload = JsonSerializer.Serialize(new
+            await context.Response.WriteAsJsonAsync(new ProblemDetails
             {
-                code = "USER_NOT_CONFIRMED",
-                message = ex.Message
+                Title = "User Not Confirmed",
+                Detail = ex.Message,
+                Status = StatusCodes.Status403Forbidden
             });
-
-            await context.Response.WriteAsync(payload);
         }
         catch (CognitoValidationException ex)
         {
+            context.Response.ContentType = "application/problem+json";
             context.Response.StatusCode = StatusCodes.Status400BadRequest;
-            context.Response.ContentType = "application/json";
-
-            var payload = JsonSerializer.Serialize(new
+            await context.Response.WriteAsJsonAsync(new ProblemDetails
             {
-                code = "COGNITO_VALIDATION_ERROR",
-                message = ex.Message
+                Title = "Cognito Validation Error",
+                Detail = ex.Message,
+                Status = StatusCodes.Status400BadRequest,
             });
-
-            await context.Response.WriteAsync(payload);
         }
         catch (InvalidOperationException ex)
         {
+            context.Response.ContentType = "application/problem+json";
             context.Response.StatusCode = StatusCodes.Status409Conflict;
-            context.Response.ContentType = "application/json";
-
-            var payload = JsonSerializer.Serialize(new
+            await context.Response.WriteAsJsonAsync(new ProblemDetails
             {
-                code = "CONFLICT",
-                message = ex.Message
+                Title = "Conflict",
+                Detail = ex.Message,
+                Status = StatusCodes.Status409Conflict
             });
+        }
+        catch (ForbiddenException ex)
+        {
+            context.Response.StatusCode = StatusCodes.Status403Forbidden;
 
-            await context.Response.WriteAsync(payload);
+            await context.Response.WriteAsJsonAsync(new ProblemDetails
+            {
+                Title = "Forbidden",
+                Detail = ex.Message,
+                Status = StatusCodes.Status403Forbidden
+            });
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+
+            await context.Response.WriteAsJsonAsync(new ProblemDetails
+            {
+                Title = "Unauthorized",
+                Detail = ex.Message,
+                Status = StatusCodes.Status401Unauthorized
+            });
         }
         catch
         {
-            // Avoid leaking details; log internally if you have logging wired up.
+            context.Response.ContentType = "application/problem+json";
             context.Response.StatusCode = StatusCodes.Status500InternalServerError;
-            context.Response.ContentType = "application/json";
-
-            var payload = JsonSerializer.Serialize(new
+            await context.Response.WriteAsJsonAsync(new ProblemDetails
             {
-                code = "INTERNAL_SERVER_ERROR",
-                message = "An unexpected error occurred."
+                Title = "Internal Server Error",
+                Detail = "An unexpected error occurred.",
+                Status = StatusCodes.Status500InternalServerError
             });
-
-            await context.Response.WriteAsync(payload);
         }
     }
 }
