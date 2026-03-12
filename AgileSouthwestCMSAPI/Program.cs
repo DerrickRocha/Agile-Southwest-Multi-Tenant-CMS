@@ -185,6 +185,7 @@ app.UseAuthorization();
 app.MapControllers().RequireRateLimiting("api");
 
 app.MapHealthChecks("/health")
+    .WithMetadata(new SkipTenantResolutionAttribute())
     .AllowAnonymous();
 
 app.Run();

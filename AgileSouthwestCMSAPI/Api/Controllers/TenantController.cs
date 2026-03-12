@@ -1,3 +1,4 @@
+using AgileSouthwestCMSAPI.Api.Middleware;
 using AgileSouthwestCMSAPI.Application.DTOs.Tenants;
 using AgileSouthwestCMSAPI.Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -22,6 +23,7 @@ public class TenantController(ITenantsService service): ControllerBase
 
     [HttpPost]
     [Authorize(Roles="Admin")]
+    [SkipTenantResolution]
     public async Task<IActionResult> AddTenant(AddTenantRequest request)
     {
         var result = await service.AddTenant(request);

@@ -14,10 +14,9 @@ public class TenantResolutionMiddleware(RequestDelegate next)
         CmsDbContext db,
         ITenantContext tenantContext)
     {
-        var path = context.Request.Path;
+        var endpoint = context.GetEndpoint();
 
-        // Skip endpoints that do not require tenant context
-        if (IsBypassPath(path, context.Request.Method))
+        if (endpoint?.Metadata.GetMetadata<SkipTenantResolutionAttribute>() != null)
         {
             await next(context);
             return;
@@ -62,15 +61,5 @@ public class TenantResolutionMiddleware(RequestDelegate next)
         tenantContext.Set(membership.User, membership.Tenant, membership.ut);
 
         await next(context);
-    }
-
-    private static bool IsBypassPath(PathString path, string? method)
-    {
-        if (string.IsNullOrEmpty(method)) return false;
-
-        return path.StartsWithSegments("/auth") ||
-               path.StartsWithSegments("/health") ||
-               path.StartsWithSegments("/me/tenants") ||
-               (path.StartsWithSegments("/tenants") && method == "POST");
     }
 }
