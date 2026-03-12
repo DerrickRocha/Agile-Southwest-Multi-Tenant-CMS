@@ -14,69 +14,40 @@ public class ExceptionHandlingMiddleware(RequestDelegate next)
         }
         catch (UserNotConfirmedAuthException ex)
         {
-            context.Response.ContentType = "application/problem+json";
-            context.Response.StatusCode = StatusCodes.Status403Forbidden;
-            await context.Response.WriteAsJsonAsync(new ProblemDetails
-            {
-                Title = "User Not Confirmed",
-                Detail = ex.Message,
-                Status = StatusCodes.Status403Forbidden
-            });
+            await WriteProblem(context, StatusCodes.Status401Unauthorized, "User Not Confirmed", ex.Message);
         }
         catch (CognitoValidationException ex)
         {
-            context.Response.ContentType = "application/problem+json";
-            context.Response.StatusCode = StatusCodes.Status400BadRequest;
-            await context.Response.WriteAsJsonAsync(new ProblemDetails
-            {
-                Title = "Cognito Validation Error",
-                Detail = ex.Message,
-                Status = StatusCodes.Status400BadRequest,
-            });
+            await WriteProblem(context, StatusCodes.Status400BadRequest, "Cognito Validation Error", ex.Message);
         }
         catch (InvalidOperationException ex)
         {
-            context.Response.ContentType = "application/problem+json";
-            context.Response.StatusCode = StatusCodes.Status409Conflict;
-            await context.Response.WriteAsJsonAsync(new ProblemDetails
-            {
-                Title = "Conflict",
-                Detail = ex.Message,
-                Status = StatusCodes.Status409Conflict
-            });
+            await WriteProblem(context, StatusCodes.Status409Conflict, "Conflict", ex.Message);
         }
         catch (ForbiddenException ex)
         {
-            context.Response.StatusCode = StatusCodes.Status403Forbidden;
-
-            await context.Response.WriteAsJsonAsync(new ProblemDetails
-            {
-                Title = "Forbidden",
-                Detail = ex.Message,
-                Status = StatusCodes.Status403Forbidden
-            });
+            await WriteProblem(context, StatusCodes.Status403Forbidden, "Forbidden", ex.Message);
         }
         catch (UnauthorizedAccessException ex)
         {
-            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-
-            await context.Response.WriteAsJsonAsync(new ProblemDetails
-            {
-                Title = "Unauthorized",
-                Detail = ex.Message,
-                Status = StatusCodes.Status401Unauthorized
-            });
+            await WriteProblem(context, StatusCodes.Status401Unauthorized, "Unauthorized", ex.Message);
         }
         catch
         {
-            context.Response.ContentType = "application/problem+json";
-            context.Response.StatusCode = StatusCodes.Status500InternalServerError;
-            await context.Response.WriteAsJsonAsync(new ProblemDetails
-            {
-                Title = "Internal Server Error",
-                Detail = "An unexpected error occurred.",
-                Status = StatusCodes.Status500InternalServerError
-            });
+            await WriteProblem(context, StatusCodes.Status500InternalServerError, "Internal Server Error", "An unexpected error occurred.");
         }
+    }
+    
+    private static Task WriteProblem(HttpContext context, int status, string title, string detail)
+    {
+        context.Response.StatusCode = status;
+        context.Response.ContentType = "application/problem+json";
+
+        return context.Response.WriteAsJsonAsync(new ProblemDetails
+        {
+            Title = title,
+            Detail = detail,
+            Status = status
+        });
     }
 }
