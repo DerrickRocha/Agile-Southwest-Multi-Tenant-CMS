@@ -117,7 +117,7 @@ public class TenantsServiceTests
             Id = 1,
             Name = "Old",
             SubDomain = "old",
-            RowVersion = new byte[] {1}
+            RowVersion = [1]
         };
 
         db.Tenants.Add(tenant);
@@ -175,6 +175,40 @@ public class TenantsServiceTests
         {
             Name = "Updated",
             SubDomain = "updated"
+        };
+
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
+            service.UpdateTenant(request));
+    }
+    
+    [Fact]
+    public async Task UpdateTenant_ShouldThrow_WhenUserNotInTenant()
+    {
+        var db = CreateDb();
+
+        var tenant = new Tenant
+        {
+            Id = 1,
+            Name = "TenantA",
+            SubDomain = "a",
+            RowVersion = [1]
+        };
+
+        db.Tenants.Add(tenant);
+        await db.SaveChangesAsync();
+
+        var tenantContext = new Mock<ITenantContext>();
+        tenantContext.Setup(t => t.Tenant).Returns((Tenant?)null);
+
+        var userContext = new Mock<ICmsUserContext>();
+
+        var service = new TenantsService(db, tenantContext.Object, userContext.Object);
+
+        var request = new UpdateTenantRequest
+        {
+            Name = "Hacked",
+            SubDomain = "hacked",
+            RowVersion = [1]
         };
 
         await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
