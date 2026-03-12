@@ -14,7 +14,7 @@ public class TenantResolutionMiddleware(RequestDelegate next)
         CmsDbContext db,
         ITenantContext tenantContext)
     {
-        var path = context.Request.Path.Value?.ToLower();
+        var path = context.Request.Path;
 
         // Skip endpoints that do not require tenant context
         if (IsBypassPath(path, context.Request.Method))
@@ -64,14 +64,13 @@ public class TenantResolutionMiddleware(RequestDelegate next)
         await next(context);
     }
 
-    private static bool IsBypassPath(string? path, string? method)
+    private static bool IsBypassPath(PathString path, string? method)
     {
-        if (string.IsNullOrEmpty(path)) return false;
         if (string.IsNullOrEmpty(method)) return false;
 
-        return path.StartsWith("/auth") ||
-               path.StartsWith("/health") ||
-               path.StartsWith("/me/tenants") ||
-               (path.StartsWith("/tenants") && method == "POST");
+        return path.StartsWithSegments("/auth") ||
+               path.StartsWithSegments("/health") ||
+               path.StartsWithSegments("/me/tenants") ||
+               (path.StartsWithSegments("/tenants") && method == "POST");
     }
 }
