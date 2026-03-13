@@ -1,5 +1,6 @@
-using System.Text.Json;
 using AgileSouthwestCMSAPI.Application.Exceptions;
+using Amazon.CognitoIdentityProvider.Model;
+using Microsoft.AspNetCore.Mvc;
 
 namespace AgileSouthwestCMSAPI.Api.Middleware;
 
@@ -13,56 +14,44 @@ public class ExceptionHandlingMiddleware(RequestDelegate next)
         }
         catch (UserNotConfirmedAuthException ex)
         {
-            context.Response.StatusCode = StatusCodes.Status403Forbidden;
-            context.Response.ContentType = "application/json";
-
-            var payload = JsonSerializer.Serialize(new
-            {
-                code = "USER_NOT_CONFIRMED",
-                message = ex.Message
-            });
-
-            await context.Response.WriteAsync(payload);
+            await WriteProblem(context, StatusCodes.Status401Unauthorized, "User Not Confirmed", ex.Message);
         }
         catch (CognitoValidationException ex)
         {
-            context.Response.StatusCode = StatusCodes.Status400BadRequest;
-            context.Response.ContentType = "application/json";
-
-            var payload = JsonSerializer.Serialize(new
-            {
-                code = "COGNITO_VALIDATION_ERROR",
-                message = ex.Message
-            });
-
-            await context.Response.WriteAsync(payload);
+            await WriteProblem(context, StatusCodes.Status400BadRequest, "Cognito Validation Error", ex.Message);
         }
         catch (InvalidOperationException ex)
         {
-            context.Response.StatusCode = StatusCodes.Status409Conflict;
-            context.Response.ContentType = "application/json";
-
-            var payload = JsonSerializer.Serialize(new
-            {
-                code = "CONFLICT",
-                message = ex.Message
-            });
-
-            await context.Response.WriteAsync(payload);
+            await WriteProblem(context, StatusCodes.Status409Conflict, "Conflict", ex.Message);
+        }
+        catch (ForbiddenException ex)
+        {
+            await WriteProblem(context, StatusCodes.Status403Forbidden, "Forbidden", ex.Message);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            await WriteProblem(context, StatusCodes.Status401Unauthorized, "Unauthorized", ex.Message);
+        }
+        catch (BadHttpRequestException ex)
+        {
+            await WriteProblem(context, StatusCodes.Status400BadRequest, "Bad Request", ex.Message);
         }
         catch
         {
-            // Avoid leaking details; log internally if you have logging wired up.
-            context.Response.StatusCode = StatusCodes.Status500InternalServerError;
-            context.Response.ContentType = "application/json";
-
-            var payload = JsonSerializer.Serialize(new
-            {
-                code = "INTERNAL_SERVER_ERROR",
-                message = "An unexpected error occurred."
-            });
-
-            await context.Response.WriteAsync(payload);
+            await WriteProblem(context, StatusCodes.Status500InternalServerError, "Internal Server Error", "An unexpected error occurred.");
         }
+    }
+    
+    private static Task WriteProblem(HttpContext context, int status, string title, string detail)
+    {
+        context.Response.StatusCode = status;
+        context.Response.ContentType = "application/problem+json";
+
+        return context.Response.WriteAsJsonAsync(new ProblemDetails
+        {
+            Title = title,
+            Detail = detail,
+            Status = status
+        });
     }
 }

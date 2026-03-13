@@ -1,17 +1,19 @@
 using System.Text.Json;
 using AgileSouthwestCMSAPI.Api.Middleware;
+using AgileSouthwestCMSAPI.Application.DTOs.Tenants;
+using AgileSouthwestCMSAPI.Application.Interfaces;
 using AgileSouthwestCMSAPI.Application.Services;
 using AgileSouthwestCMSAPI.Domain.ValueObjects;
 using AgileSouthwestCMSAPI.Infrastructure.Configuration;
 using AgileSouthwestCMSAPI.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.IdentityModel.Tokens;
 using Amazon.CognitoIdentityProvider;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.ResponseCompression;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,53 +22,26 @@ var builder = WebApplication.CreateBuilder(args);
 // --------------------------------------------------
 
 
-// Load database connectionString
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-if (string.IsNullOrWhiteSpace(connectionString))
-{
-    throw new InvalidOperationException("DefaultConnection is not configured");
-}
-
+var connectionString = Environment.GetEnvironmentVariable("DB_HOST") is not null
+    ? $"Server={Environment.GetEnvironmentVariable("DB_HOST")};Port={Environment.GetEnvironmentVariable("DB_PORT")};Database={Environment.GetEnvironmentVariable("DB_NAME")};User={Environment.GetEnvironmentVariable("DB_USER")};Password={Environment.GetEnvironmentVariable("DB_PASSWORD")};"
+    : builder.Configuration.GetConnectionString("DefaultConnection");
 // --------------------------------------------------
 // Services
 // --------------------------------------------------
 
-// Logging (Serilog / OpenTelemetry-friendly)
 builder.Services.AddLogging();
 
-builder.Services.AddDbContext<CmsDbContext>(options =>
+var isTest = builder.Environment.EnvironmentName == "Test";
+if (!isTest) // Only add MySQL in non-test environments
 {
-    if (!string.IsNullOrWhiteSpace(connectionString))
+    builder.Services.AddDbContext<CmsDbContext>(options =>
     {
-        options.UseMySQL(connectionString, sql => { sql.EnableRetryOnFailure(); });
-    }
-});
-
-builder.Services
-    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
-    {
-        options.Authority = "https://cognito-idp.us-east-1.amazonaws.com/us-east-1_R0b1zUu0r";
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidIssuer = "https://cognito-idp.us-east-1.amazonaws.com/us-east-1_R0b1zUu0r",
-            ValidateAudience = true,
-            ValidAudience = "7sif4nesaud83g9bnm0d183j5n",
-            ValidateLifetime = true
-        };
+        options.UseMySQL(connectionString, sql => sql.EnableRetryOnFailure());
     });
+}
 
 
-// Health checks
-builder.Services.AddHealthChecks()
-    .AddDbContextCheck<CmsDbContext>(
-        name: "mysql",
-        failureStatus: HealthStatus.Unhealthy,
-        tags: ["db", "sql"]
-    );
-
-// Controllers + validation
+// Controllers
 builder.Services.AddControllers()
     .AddJsonOptions(opts => { opts.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase; });
 
@@ -74,17 +49,53 @@ builder.Services.AddControllers()
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("Default", policy =>
-        policy
-            .WithOrigins("https://agilesouthwest.com")
-            .AllowAnyHeader()
-            .AllowAnyMethod());
+    {
+        if (builder.Environment.IsDevelopment())
+        {
+            policy
+                .WithOrigins(
+                    "http://localhost:3000",
+                    "http://localhost:5173"
+                )
+                .AllowAnyHeader()
+                .AllowAnyMethod();
+        }
+        else
+        {
+            policy
+                .WithOrigins("https://agilesouthwest.com")
+                .AllowAnyHeader()
+                .AllowAnyMethod();
+        }
+    });
 });
 
-builder.Services.AddAuthentication();
+// Authentication
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.Authority = "https://cognito-idp.us-east-1.amazonaws.com/us-east-1_R0b1zUu0r";
 
-builder.Services.AddAuthorization();
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidIssuer = options.Authority,
+            ValidateAudience = true,
+            RoleClaimType = "cognito:groups",
+            ValidAudience = builder.Configuration["Cognito:Audience"],
+            ValidateLifetime = true
+        };
+    });
 
-// Rate limiting (built-in)
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("TenantAdmin",
+        policy => policy.Requirements.Add(new TenantAdminRequirement()));
+});
+
+builder.Services.AddScoped<IAuthorizationHandler, TenantAdminHandler>();
+// Rate Limiting
 builder.Services.AddRateLimiter(options =>
 {
     options.AddFixedWindowLimiter("api", limiter =>
@@ -94,18 +105,20 @@ builder.Services.AddRateLimiter(options =>
     });
 });
 
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddOpenApi();
+// Health Checks
+builder.Services.AddHealthChecks()
+    .AddDbContextCheck<CmsDbContext>("mysql");
 
-// Compression
+// Response Compression
 builder.Services.AddResponseCompression(options =>
 {
     options.MimeTypes =
-    [
-        "application/json"
-    ];
+        ResponseCompressionDefaults.MimeTypes.Concat([
+            "application/json"
+        ]);
 });
 
+// Forwarded Headers
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
     options.ForwardedHeaders =
@@ -116,40 +129,44 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
     options.KnownProxies.Clear();
 });
 
-builder.Services.AddScoped<RequestLoggingMiddleware>();
+// AWS / Cognito
+builder.Services.AddDefaultAWSOptions(builder.Configuration.GetAWSOptions());
+builder.Services.AddAWSService<IAmazonCognitoIdentityProvider>();
+builder.Services.Configure<CognitoSettings>(
+    builder.Configuration.GetSection("Cognito"));
+
+builder.Services.AddSingleton<ICognitoService, CognitoService>();
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ITenantContext, TenantContext>();
+builder.Services.AddScoped<ICmsUserContext, CmsUserContext>();
 
-builder.Services.AddDefaultAWSOptions(
-    builder.Configuration.GetAWSOptions()
-);
-builder.Services.AddAWSService<IAmazonCognitoIdentityProvider>();
-
-builder.Services.Configure<CognitoSettings>(
-    builder.Configuration.GetSection("Cognito")
-);
-builder.Services.AddSingleton<ICognitoService, CognitoService>();
+// Application services
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<ITenantsService, TenantsService>();
+
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddOpenApi();
 
 // --------------------------------------------------
 // App
 // --------------------------------------------------
+
 var app = builder.Build();
 
 app.UseForwardedHeaders();
 
-app.UseApiExceptionHandling();
-
-app.UseMiddleware<RequestLoggingMiddleware>();
 app.UseMiddleware<ExceptionHandlingMiddleware>();
-
 
 app.UseHttpsRedirection();
 
+app.UseResponseCompression();
+
+app.UseCors("Default");
+
 app.UseRouting();
 
-// 🔒 Security headers AFTER routing, BEFORE endpoints
+// 3️⃣ Security headers
 app.Use(async (context, next) =>
 {
     context.Response.Headers.TryAdd("X-Content-Type-Options", "nosniff");
@@ -163,18 +180,18 @@ app.Use(async (context, next) =>
     await next();
 });
 
-app.UseCors("Default");
-
 app.UseRateLimiter();
 
 app.UseMiddleware<IpAllowListMiddleware>();
 
 app.UseAuthentication();
+app.UseMiddleware<TenantResolutionMiddleware>();
 app.UseAuthorization();
 
-app.MapControllers();
+app.MapControllers().RequireRateLimiting("api");
 
 app.MapHealthChecks("/health")
-    .WithMetadata(new AllowAnonymousAttribute());
+    .WithMetadata(new SkipTenantResolutionAttribute())
+    .AllowAnonymous();
 
 app.Run();

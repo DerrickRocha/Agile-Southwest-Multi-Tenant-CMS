@@ -1,4 +1,5 @@
 using AgileSouthwestCMSAPI.Application.DTOs.Auth;
+using AgileSouthwestCMSAPI.Application.DTOs.Cognito;
 using AgileSouthwestCMSAPI.Application.Exceptions;
 using AgileSouthwestCMSAPI.Infrastructure.Configuration;
 using Amazon.CognitoIdentityProvider;
@@ -9,10 +10,12 @@ namespace AgileSouthwestCMSAPI.Application.Services;
 
 public interface ICognitoService
 {
-    Task<CognitoSignupResult> SignUpAsync(string email, string password, string tenantIdentifier);
+    Task<CognitoSignupResult> SignUpAsync(string email, string password);
     Task<TokenResult> AuthenticateAsync(string email, string password);
     Task ConfirmSignUpAsync(string email, string confirmationCode);
     Task ResendConfirmationCodeAsync(string email);
+
+    public Task<GetCognitoUserResult> GetUserAsync(string token);
     Task DeleteUserBySubAsync(string sub);
 }
 
@@ -23,7 +26,7 @@ public class CognitoService(
 {
     private readonly CognitoSettings _settings = settingsOptions.Value;
 
-    public async Task<CognitoSignupResult> SignUpAsync(string email, string password, string tenantIdentifier)
+    public async Task<CognitoSignupResult> SignUpAsync(string email, string password)
     {
         try
         {
@@ -35,7 +38,6 @@ public class CognitoService(
                 UserAttributes =
                 [
                     new AttributeType { Name = "email", Value = email },
-                    new AttributeType { Name = "custom:tenant_id", Value = tenantIdentifier }
                 ]
             };
 
@@ -178,6 +180,13 @@ public class CognitoService(
         {
             throw new CognitoValidationException("Too many requests. Please try again later.");
         }
+    }
+
+    public async Task<GetCognitoUserResult> GetUserAsync(string token)
+    {
+        var request = new GetUserRequest { AccessToken = token };
+        var result = await provider.GetUserAsync(request);
+        return new GetCognitoUserResult { Email = result.Username };
     }
 
     public async Task DeleteUserBySubAsync(string sub)

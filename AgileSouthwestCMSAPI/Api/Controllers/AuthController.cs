@@ -1,3 +1,4 @@
+using AgileSouthwestCMSAPI.Api.Middleware;
 using AgileSouthwestCMSAPI.Application.DTOs.Auth;
 using AgileSouthwestCMSAPI.Application.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -7,6 +8,7 @@ namespace AgileSouthwestCMSAPI.Api.Controllers;
 [ApiController]
 [Route("[controller]")]
 [Produces("application/json")]
+[SkipTenantResolution]
 public class AuthController(
     IAuthService service,
     ICognitoService cognito

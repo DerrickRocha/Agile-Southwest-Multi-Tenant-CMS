@@ -26,10 +26,10 @@ public class AuthControllerTests
         var request = new SignupRequest { Email = "test@test.com", Password = "Password123!" };
         var expected = new SignupResult
         {
-            TenantId = Guid.NewGuid(),
+            TenantId = 1,
             CognitoSub = "123444",
             UserConfirmed = false,
-            UserId = Guid.NewGuid(),
+            UserId = 1,
         };
 
         _authServiceMock
