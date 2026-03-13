@@ -21,9 +21,10 @@ var builder = WebApplication.CreateBuilder(args);
 // Configuration
 // --------------------------------------------------
 
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
-                       ?? throw new InvalidOperationException("DefaultConnection is not configured");
 
+var connectionString = Environment.GetEnvironmentVariable("DB_HOST") is not null
+    ? $"Server={Environment.GetEnvironmentVariable("DB_HOST")};Port={Environment.GetEnvironmentVariable("DB_PORT")};Database={Environment.GetEnvironmentVariable("DB_NAME")};User={Environment.GetEnvironmentVariable("DB_USER")};Password={Environment.GetEnvironmentVariable("DB_PASSWORD")};"
+    : builder.Configuration.GetConnectionString("DefaultConnection");
 // --------------------------------------------------
 // Services
 // --------------------------------------------------
