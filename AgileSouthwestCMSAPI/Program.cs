@@ -30,10 +30,16 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 
 builder.Services.AddLogging();
 
-builder.Services.AddDbContext<CmsDbContext>(options =>
+// Program.cs
+var isTest = builder.Environment.EnvironmentName == "Test";
+if (!isTest) // Only add MySQL in non-test environments
 {
-    options.UseMySQL(connectionString, sql => { sql.EnableRetryOnFailure(); });
-});
+    builder.Services.AddDbContext<CmsDbContext>(options =>
+    {
+        options.UseMySQL(connectionString, sql => sql.EnableRetryOnFailure());
+    });
+}
+
 
 // Controllers
 builder.Services.AddControllers()

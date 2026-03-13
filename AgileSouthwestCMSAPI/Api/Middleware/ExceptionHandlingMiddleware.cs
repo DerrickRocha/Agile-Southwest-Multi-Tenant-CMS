@@ -32,6 +32,10 @@ public class ExceptionHandlingMiddleware(RequestDelegate next)
         {
             await WriteProblem(context, StatusCodes.Status401Unauthorized, "Unauthorized", ex.Message);
         }
+        catch (BadHttpRequestException ex)
+        {
+            await WriteProblem(context, StatusCodes.Status400BadRequest, "Bad Request", ex.Message);
+        }
         catch
         {
             await WriteProblem(context, StatusCodes.Status500InternalServerError, "Internal Server Error", "An unexpected error occurred.");

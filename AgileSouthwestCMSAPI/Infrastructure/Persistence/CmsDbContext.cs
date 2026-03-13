@@ -53,19 +53,9 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
                 .HasDefaultValueSql("CURRENT_TIMESTAMP(6)")
                 .IsRequired();
             
-            if (Database.IsRelational())
-            {
-                entity.Property(t => t.RowVersion)
-                    .HasColumnName("row_version")
-                    .IsRowVersion();
-            }
-            else
-            {
-                // InMemory provider fallback
-                entity.Property(t => t.RowVersion)
-                    .IsConcurrencyToken(false)
-                    .ValueGeneratedNever();
-            }
+            entity.Property(t => t.RowVersion)
+                .HasColumnName("row_version")
+                .IsRowVersion();
 
             entity.HasIndex(t => t.SubDomain)
                 .HasDatabaseName("uq_tenants_subdomain")
