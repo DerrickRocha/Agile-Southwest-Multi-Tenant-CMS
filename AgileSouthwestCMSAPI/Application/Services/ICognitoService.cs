@@ -184,17 +184,9 @@ public class CognitoService(
 
     public async Task<GetCognitoUserResult> GetUserAsync(string token)
     {
-        try
-        {
-            var request = new GetUserRequest { AccessToken = token };
-            var result = await provider.GetUserAsync(request);
-            return new GetCognitoUserResult { Email = result.Username };
-        }
-        catch (Exception e)
-        {
-            Console.WriteLine(e);
-            throw;
-        }
+        var request = new GetUserRequest { AccessToken = token };
+        var result = await provider.GetUserAsync(request);
+        return new GetCognitoUserResult { Email = result.Username };
     }
 
     public async Task DeleteUserBySubAsync(string sub)

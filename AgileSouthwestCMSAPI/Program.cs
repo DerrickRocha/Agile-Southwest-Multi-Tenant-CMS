@@ -31,7 +31,6 @@ var connectionString = Environment.GetEnvironmentVariable("DB_HOST") is not null
 
 builder.Services.AddLogging();
 
-// Program.cs
 var isTest = builder.Environment.EnvironmentName == "Test";
 if (!isTest) // Only add MySQL in non-test environments
 {
