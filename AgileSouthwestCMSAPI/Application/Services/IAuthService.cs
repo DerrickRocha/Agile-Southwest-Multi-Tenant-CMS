@@ -23,17 +23,8 @@ public class AuthService(
     {
         var normalizedSubdomain = Normalize(request.SubDomain);
 
-        try
-        {
-            if (await database.Tenants.AnyAsync(t => t.SubDomain == normalizedSubdomain))
-                throw new InvalidOperationException("Subdomain already taken.");
-        }
-        catch (Exception e)
-        {
-            Console.WriteLine(e);
-            throw;
-        }
-        
+        if (await database.Tenants.AnyAsync(t => t.SubDomain == normalizedSubdomain))
+            throw new InvalidOperationException("Subdomain already taken.");
 
         string? cognitoSub = null;
 
