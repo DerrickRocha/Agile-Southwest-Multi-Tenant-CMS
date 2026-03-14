@@ -1,4 +1,5 @@
 using AgileSouthwestCMSAPI.Application.DTOs.Auth;
+using AgileSouthwestCMSAPI.Application.DTOs.Cognito;
 using AgileSouthwestCMSAPI.Domain.Entities;
 using AgileSouthwestCMSAPI.Domain.Enums;
 using AgileSouthwestCMSAPI.Infrastructure.Persistence;
@@ -49,7 +50,7 @@ public class AuthService(
 
                 cognitoSub = cognitoResult.CognitoSub;
                 
-                await cognito.AdminAddUserToGroupAsync(request.Email);
+                await cognito.AdminAddUserToGroupAsync(request.Email, CognitoGroups.Admin);
                 
                 var tenant = new Tenant
                 {
