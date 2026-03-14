@@ -1,7 +1,9 @@
 using AgileSouthwestCMSAPI.Application.DTOs.Auth;
+using AgileSouthwestCMSAPI.Application.DTOs.Cognito;
 using AgileSouthwestCMSAPI.Domain.Entities;
 using AgileSouthwestCMSAPI.Domain.Enums;
 using AgileSouthwestCMSAPI.Infrastructure.Persistence;
+using Amazon.CognitoIdentityProvider.Model;
 using Microsoft.EntityFrameworkCore;
 
 namespace AgileSouthwestCMSAPI.Application.Services;
@@ -42,14 +44,14 @@ public class AuthService(
 
             try
             {
-                // 1️⃣ Create Cognito user
                 var cognitoResult = await cognito.SignUpAsync(
                     request.Email,
                     request.Password);
 
                 cognitoSub = cognitoResult.CognitoSub;
-
-                // 2️⃣ Create Tenant
+                
+                await cognito.AdminAddUserToGroupAsync(request.Email, CognitoGroups.Admin);
+                
                 var tenant = new Tenant
                 {
                     Name = request.CompanyName,
@@ -58,7 +60,6 @@ public class AuthService(
 
                 database.Tenants.Add(tenant);
 
-                // 3️⃣ Create User
                 var user = new CmsUser
                 {
                     CognitoUserId = cognitoSub,
@@ -98,14 +99,12 @@ public class AuthService(
 
     private async Task<SignupResult> SignupInternal(SignupRequest request, string normalizedSubdomain)
     {
-        // 1️⃣ Create Cognito user
         var cognitoResult = await cognito.SignUpAsync(
             request.Email,
             request.Password);
 
         var cognitoSub = cognitoResult.CognitoSub;
 
-        // 2️⃣ Create Tenant
         var tenant = new Tenant
         {
             Name = request.CompanyName,
@@ -113,7 +112,6 @@ public class AuthService(
         };
         database.Tenants.Add(tenant);
 
-        // 3️⃣ Create User
         var user = new CmsUser
         {
             CognitoUserId = cognitoSub,
