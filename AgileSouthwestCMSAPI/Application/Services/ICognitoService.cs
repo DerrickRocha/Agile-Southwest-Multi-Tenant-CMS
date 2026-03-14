@@ -17,6 +17,7 @@ public interface ICognitoService
 
     public Task<GetCognitoUserResult> GetUserAsync(string token);
     Task DeleteUserBySubAsync(string sub);
+    Task AdminAddUserToGroupAsync(string groupRequest);
 }
 
 public class CognitoService(
@@ -206,5 +207,46 @@ public class CognitoService(
             // We intentionally swallow errors here
             // because this is compensation logic
         }
+    }
+
+    public async Task AdminAddUserToGroupAsync(string username)
+    {
+        try
+        {
+            var groupRequest = new AdminAddUserToGroupRequest
+            {
+                GroupName = nameof(CognitoGroups.Admin), Username = username, UserPoolId = _settings.UserPoolId
+            };
+            await provider.AdminAddUserToGroupAsync(groupRequest);
+        }
+        catch (UserNotFoundException)
+        {
+            throw new CognitoValidationException("User not found.");
+        }
+        catch (GroupExistsException)
+        {
+            throw new CognitoValidationException("User already in group.");
+        }
+        catch (InvalidParameterException ex)
+        {
+            throw new CognitoValidationException(ex.Message);
+        }
+        catch (LimitExceededException)
+        {
+            throw new CognitoValidationException("Too many requests. Please try again later.");
+        }
+        catch (NotAuthorizedException)
+        {
+            throw new CognitoValidationException("User is not authorized to add user to group.");
+        }
+        catch (ResourceNotFoundException)
+        {
+            throw new CognitoValidationException("Group not found.");
+        }
+        catch(Exception e)
+        {
+            throw new CognitoValidationException("Failed to add user to group.");
+        }
+        
     }
 }
