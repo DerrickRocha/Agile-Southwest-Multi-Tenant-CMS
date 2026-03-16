@@ -105,6 +105,8 @@ public class AuthService(
 
         var cognitoSub = cognitoResult.CognitoSub;
 
+        await cognito.AdminAddUserToGroupAsync(request.Email, CognitoGroups.Admin);
+        
         var tenant = new Tenant
         {
             Name = request.CompanyName,
