@@ -70,7 +70,7 @@ public class AuthService(
                 
                 database.CmsUsers.Add(user);
                 
-                var userTenant = new UserTenant { Role = UserTenantRole.Admin, Tenant = tenant, User = user};
+                var userTenant = new UserTenant { TenantId = tenant.Id, UserId = user.Id, Role = UserTenantRole.Admin};
                 
                 database.UserTenants.Add(userTenant);
 
@@ -90,7 +90,7 @@ public class AuthService(
                 await transaction.RollbackAsync();
 
                 if (!string.IsNullOrEmpty(cognitoSub))
-                    await cognito.DeleteUserBySubAsync(cognitoSub);
+                    await cognito.DeleteUserAsync(cognitoSub);
 
                 throw;
             }

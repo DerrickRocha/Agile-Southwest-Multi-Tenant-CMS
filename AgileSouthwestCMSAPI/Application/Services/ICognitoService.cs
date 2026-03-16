@@ -16,7 +16,7 @@ public interface ICognitoService
     Task ResendConfirmationCodeAsync(string email);
 
     public Task<GetCognitoUserResult> GetUserAsync(string token);
-    Task DeleteUserBySubAsync(string sub);
+    Task DeleteUserAsync(string sub);
     Task AdminAddUserToGroupAsync(string email, CognitoGroups group);
 }
 
@@ -190,7 +190,7 @@ public class CognitoService(
         return new GetCognitoUserResult { Email = result.Username };
     }
 
-    public async Task DeleteUserBySubAsync(string sub)
+    public async Task DeleteUserAsync(string sub)
     {
         try
         {
@@ -215,7 +215,7 @@ public class CognitoService(
         {
             var groupRequest = new AdminAddUserToGroupRequest
             {
-                GroupName = nameof(group), Username = username, UserPoolId = _settings.UserPoolId
+                GroupName = group.ToString(), Username = username, UserPoolId = _settings.UserPoolId
             };
             await provider.AdminAddUserToGroupAsync(groupRequest);
         }
