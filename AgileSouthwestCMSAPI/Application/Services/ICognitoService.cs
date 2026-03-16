@@ -16,7 +16,8 @@ public interface ICognitoService
     Task ResendConfirmationCodeAsync(string email);
 
     public Task<GetCognitoUserResult> GetUserAsync(string token);
-    Task DeleteUserBySubAsync(string sub);
+    Task DeleteUserAsync(string sub);
+    Task AdminAddUserToGroupAsync(string email, CognitoGroups group);
 }
 
 public class CognitoService(
@@ -189,7 +190,7 @@ public class CognitoService(
         return new GetCognitoUserResult { Email = result.Username };
     }
 
-    public async Task DeleteUserBySubAsync(string sub)
+    public async Task DeleteUserAsync(string sub)
     {
         try
         {
@@ -206,5 +207,46 @@ public class CognitoService(
             // We intentionally swallow errors here
             // because this is compensation logic
         }
+    }
+
+    public async Task AdminAddUserToGroupAsync(string username, CognitoGroups group)
+    {
+        try
+        {
+            var groupRequest = new AdminAddUserToGroupRequest
+            {
+                GroupName = group.ToString(), Username = username, UserPoolId = _settings.UserPoolId
+            };
+            await provider.AdminAddUserToGroupAsync(groupRequest);
+        }
+        catch (UserNotFoundException)
+        {
+            throw new CognitoValidationException("User not found.");
+        }
+        catch (GroupExistsException)
+        {
+            throw new CognitoValidationException("User already in group.");
+        }
+        catch (InvalidParameterException ex)
+        {
+            throw new CognitoValidationException(ex.Message);
+        }
+        catch (LimitExceededException)
+        {
+            throw new CognitoValidationException("Too many requests. Please try again later.");
+        }
+        catch (NotAuthorizedException)
+        {
+            throw new CognitoValidationException("User is not authorized to add user to group.");
+        }
+        catch (ResourceNotFoundException)
+        {
+            throw new CognitoValidationException("Group not found.");
+        }
+        catch(Exception e)
+        {
+            throw new CognitoValidationException("Failed to add user to group.");
+        }
+        
     }
 }

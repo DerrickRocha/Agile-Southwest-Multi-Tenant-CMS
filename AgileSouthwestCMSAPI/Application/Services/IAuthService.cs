@@ -1,4 +1,5 @@
 using AgileSouthwestCMSAPI.Application.DTOs.Auth;
+using AgileSouthwestCMSAPI.Application.DTOs.Cognito;
 using AgileSouthwestCMSAPI.Domain.Entities;
 using AgileSouthwestCMSAPI.Domain.Enums;
 using AgileSouthwestCMSAPI.Infrastructure.Persistence;
@@ -26,12 +27,18 @@ public class AuthService(
         if (await database.Tenants.AnyAsync(t => t.SubDomain == normalizedSubdomain))
             throw new InvalidOperationException("Subdomain already taken.");
 
-        string? cognitoSub = null;
+        var cognitoResult = await cognito.SignUpAsync(
+            request.Email,
+            request.Password);
 
+        var cognitoSub = cognitoResult.CognitoSub;
+                
+        await cognito.AdminAddUserToGroupAsync(request.Email, CognitoGroups.Admin);
+        
         if (skipTransactionsForTesting)
         {
             // Simple path for tests
-            return await SignupInternal(request, normalizedSubdomain);
+            return await WriteSignupData(request, normalizedSubdomain, cognitoSub, cognitoResult.UserConfirmed);
         }
 
         var strategy = database.Database.CreateExecutionStrategy();
@@ -39,81 +46,32 @@ public class AuthService(
         return await strategy.ExecuteAsync(async () =>
         {
             await using var transaction = await database.Database.BeginTransactionAsync();
-
             try
             {
-                // 1️⃣ Create Cognito user
-                var cognitoResult = await cognito.SignUpAsync(
-                    request.Email,
-                    request.Password);
-
-                cognitoSub = cognitoResult.CognitoSub;
-
-                // 2️⃣ Create Tenant
-                var tenant = new Tenant
-                {
-                    Name = request.CompanyName,
-                    SubDomain = normalizedSubdomain,
-                };
-
-                database.Tenants.Add(tenant);
-
-                // 3️⃣ Create User
-                var user = new CmsUser
-                {
-                    CognitoUserId = cognitoSub,
-                    Email = request.Email,
-                    Role = UserRole.Admin,
-                    Status = UserStatus.Active
-                };
-                
-                database.CmsUsers.Add(user);
-                
-                var userTenant = new UserTenant { Role = UserTenantRole.Admin, Tenant = tenant, User = user};
-                
-                database.UserTenants.Add(userTenant);
-
-                await database.SaveChangesAsync();
+                var signupResult = await WriteSignupData(request, normalizedSubdomain, cognitoSub, cognitoResult.UserConfirmed);
                 await transaction.CommitAsync();
-
-                return new SignupResult
-                {
-                    TenantId = tenant.Id,
-                    UserId = user.Id,
-                    CognitoSub = cognitoSub,
-                    UserConfirmed = cognitoResult.UserConfirmed
-                };
+                return signupResult;
             }
             catch
             {
                 await transaction.RollbackAsync();
-
                 if (!string.IsNullOrEmpty(cognitoSub))
-                    await cognito.DeleteUserBySubAsync(cognitoSub);
-
+                    await cognito.DeleteUserAsync(cognitoSub);
                 throw;
             }
         });
     }
 
-    private async Task<SignupResult> SignupInternal(SignupRequest request, string normalizedSubdomain)
+    private async Task<SignupResult> WriteSignupData(SignupRequest request, string normalizedSubdomain, string cognitoSub, bool userConfirmed)
     {
-        // 1️⃣ Create Cognito user
-        var cognitoResult = await cognito.SignUpAsync(
-            request.Email,
-            request.Password);
-
-        var cognitoSub = cognitoResult.CognitoSub;
-
-        // 2️⃣ Create Tenant
         var tenant = new Tenant
         {
             Name = request.CompanyName,
             SubDomain = normalizedSubdomain,
         };
+
         database.Tenants.Add(tenant);
 
-        // 3️⃣ Create User
         var user = new CmsUser
         {
             CognitoUserId = cognitoSub,
@@ -121,20 +79,20 @@ public class AuthService(
             Role = UserRole.Admin,
             Status = UserStatus.Active
         };
+                
         database.CmsUsers.Add(user);
-        
+                
         var userTenant = new UserTenant { TenantId = tenant.Id, UserId = user.Id, Role = UserTenantRole.Admin};
                 
         database.UserTenants.Add(userTenant);
 
         await database.SaveChangesAsync();
-
         return new SignupResult
         {
             TenantId = tenant.Id,
             UserId = user.Id,
             CognitoSub = cognitoSub,
-            UserConfirmed = cognitoResult.UserConfirmed
+            UserConfirmed = userConfirmed
         };
     }
 

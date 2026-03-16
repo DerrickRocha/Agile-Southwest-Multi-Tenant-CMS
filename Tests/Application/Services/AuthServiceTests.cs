@@ -1,4 +1,5 @@
 using AgileSouthwestCMSAPI.Application.DTOs.Auth;
+using AgileSouthwestCMSAPI.Application.DTOs.Cognito;
 using AgileSouthwestCMSAPI.Application.Services;
 using AgileSouthwestCMSAPI.Domain.Entities;
 using AgileSouthwestCMSAPI.Domain.Enums;
@@ -94,6 +95,35 @@ public class AuthServiceTests
 
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
             service.SignupAsync(request));
+    }
+
+    [Fact]
+    public async Task SignupAsync_Should_Add_User_To_Admin_Group()
+    {
+        var db = CreateDbContext();
+
+        var request = new SignupRequest
+        {
+            Email = "admin@test.com",
+            Password = "Password123!",
+            CompanyName = "Test Company",
+            SubDomain = "Test Co"
+        };
+
+        _cognitoMock
+            .Setup(x => x.SignUpAsync(request.Email, request.Password))
+            .ReturnsAsync(new CognitoSignupResult
+            {
+                CognitoSub = "abc-123",
+                UserConfirmed = false
+            });
+        _cognitoMock
+            .Setup(x => x.AdminAddUserToGroupAsync(request.Email, CognitoGroups.Admin));
+
+        var service = CreateService(db);
+
+        await service.SignupAsync(request);
+        _cognitoMock.Verify(x => x.AdminAddUserToGroupAsync(request.Email, CognitoGroups.Admin), Times.Once);
     }
 
     // ----------------------------------------
