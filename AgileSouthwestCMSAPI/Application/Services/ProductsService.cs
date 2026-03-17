@@ -14,9 +14,9 @@ public class ProductsService(ITenantContext context, CmsDbContext database): IPr
         };
     }
 
-    public Task<ProductResult> GetProduct(int id)
+    public async Task<ProductResult> GetProduct(int id)
     {
-        throw new NotImplementedException();
+        return new ProductResult();
     }
 
     public async Task<ProductResult> UpdateProduct(UpdateProductRequest request)
