@@ -4,5 +4,9 @@ namespace AgileSouthwestCMSAPI.Application.Interfaces;
 
 public interface IProductsService
 {
-    public Task<CreateProductResult> CreateProduct(CreateProductRequest request);
+    public Task<ProductResult> CreateProduct(CreateProductRequest request);
+    public Task<ProductResult> GetProduct(int id);
+    public Task<ProductResult> UpdateProduct(UpdateProductRequest request);
+    public Task<ProductResult> DeleteProduct();
+    public Task<IEnumerable<ProductResult>> GetProducts();
 }

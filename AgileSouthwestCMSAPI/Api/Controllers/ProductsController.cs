@@ -19,20 +19,23 @@ public class ProductsController(IProductsService service) : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> Get()
+    public async Task<IActionResult> Get(int id)
     {
-        return Ok();
+        var result = await service.GetProduct(id);
+        return Ok(result);
     }
-    
+
     [HttpDelete]
-    public async Task<IActionResult> Delete()
+    public async Task<IActionResult> Delete(int id)
     {
+        var result = await service.DeleteProduct();
         return Ok();
     }
 
     [HttpPut]
-    public async Task<IActionResult> Update()
+    public async Task<IActionResult> Update([FromBody] UpdateProductRequest request)
     {
-        return Ok();   
+        await service.UpdateProduct(request);
+        return Ok();
     }
 }

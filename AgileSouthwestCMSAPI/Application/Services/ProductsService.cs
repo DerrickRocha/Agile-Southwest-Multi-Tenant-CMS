@@ -6,11 +6,31 @@ namespace AgileSouthwestCMSAPI.Application.Services;
 
 public class ProductsService(ITenantContext context, CmsDbContext database): IProductsService
 {
-    public async Task<CreateProductResult> CreateProduct(CreateProductRequest request)
+    public async Task<ProductResult> CreateProduct(CreateProductRequest request)
     {
-        return new CreateProductResult
+        return new ProductResult()
         {
             Id = 1
         };
+    }
+
+    public Task<ProductResult> GetProduct(int id)
+    {
+        throw new NotImplementedException();
+    }
+
+    public async Task<ProductResult> UpdateProduct(UpdateProductRequest request)
+    {
+      return new ProductResult();
+    }
+    
+    public async Task<ProductResult> DeleteProduct()
+    {
+      return new ProductResult();
+    }
+    
+    public async Task<IEnumerable<ProductResult>> GetProducts()
+    {
+      return new List<ProductResult>();
     }
 }

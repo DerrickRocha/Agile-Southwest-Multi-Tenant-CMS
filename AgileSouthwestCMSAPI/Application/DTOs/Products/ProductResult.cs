@@ -1,6 +1,6 @@
 namespace AgileSouthwestCMSAPI.Application.DTOs.Products;
 
-public class CreateProductResult
+public class ProductResult
 {
     public int Id { get; set; }
     public int TenantId { get; set; }
