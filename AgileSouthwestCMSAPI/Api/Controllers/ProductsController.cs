@@ -17,4 +17,22 @@ public class ProductsController(IProductsService service) : ControllerBase
         var result = await service.CreateProduct(request);
         return Ok(result);
     }
+
+    [HttpGet]
+    public async Task<IActionResult> Get()
+    {
+        return Ok();
+    }
+    
+    [HttpDelete]
+    public async Task<IActionResult> Delete()
+    {
+        return Ok();
+    }
+
+    [HttpPut]
+    public async Task<IActionResult> Update()
+    {
+        return Ok();   
+    }
 }
