@@ -8,6 +8,7 @@ public class ProductResult
     public string Description { get; set; }
     public int BasePrice { get; set; }
     public bool IsActive { get; set; }
+    public ProductOptionResult[] ProductOptions { get; set; }
     public byte[] RowVersion { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
