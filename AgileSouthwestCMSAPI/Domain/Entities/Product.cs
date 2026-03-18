@@ -10,9 +10,6 @@ public class Product
     [Column("tenant_id")]
     public int TenantId { get; set; }
     
-    [Column("product_option_id")]
-    public int ProductOptionId { get; set; }
-    
     [Column("name")]
     public string Name { get; set; }
     

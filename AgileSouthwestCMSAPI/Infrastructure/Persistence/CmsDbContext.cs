@@ -158,7 +158,7 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
                 .ValueGeneratedOnAdd();
             
             entity.Property(p => p.ProductOptionId)
-                .HasColumnName("product_option_id")
+                .HasColumnName("option_id")
                 .IsRequired();
             entity.HasOne(o => o.ProductOption)
                 .WithMany(p => p.ProductOptionChoices)

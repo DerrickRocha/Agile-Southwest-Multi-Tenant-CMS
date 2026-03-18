@@ -6,4 +6,5 @@ public class CreateProductRequest
     public string Description { set; get;}
     public int BasePrice { set; get;}
     public bool IsActive { set; get;}
+    public CreateProductOptionRequest[] ProductOptions { set; get;}
 }
