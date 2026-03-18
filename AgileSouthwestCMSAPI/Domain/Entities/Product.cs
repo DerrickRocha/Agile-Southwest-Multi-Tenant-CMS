@@ -30,4 +30,9 @@ public class Product
     
     [Column("updated_at")]
     public DateTime UpdatedAt { get; set; }
+    
+    public Tenant Tenant { get; set; } = null!;
+    
+    public ICollection<ProductOption> ProductOptions { get; set; } = new List<ProductOption>();
+
 }

@@ -10,6 +10,10 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
     public DbSet<Tenant> Tenants => Set<Tenant>();
     public DbSet<UserTenant> UserTenants => Set<UserTenant>();
 
+    public DbSet<Product> Products => Set<Product>();
+    public DbSet<ProductOption> ProductOptions => Set<ProductOption>();
+    public DbSet<ProductOptionChoice> ProductOptionChoices => Set<ProductOptionChoice>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
@@ -26,7 +30,7 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
             entity.Property(t => t.Id)
                 .HasColumnName("id")
                 .ValueGeneratedOnAdd(); // AUTO_INCREMENT
-
+            
             entity.Property(t => t.Name)
                 .HasColumnName("name")
                 .IsRequired()
@@ -52,7 +56,7 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
                 .HasColumnType("DATETIME(6)")
                 .HasDefaultValueSql("CURRENT_TIMESTAMP(6)")
                 .IsRequired();
-            
+
             entity.Property(t => t.RowVersion)
                 .HasColumnName("row_version")
                 .IsRowVersion();
@@ -67,6 +71,101 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
                 .IsUnique();
         });
 
+        builder.Entity<Product>(entity =>
+        {
+            entity.ToTable("products");
+            
+            entity.HasKey(p => p.Id);
+            entity.Property(p => p.Id)
+                .HasColumnName("id")
+                .ValueGeneratedOnAdd();
+            
+            entity.Property(p => p.TenantId)
+                .HasColumnName("tenant_id")
+                .IsRequired();
+            entity.HasOne(p => p.Tenant)
+                .WithMany(t => t.Products)
+                .HasForeignKey(p => p.TenantId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            entity.Property(p => p.Name)
+                .HasColumnName("name")
+                .IsRequired()
+                .HasMaxLength(255);
+
+            entity.Property(p => p.Description)
+                .HasColumnName("description");
+            
+            entity.Property(p => p.BasePriceCents)
+                .HasColumnName("base_price_cents")
+                .IsRequired();
+
+            entity.Property(p => p.IsActive)
+                .HasColumnName("is_active")
+                .IsRequired();
+            
+            entity.Property(u => u.CreatedAt)
+                .HasColumnName("created_at")
+                .HasColumnType("DATETIME(6)")
+                .HasDefaultValueSql("CURRENT_TIMESTAMP(6)")
+                .IsRequired();
+
+            entity.Property(u => u.UpdatedAt)
+                .HasColumnName("updated_at")
+                .HasColumnType("DATETIME(6)")
+                .HasDefaultValueSql("CURRENT_TIMESTAMP(6)")
+                .IsRequired();
+        });
+
+        builder.Entity<ProductOption>(entity =>
+        {
+            entity.ToTable("product_options");
+            entity.HasKey(p => p.Id);
+            entity.Property(o => o.Id)
+                .HasColumnName("id")
+                .ValueGeneratedOnAdd();
+            
+            entity.Property(p => p.ProductId)
+                .HasColumnName("product_id")
+                .IsRequired();
+            entity.HasOne(o => o.Product)
+                .WithMany(p => p.ProductOptions)
+                .HasForeignKey(o => o.ProductId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            entity.Property(o => o.Name)
+                .HasColumnName("name")
+                .IsRequired()
+                .HasMaxLength(255);
+
+            entity.Property(o => o.CreatedAt)
+                .HasColumnName("created_at")
+                .HasColumnType("DATETIME(6)")
+                .HasDefaultValueSql("CURRENT_TIMESTAMP(6)");
+            
+            entity.Property(o => o.UpdatedAt)
+                .HasColumnName("updated_at")
+                .HasColumnType("DATETIME(6)")
+                .HasDefaultValueSql("CURRENT_TIMESTAMP(6)");
+        });
+        
+        builder.Entity<ProductOptionChoice>(entity =>
+        {
+            entity.ToTable("product_option_choices");
+            entity.HasKey(p => p.Id);
+            entity.Property(o => o.Id)
+                .HasColumnName("id")
+                .ValueGeneratedOnAdd();
+            
+            entity.Property(p => p.ProductOptionId)
+                .HasColumnName("product_option_id")
+                .IsRequired();
+            entity.HasOne(o => o.ProductOption)
+                .WithMany(p => p.ProductOptionChoices)
+                .HasForeignKey(o => o.ProductOptionId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
         // =========================
         // cms_users
         // =========================
@@ -78,7 +177,7 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
 
             entity.Property(u => u.Id)
                 .HasColumnName("id")
-                .ValueGeneratedOnAdd(); // AUTO_INCREMENT
+                .ValueGeneratedOnAdd();
 
             entity.Property(u => u.CognitoUserId)
                 .HasColumnName("cognito_user_id")
@@ -139,7 +238,7 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
 
             entity.Property(ut => ut.UserId)
                 .HasColumnName("user_id");
-            
+
             entity.Property(ut => ut.Role)
                 .HasColumnName("Role")
                 .HasConversion<string>()

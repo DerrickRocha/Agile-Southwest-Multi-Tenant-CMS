@@ -18,4 +18,8 @@ public class ProductOption
     
     [Column( "updated_at" )]
     public DateTime UpdatedAt { get; set; }
+
+    public Product Product { get; set; } = null!;
+    
+    public ICollection<ProductOptionChoice> ProductOptionChoices { get; set; } = new List<ProductOptionChoice>();
 }

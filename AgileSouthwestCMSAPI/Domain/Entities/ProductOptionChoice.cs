@@ -24,4 +24,6 @@ public class ProductOptionChoice
     
     [Column("updated_at")]
     public DateTime UpdatedAt { get; set; }
+
+    public ProductOption ProductOption { get; set; } = null!;
 }
