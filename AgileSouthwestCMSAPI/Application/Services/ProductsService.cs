@@ -14,6 +14,18 @@ public class ProductsService(ITenantContext context, CmsDbContext database) : IP
                      ?? throw new UnauthorizedAccessException("Tenant not resolved.");
         var strategy = database.Database.CreateExecutionStrategy();
 
+        if (request.ProductOptions.Length == 0)
+        {
+            if(request.BasePrice <= 0) throw new InvalidOperationException("Base price must be greater than 0");
+
+        }
+
+        var hasNoValue = request.ProductOptions.Any(o => o.ProductOptionChoices.Any(c => c.PriceDelta == 0));
+        if (hasNoValue)
+        {
+            if(request.BasePrice <= 0) throw new InvalidOperationException("Base price must be greater than 0");
+        }
+
         return await strategy.ExecuteAsync(async () =>
         {
             await using var transaction = await database.Database.BeginTransactionAsync();
