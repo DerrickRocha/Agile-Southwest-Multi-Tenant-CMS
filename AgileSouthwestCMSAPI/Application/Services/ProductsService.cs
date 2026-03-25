@@ -1,6 +1,6 @@
 using AgileSouthwestCMSAPI.Application.DTOs.Products;
 using AgileSouthwestCMSAPI.Application.Interfaces;
-using AgileSouthwestCMSAPI.Domain.Entities;
+using AgileSouthwestCMSAPI.Extensions;
 using AgileSouthwestCMSAPI.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -23,36 +23,11 @@ public class ProductsService(ITenantContext context, CmsDbContext database) : IP
 
             try
             {
-                var options = request.ProductOptions.Select(option =>
-                    {
-                        var choices = option.ProductOptionChoices.Select(optionChoice => new ProductOptionChoice
-                        {
-                            Name = optionChoice.Name,
-                            PriceDeltaCents = optionChoice.PriceDelta,
-                            SalePriceDeltaCents = optionChoice.SalePriceDelta,
-                        });
-                        var productOption = new ProductOption
-                        {
-                            Name = option.Name,
-                            ProductOptionChoices = choices.ToList()
-                        };
-                        return productOption;
-                    }
-                ).ToList();
-                
-                var product = new Product
-                {
-                    TenantId = tenant.Id,
-                    Name = request.Name,
-                    Description = request.Description,
-                    BasePriceCents = request.BasePrice,
-                    IsActive = request.IsActive,
-                    ProductOptions = options
-                };
+                var product = request.ToProduct(tenant.Id);
                 database.Products.Add(product);
                 await database.SaveChangesAsync();
                 await transaction.CommitAsync();
-                return ToProductResult(product);
+                return product.ToProductResult();
             }
             catch
             {
@@ -60,40 +35,6 @@ public class ProductsService(ITenantContext context, CmsDbContext database) : IP
                 throw;
             }
         });
-    }
-
-    private ProductResult ToProductResult(Product product)
-    {
-        var options = product.ProductOptions.Select(option => new ProductOptionResult
-        {
-            Id = option.Id,
-            ProductId = option.ProductId,
-            Name = option.Name,
-            CreatedAt = option.CreatedAt,
-            UpdatedAt = option.UpdatedAt,
-            ProductOptionChoices = option.ProductOptionChoices.Select(choice => new ProductOptionChoiceResult
-            {
-                Id = choice.Id,
-                ProductOptionId = choice.ProductOptionId,
-                Name = choice.Name,
-                PriceDelta = choice.PriceDeltaCents,
-                SalePriceDelta = choice.SalePriceDeltaCents,
-                CreatedAt = choice.CreatedAt,
-                UpdatedAt = choice.UpdatedAt
-            }).ToArray()
-        }).ToArray();
-        return new ProductResult
-        {
-            Id = product.Id,
-            TenantId = product.TenantId,
-            Name = product.Name,
-            Description = product.Description,
-            BasePrice = product.BasePriceCents,
-            IsActive = product.IsActive,
-            CreatedAt = product.CreatedAt,
-            UpdatedAt = product.UpdatedAt,
-            ProductOptions = options
-        };
     }
 
     public async Task<ProductResult> GetProduct(int id)
