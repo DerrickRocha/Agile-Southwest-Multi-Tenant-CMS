@@ -19,6 +19,9 @@ public class ProductOption
     [Column( "updated_at" )]
     public DateTime UpdatedAt { get; set; }
 
+    [Column("is_required")] 
+    public bool IsRequired { get; set; } = true;
+
     public Product Product { get; set; } = null!;
     
     public ICollection<ProductOptionChoice> ProductOptionChoices { get; set; } = new List<ProductOptionChoice>();

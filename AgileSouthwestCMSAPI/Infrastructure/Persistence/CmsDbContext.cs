@@ -138,6 +138,10 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
                 .IsRequired()
                 .HasMaxLength(255);
 
+            entity.Property(o => o.IsRequired)
+                .HasColumnName("is_required")
+                .IsRequired();
+
             entity.Property(o => o.CreatedAt)
                 .HasColumnName("created_at")
                 .HasColumnType("DATETIME(6)")
@@ -164,6 +168,33 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
                 .WithMany(p => p.ProductOptionChoices)
                 .HasForeignKey(o => o.ProductOptionId)
                 .OnDelete(DeleteBehavior.Cascade);
+            
+            entity.Property(o => o.Name)
+                .HasColumnName("name")
+                .IsRequired()
+                .HasMaxLength(255);
+            
+            entity.Property(o => o.PriceDeltaCents)
+                .HasColumnName("price_delta_cents")
+                .IsRequired();
+            
+            entity.Property(o => o.SalePriceDeltaCents)
+                .HasColumnName("sale_price_delta_cents")
+                .IsRequired();
+            
+            entity.Property(o => o.CreatedAt)
+                .HasColumnName("created_at")
+                .HasColumnType("DATETIME(6)")
+                .HasDefaultValueSql("CURRENT_TIMESTAMP(6)");
+
+            entity.Property(o => o.UpdatedAt)
+                .HasColumnName("updated_at")
+                .HasColumnType("DATETIME(6)")
+                .HasDefaultValueSql("CURRENT_TIMESTAMP(6)");
+            
+            entity.Property(o => o.IsActive)
+                .HasColumnName("is_active")
+                .IsRequired();
         });
 
         // =========================
