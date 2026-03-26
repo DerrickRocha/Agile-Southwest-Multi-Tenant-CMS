@@ -1,6 +1,6 @@
 namespace AgileSouthwestCMSAPI.Api.Requests.Products;
 
-public class UpdateProductRequest
+public class ProductRequest
 {
     public string Name { set; get;}
     public string Description { set; get;}
