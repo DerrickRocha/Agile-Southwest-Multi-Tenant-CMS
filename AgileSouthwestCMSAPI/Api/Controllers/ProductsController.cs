@@ -1,3 +1,4 @@
+using AgileSouthwestCMSAPI.Api.Requests.Products;
 using AgileSouthwestCMSAPI.Application.DTOs.Products;
 using AgileSouthwestCMSAPI.Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -35,10 +36,10 @@ public class ProductsController(IProductsService service) : ControllerBase
         return Ok();
     }
 
-    [HttpPut]
-    public async Task<IActionResult> Update([FromBody] UpdateProductRequest request)
+    [HttpPut("{id:int}")]
+    public async Task<IActionResult> Update(int id, [FromBody] UpdateProductRequest request)
     {
-        await service.UpdateProduct(request);
+        await service.UpdateProduct(id, request);
         return Ok();
     }
 }

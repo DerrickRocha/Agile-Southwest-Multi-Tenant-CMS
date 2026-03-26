@@ -1,3 +1,4 @@
+using AgileSouthwestCMSAPI.Api.Requests.Products;
 using AgileSouthwestCMSAPI.Application.DTOs.Products;
 using AgileSouthwestCMSAPI.Application.Interfaces;
 using AgileSouthwestCMSAPI.Extensions;
@@ -55,9 +56,17 @@ public class ProductsService(ITenantContext context, CmsDbContext database, bool
         return product == null ? throw new InvalidOperationException("Product not found.") : product.ToProductResult();
     }
 
-    public async Task<ProductResult> UpdateProduct(UpdateProductRequest request)
+    public async Task<ProductResult> UpdateProduct(int id, UpdateProductRequest request)
     {
-        return new ProductResult();
+        var tenant = context.Tenant ?? throw new UnauthorizedAccessException("Tenant not resolved.");
+        var product = await database.Products.FirstOrDefaultAsync(p => p.Id == id && p.TenantId == tenant.Id);
+        if (product == null) throw new InvalidOperationException("Product not found.");
+        
+        database.Update(product);
+        
+        await database.SaveChangesAsync();
+        
+        return product.ToProductResult();
     }
 
     public async Task<ProductResult> DeleteProduct()
