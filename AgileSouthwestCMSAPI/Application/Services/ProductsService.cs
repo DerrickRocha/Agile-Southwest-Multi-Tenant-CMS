@@ -39,7 +39,11 @@ public class ProductsService(ITenantContext context, CmsDbContext database) : IP
 
     public async Task<ProductResult> GetProduct(int id)
     {
-        return new ProductResult();
+        var tenant = context.Tenant
+                     ?? throw new UnauthorizedAccessException("Tenant not resolved.");
+        
+        var product = await database.Products.FirstOrDefaultAsync(p => p.Id == id && p.TenantId == tenant.Id);
+        return product == null ? throw new InvalidOperationException("Product not found.") : product.ToProductResult();
     }
 
     public async Task<ProductResult> UpdateProduct(UpdateProductRequest request)
