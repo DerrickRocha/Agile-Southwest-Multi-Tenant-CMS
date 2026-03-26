@@ -15,7 +15,10 @@ public class ProductsController(IProductsService service) : ControllerBase
     public async Task<IActionResult> Create([FromBody] CreateProductRequest request)
     {
         var result = await service.CreateProduct(request);
-        return Ok(result);
+        return CreatedAtAction(
+            nameof(Create),
+            result
+        );
     }
 
     [HttpGet]
