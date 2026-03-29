@@ -15,8 +15,7 @@ public class ProductsService(ITenantContext context, CmsDbContext database, bool
                      ?? throw new UnauthorizedAccessException("Tenant not resolved.");
         var strategy = database.Database.CreateExecutionStrategy();
 
-        var requiresBasePrice = request.Options.Any(o => o.Choices.Any(c => c.PriceDelta == 0));
-        if (requiresBasePrice && request.BasePrice <= 0) throw new InvalidOperationException("Base price must be greater than 0");
+        CheckFields(request);
 
         if (skipTransactionsForTesting) return await WriteProduct(request, tenant.Id);
         

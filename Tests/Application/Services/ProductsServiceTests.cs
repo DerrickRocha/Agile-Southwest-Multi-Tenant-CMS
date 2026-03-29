@@ -1,4 +1,4 @@
-using AgileSouthwestCMSAPI.Application.DTOs.Products;
+using AgileSouthwestCMSAPI.Api.Requests.Products;
 using AgileSouthwestCMSAPI.Application.Interfaces;
 using AgileSouthwestCMSAPI.Application.Services;
 using AgileSouthwestCMSAPI.Domain.Entities;
@@ -7,7 +7,6 @@ using Microsoft.EntityFrameworkCore;
 using Moq;
 using Xunit;
 using Assert = Xunit.Assert;
-using CreateProductRequest = AgileSouthwestCMSAPI.Application.DTOs.Products.CreateProductRequest;
 
 namespace Tests.Application.Services;
 
@@ -32,13 +31,13 @@ public class ProductsServiceTests
 
         var service = new ProductsService(tenantContext.Object, db);
 
-        var request = new CreateProductRequest
+        var request = new ProductRequest
         {
             Name = "Test",
             Description = "Test",
             BasePrice = 1000,
             IsActive = true,
-            ProductOptions = []
+            Options = []
         };
 
         await Assert.ThrowsAsync<UnauthorizedAccessException>(
@@ -63,20 +62,20 @@ public class ProductsServiceTests
 
         var service = new ProductsService(tenantContext.Object, db);
 
-        var request = new CreateProductRequest
+        var request = new ProductRequest
         {
             Name = "Test",
             Description = "Test",
             BasePrice = 0,
             IsActive = true,
-            ProductOptions =
+            Options = 
             [
-                new CreateProductOptionRequest
+                new ProductOptionRequest
                 {
                     Name = "Size",
-                    ProductOptionChoices = 
+                    Choices = 
                     [
-                        new CreateProductOptionChoice()
+                        new ProductOptionChoiceRequest()
                         {
                             Name = "Small",
                             PriceDelta = 0,
@@ -111,20 +110,20 @@ public class ProductsServiceTests
 
         var service = new ProductsService(tenantContext.Object, db, true);
 
-        var request = new CreateProductRequest
+        var request = new ProductRequest
         {
             Name = "Coffee",
             Description = "Fresh coffee",
             BasePrice = 1000,
             IsActive = true,
-            ProductOptions =
+            Options = 
             [
-                new CreateProductOptionRequest
+                new ProductOptionRequest
                 {
                     Name = "Size",
-                    ProductOptionChoices =
+                    Choices = 
                     [
-                        new CreateProductOptionChoice
+                        new ProductOptionChoiceRequest
                         {
                             Name = "Small",
                             PriceDelta = 100,

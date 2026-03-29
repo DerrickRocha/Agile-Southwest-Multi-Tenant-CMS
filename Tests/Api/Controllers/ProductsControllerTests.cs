@@ -1,4 +1,5 @@
 using AgileSouthwestCMSAPI.Api.Controllers;
+using AgileSouthwestCMSAPI.Api.Requests.Products;
 using AgileSouthwestCMSAPI.Application.DTOs.Products;
 using AgileSouthwestCMSAPI.Application.Interfaces;
 using AgileSouthwestCMSAPI.Application.Services;
@@ -18,13 +19,13 @@ public class ProductsControllerTests
     [Fact]
     public async Task Create_ReturnsOk_With_Product()
     {
-        var request = new CreateProductRequest
+        var request = new ProductRequest
         {
             Name = "Test Product",
             Description = "Test Description",
             BasePrice = 1000,
             IsActive = true,
-            ProductOptions = []
+            Options = []
         };
 
         var result = new ProductResult
