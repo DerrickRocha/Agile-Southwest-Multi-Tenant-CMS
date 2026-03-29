@@ -85,6 +85,7 @@ builder.Services
             RoleClaimType = "cognito:groups",
             ValidAudience = builder.Configuration["Cognito:Audience"],
             ValidateLifetime = true
+            
         };
     });
 

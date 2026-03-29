@@ -64,8 +64,9 @@ public class ProductsService(ITenantContext context, CmsDbContext database, bool
         CheckFields(request);
         product.Name = request.Name;
         product.Description = request.Description;
-        
-        database.Update(product);
+        product.BasePriceCents = request.BasePrice;
+        product.IsActive = request.IsActive?? false;
+        product.ProductOptions = request.ToProductOptions();
         
         await database.SaveChangesAsync();
         
@@ -75,6 +76,11 @@ public class ProductsService(ITenantContext context, CmsDbContext database, bool
     private void CheckFields(ProductRequest request)
     {
         if(string.IsNullOrWhiteSpace(request.Name)) throw new InvalidOperationException("Name is required.");
+
+        if (request.IsActive == null)
+        {
+            throw new InvalidOperationException("Is Active is required.");
+        }
         
         var optionNameRequired = request.Options.Any(o => string.IsNullOrWhiteSpace(o.Name));
         if (optionNameRequired) throw new InvalidOperationException("Option name is required.");

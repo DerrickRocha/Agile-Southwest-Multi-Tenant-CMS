@@ -22,7 +22,7 @@ public class ProductsController(IProductsService service) : ControllerBase
         );
     }
 
-    [HttpGet]
+    [HttpGet("{id:int}")]
     public async Task<IActionResult> Get(int id)
     {
         var result = await service.GetProduct(id);
@@ -39,7 +39,7 @@ public class ProductsController(IProductsService service) : ControllerBase
     [HttpPut("{id:int}")]
     public async Task<IActionResult> Update(int id, [FromBody] ProductRequest request)
     {
-        await service.UpdateProduct(id, request);
-        return Ok();
+        var result = await service.UpdateProduct(id, request);
+        return Ok(result);
     }
 }
