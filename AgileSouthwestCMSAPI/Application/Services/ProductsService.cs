@@ -9,13 +9,13 @@ namespace AgileSouthwestCMSAPI.Application.Services;
 
 public class ProductsService(ITenantContext context, CmsDbContext database, bool skipTransactionsForTesting = false) : IProductsService
 {
-    public async Task<ProductResult> CreateProduct(CreateProductRequest request)
+    public async Task<ProductResult> CreateProduct(ProductRequest request)
     {
         var tenant = context.Tenant
                      ?? throw new UnauthorizedAccessException("Tenant not resolved.");
         var strategy = database.Database.CreateExecutionStrategy();
 
-        var requiresBasePrice = request.ProductOptions.Any(o => o.ProductOptionChoices.Any(c => c.PriceDelta == 0));
+        var requiresBasePrice = request.Options.Any(o => o.Choices.Any(c => c.PriceDelta == 0));
         if (requiresBasePrice && request.BasePrice <= 0) throw new InvalidOperationException("Base price must be greater than 0");
 
         if (skipTransactionsForTesting) return await WriteProduct(request, tenant.Id);
@@ -39,7 +39,7 @@ public class ProductsService(ITenantContext context, CmsDbContext database, bool
         });
     }
 
-    private async Task<ProductResult> WriteProduct(CreateProductRequest request, int tenantId)
+    private async Task<ProductResult> WriteProduct(ProductRequest request, int tenantId)
     {
         var product = request.ToProduct(tenantId);
         database.Products.Add(product);

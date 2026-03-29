@@ -1,5 +1,4 @@
 using AgileSouthwestCMSAPI.Api.Requests.Products;
-using AgileSouthwestCMSAPI.Application.DTOs.Products;
 using AgileSouthwestCMSAPI.Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -13,7 +12,7 @@ namespace AgileSouthwestCMSAPI.Api.Controllers;
 public class ProductsController(IProductsService service) : ControllerBase
 {
     [HttpPost]
-    public async Task<IActionResult> Create([FromBody] CreateProductRequest request)
+    public async Task<IActionResult> Create([FromBody] ProductRequest request)
     {
         var result = await service.CreateProduct(request);
         return CreatedAtAction(

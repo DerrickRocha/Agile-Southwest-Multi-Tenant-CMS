@@ -26,5 +26,38 @@ public static class ProductRequestExtensions
             );
             return options.ToArray();
         }
+        
+        public Product ToProduct(int tenantId)
+        {
+            var options = request.Options.Select(option =>
+                {
+                    var choices = option.Choices.Select(optionChoice => new ProductOptionChoice
+                    {
+                        Name = optionChoice.Name,
+                        PriceDeltaCents = optionChoice.PriceDelta,
+                        SalePriceDeltaCents = optionChoice.SalePriceDelta,
+                        IsActive = optionChoice.IsActive ?? false
+                    });
+                    var productOption = new ProductOption
+                    {
+                        Name = option.Name,
+                        IsRequired = option.IsRequired ?? false,
+                        ProductOptionChoices = choices.ToList()
+                    };
+                    return productOption;
+                }
+            ).ToList();
+                
+            var product = new Product
+            {
+                TenantId = tenantId,
+                Name = request.Name,
+                Description = request.Description,
+                BasePriceCents = request.BasePrice,
+                IsActive = request.IsActive ?? false,
+                ProductOptions = options
+            };
+            return product;
+        }
     }
 }
