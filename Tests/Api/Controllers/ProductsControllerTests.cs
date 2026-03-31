@@ -42,7 +42,7 @@ public class ProductsControllerTests
         
         var response = await controller.Create(request);
         var createdResult = Assert.IsInstanceOfType<CreatedAtActionResult>(response);
-        Assert.AreEqual(nameof(ProductsController.Create), createdResult.ActionName);
+        Assert.AreEqual(nameof(ProductsController.Get), createdResult.ActionName);
         Assert.AreEqual(result, createdResult.Value);
         
 

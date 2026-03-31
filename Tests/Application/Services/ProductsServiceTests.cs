@@ -45,6 +45,75 @@ public class ProductsServiceTests
     }
 
     [Fact]
+    public async Task CreateProduct_ThrowsInvalidOperation_WhenNoName()
+    {
+        await using var db = CreateDb();
+
+        var tenant = new Tenant
+        {
+            Id = 1,
+            Name = "Tenant",
+            SubDomain = "tenant",
+        };
+
+        var tenantContext = new Mock<ITenantContext>();
+        tenantContext.SetupGet(x => x.Tenant).Returns(tenant);
+        
+        var service = new ProductsService(tenantContext.Object, db);
+
+        var request = new ProductRequest
+        {
+            Name = "",
+            Description = "Test",
+            BasePrice = 100,
+            IsActive = true,
+            Options = 
+            [
+                
+            ]
+        };
+
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => service.CreateProduct(request));
+        
+        Assert.Equal("Name is required.", ex.Message);
+    }
+    
+    [Fact]
+    public async Task CreateProduct_ThrowsInvalidOperation_WhenIsActiveRequiredAndMissing()
+    {
+        await using var db = CreateDb();
+
+        var tenant = new Tenant
+        {
+            Id = 1,
+            Name = "Tenant",
+            SubDomain = "tenant",
+        };
+
+        var tenantContext = new Mock<ITenantContext>();
+        tenantContext.SetupGet(x => x.Tenant).Returns(tenant);
+        
+        var service = new ProductsService(tenantContext.Object, db);
+
+        var request = new ProductRequest
+        {
+            Name = "Test",
+            Description = "Test",
+            BasePrice = 100,
+            Options = 
+            [
+                
+            ]
+        };
+
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => service.CreateProduct(request));
+        
+        Assert.Equal("IsActive is required.", ex.Message);
+    }
+
+    [Fact]
     public async Task CreateProduct_ThrowsInvalidOperation_WhenBasePriceRequiredAndMissing()
     {
 
@@ -89,7 +158,104 @@ public class ProductsServiceTests
         var ex = await Assert.ThrowsAsync<InvalidOperationException>(
             () => service.CreateProduct(request));
 
-        Assert.Equal("Base price must be greater than 0", ex.Message);
+        Assert.Equal("Base price must be greater than 0 if option choices don't have a price delta.", ex.Message);
+    }
+    
+    [Fact]
+    public async Task CreateProduct_ThrowsInvalidOperation_WhenOptionNameMissing()
+    {
+
+        await using var db = CreateDb();
+
+        var tenant = new Tenant
+        {
+            Id = 1,
+            Name = "Tenant",
+            SubDomain = "tenant",
+        };
+        
+
+        var tenantContext = new Mock<ITenantContext>();
+        tenantContext.SetupGet(x => x.Tenant).Returns(tenant);
+
+        var service = new ProductsService(tenantContext.Object, db);
+
+        var request = new ProductRequest
+        {
+            Name = "Test",
+            Description = "Test",
+            BasePrice = 0,
+            IsActive = true,
+            Options = 
+            [
+                new ProductOptionRequest
+                {
+                    Name = "",
+                    Choices = 
+                    [
+                        new ProductOptionChoiceRequest()
+                        {
+                            Name = "Small",
+                            PriceDelta = 100,
+                            SalePriceDelta = 0
+                        }
+                    ]
+                }
+            ]
+        };
+
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => service.CreateProduct(request));
+
+        Assert.Equal("Option name is required.", ex.Message);
+    }
+    
+    [Fact]
+    public async Task CreateProduct_ThrowsInvalidOperation_WhenOptionChoiceNameMissing()
+    {
+
+        await using var db = CreateDb();
+
+        var tenant = new Tenant
+        {
+            Id = 1,
+            Name = "Tenant",
+            SubDomain = "tenant",
+        };
+
+        var tenantContext = new Mock<ITenantContext>();
+        tenantContext.SetupGet(x => x.Tenant).Returns(tenant);
+
+        var service = new ProductsService(tenantContext.Object, db);
+
+        var request = new ProductRequest
+        {
+            Name = "Test",
+            Description = "Test",
+            BasePrice = 0,
+            IsActive = true,
+            Options = 
+            [
+                new ProductOptionRequest
+                {
+                    Name = "Size",
+                    Choices = 
+                    [
+                        new ProductOptionChoiceRequest()
+                        {
+                            Name = "",
+                            PriceDelta = 100,
+                            SalePriceDelta = 0
+                        }
+                    ]
+                }
+            ]
+        };
+
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => service.CreateProduct(request));
+
+        Assert.Equal("Option choice name is required.", ex.Message);
     }
 
     [Fact]

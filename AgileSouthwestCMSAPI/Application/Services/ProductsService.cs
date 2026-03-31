@@ -63,8 +63,8 @@ public class ProductsService(ITenantContext context, CmsDbContext database, bool
         CheckFields(request);
         product.Name = request.Name;
         product.Description = request.Description;
-        product.BasePriceCents = request.BasePrice;
-        product.IsActive = request.IsActive?? false;
+        product.BasePriceCents = request.BasePrice ?? throw new InvalidOperationException("Base price is required.");
+        product.IsActive = request.IsActive ?? throw new InvalidOperationException("IsActive is required.");
         product.ProductOptions = request.ToProductOptions();
         
         await database.SaveChangesAsync();
@@ -78,17 +78,29 @@ public class ProductsService(ITenantContext context, CmsDbContext database, bool
 
         if (request.IsActive == null)
         {
-            throw new InvalidOperationException("Is Active is required.");
+            throw new InvalidOperationException("IsActive is required.");
         }
         
-        var optionNameRequired = request.Options.Any(o => string.IsNullOrWhiteSpace(o.Name));
-        if (optionNameRequired) throw new InvalidOperationException("Option name is required.");
+        var options = request.Options;
+        if (options.Length == 0)
+        {
+            if (request.BasePrice <= 0) throw new InvalidOperationException("Base price must be greater than 0 if no options are provided.");
+        }
+        else
+        {
+            var optionNameRequired = options.Any(o => string.IsNullOrWhiteSpace(o.Name));
+            if (optionNameRequired) throw new InvalidOperationException("Option name is required.");
+            if (options.Any(productOptionRequest => productOptionRequest.Choices.Length == 0))
+            {
+                throw new InvalidOperationException("Option must have at least one choice.");
+            }
+            var optionChoiceNameRequired = options.Any(o => o.Choices.Any(c => string.IsNullOrWhiteSpace(c.Name)));
+            if (optionChoiceNameRequired) throw new InvalidOperationException("Option choice name is required.");
         
-        var optionChoiceNameRequired = request.Options.Any(o => o.Choices.Any(c => string.IsNullOrWhiteSpace(c.Name)));
-        if (optionChoiceNameRequired) throw new InvalidOperationException("Option choice name is required.");
-        
-        var requiresBasePrice = request.Options.Any(o => o.Choices.Any(c => c.PriceDelta == 0));
-        if (requiresBasePrice && request.BasePrice <= 0) throw new InvalidOperationException("Base price must be greater than 0");
+            var requiresBasePrice = options.Any(o => o.Choices.Any(c => c.PriceDelta == 0));
+            if (requiresBasePrice && request.BasePrice <= 0) throw new InvalidOperationException("Base price must be greater than 0 if option choices don't have a price delta."); 
+        }
+       
     }
 
     public async Task<ProductResult> DeleteProduct()

@@ -13,13 +13,13 @@ public static class ProductRequestExtensions
             
                 new ProductOption
                 {
-                    Name = o.Name,
+                    Name = o.Name ?? "",
                     IsRequired = o.IsRequired?? false,
                     ProductOptionChoices = o.Choices.Select(c => new ProductOptionChoice
                     {
-                        Name = c.Name,
-                        PriceDeltaCents = c.PriceDelta,
-                        SalePriceDeltaCents = c.SalePriceDelta,
+                        Name = c.Name ?? "",
+                        PriceDeltaCents = c.PriceDelta ?? 0,
+                        SalePriceDeltaCents = c.SalePriceDelta ?? 0,
                         IsActive = c.IsActive?? false
                     }).ToArray()
                 }
@@ -33,14 +33,14 @@ public static class ProductRequestExtensions
                 {
                     var choices = option.Choices.Select(optionChoice => new ProductOptionChoice
                     {
-                        Name = optionChoice.Name,
-                        PriceDeltaCents = optionChoice.PriceDelta,
-                        SalePriceDeltaCents = optionChoice.SalePriceDelta,
+                        Name = optionChoice.Name ?? "",
+                        PriceDeltaCents = optionChoice.PriceDelta ?? 0,
+                        SalePriceDeltaCents = optionChoice.SalePriceDelta ?? 0,
                         IsActive = optionChoice.IsActive ?? false
                     });
                     var productOption = new ProductOption
                     {
-                        Name = option.Name,
+                        Name = option.Name ?? "",
                         IsRequired = option.IsRequired ?? false,
                         ProductOptionChoices = choices.ToList()
                     };
@@ -51,9 +51,9 @@ public static class ProductRequestExtensions
             var product = new Product
             {
                 TenantId = tenantId,
-                Name = request.Name,
-                Description = request.Description,
-                BasePriceCents = request.BasePrice,
+                Name = request.Name ?? "",
+                Description = request.Description ?? "",
+                BasePriceCents = request.BasePrice?? 0,
                 IsActive = request.IsActive ?? false,
                 ProductOptions = options
             };

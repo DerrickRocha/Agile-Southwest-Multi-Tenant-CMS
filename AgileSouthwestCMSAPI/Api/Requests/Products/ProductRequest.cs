@@ -4,12 +4,11 @@ namespace AgileSouthwestCMSAPI.Api.Requests.Products;
 
 public class ProductRequest
 {
-    public string Name { set; get;}
-    public string Description { set; get;}
-    public int BasePrice { set; get;}
+    public string? Name { set; get;}
+    public string? Description { set; get;}
+    public int? BasePrice { set; get;}
     
-    [Required]
     public bool? IsActive { set; get; }
-    
-    public ProductOptionRequest[] Options { set; get;}
+
+    public ProductOptionRequest[] Options { set; get; }
 }

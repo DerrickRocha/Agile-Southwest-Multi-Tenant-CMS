@@ -16,7 +16,8 @@ public class ProductsController(IProductsService service) : ControllerBase
     {
         var result = await service.CreateProduct(request);
         return CreatedAtAction(
-            nameof(Create),
+            nameof(Get),
+            new { id = result.Id },
             result
         );
     }
