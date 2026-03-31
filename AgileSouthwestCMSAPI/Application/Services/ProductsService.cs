@@ -1,31 +1,34 @@
 using AgileSouthwestCMSAPI.Api.Requests.Products;
 using AgileSouthwestCMSAPI.Application.DTOs.Products;
 using AgileSouthwestCMSAPI.Application.Interfaces;
+using AgileSouthwestCMSAPI.Domain.Entities;
 using AgileSouthwestCMSAPI.Extensions;
 using AgileSouthwestCMSAPI.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
 namespace AgileSouthwestCMSAPI.Application.Services;
 
-public class ProductsService(ITenantContext context, CmsDbContext database, bool skipTransactionsForTesting = false) : IProductsService
+public class ProductsService(ITenantContext context, CmsDbContext database, bool skipTransactionsForTesting = false)
+    : IProductsService
 {
     public async Task<ProductResult> CreateProduct(ProductRequest request)
     {
         var tenant = context.Tenant
                      ?? throw new UnauthorizedAccessException("Tenant not resolved.");
+
+        ValidateProductRequest(request);
+
         var strategy = database.Database.CreateExecutionStrategy();
 
-        CheckFields(request);
+        if (skipTransactionsForTesting)
+            return await WriteProduct(request, tenant.Id);
 
-        if (skipTransactionsForTesting) return await WriteProduct(request, tenant.Id);
-        
         return await strategy.ExecuteAsync(async () =>
         {
             await using var transaction = await database.Database.BeginTransactionAsync();
 
             try
             {
-
                 var result = await WriteProduct(request, tenant.Id);
                 await transaction.CommitAsync();
                 return result;
@@ -38,11 +41,27 @@ public class ProductsService(ITenantContext context, CmsDbContext database, bool
         });
     }
 
-    private async Task<ProductResult> WriteProduct(ProductRequest request, int tenantId)
+    public async Task<ProductResult> UpdateProduct(int id, ProductRequest request)
     {
-        var product = request.ToProduct(tenantId);
-        database.Products.Add(product);
+        var tenant = context.Tenant
+                     ?? throw new UnauthorizedAccessException("Tenant not resolved.");
+
+        ValidateProductRequest(request);
+
+        var product = await database.Products
+            .FirstOrDefaultAsync(p => p.Id == id && p.TenantId == tenant.Id);
+
+        if (product is null)
+            throw new KeyNotFoundException("Product not found.");
+
+        product.Name = request.Name!;
+        product.Description = request.Description!;
+        product.BasePriceCents = request.BasePrice!.Value;
+        product.IsActive = request.IsActive!.Value;
+        product.ProductOptions = MapToProductOptions(request.Options!);
+
         await database.SaveChangesAsync();
+
         return product.ToProductResult();
     }
 
@@ -50,57 +69,12 @@ public class ProductsService(ITenantContext context, CmsDbContext database, bool
     {
         var tenant = context.Tenant
                      ?? throw new UnauthorizedAccessException("Tenant not resolved.");
-        
-        var product = await database.Products.FirstOrDefaultAsync(p => p.Id == id && p.TenantId == tenant.Id);
+
+        var product = await database.Products
+            .Include(p  => p.ProductOptions)
+            .ThenInclude(po => po.ProductOptionChoices)
+            .FirstOrDefaultAsync(p => p.Id == id && p.TenantId == tenant.Id);
         return product == null ? throw new InvalidOperationException("Product not found.") : product.ToProductResult();
-    }
-
-    public async Task<ProductResult> UpdateProduct(int id, ProductRequest request)
-    {
-        var tenant = context.Tenant ?? throw new UnauthorizedAccessException("Tenant not resolved.");
-        var product = await database.Products.FirstOrDefaultAsync(p => p.Id == id && p.TenantId == tenant.Id);
-        if (product == null) throw new InvalidOperationException("Product not found.");
-        CheckFields(request);
-        product.Name = request.Name;
-        product.Description = request.Description;
-        product.BasePriceCents = request.BasePrice ?? throw new InvalidOperationException("Base price is required.");
-        product.IsActive = request.IsActive ?? throw new InvalidOperationException("IsActive is required.");
-        product.ProductOptions = request.ToProductOptions();
-        
-        await database.SaveChangesAsync();
-        
-        return product.ToProductResult();
-    }
-
-    private void CheckFields(ProductRequest request)
-    {
-        if(string.IsNullOrWhiteSpace(request.Name)) throw new InvalidOperationException("Name is required.");
-
-        if (request.IsActive == null)
-        {
-            throw new InvalidOperationException("IsActive is required.");
-        }
-        
-        var options = request.Options;
-        if (options.Length == 0)
-        {
-            if (request.BasePrice <= 0) throw new InvalidOperationException("Base price must be greater than 0 if no options are provided.");
-        }
-        else
-        {
-            var optionNameRequired = options.Any(o => string.IsNullOrWhiteSpace(o.Name));
-            if (optionNameRequired) throw new InvalidOperationException("Option name is required.");
-            if (options.Any(productOptionRequest => productOptionRequest.Choices.Length == 0))
-            {
-                throw new InvalidOperationException("Option must have at least one choice.");
-            }
-            var optionChoiceNameRequired = options.Any(o => o.Choices.Any(c => string.IsNullOrWhiteSpace(c.Name)));
-            if (optionChoiceNameRequired) throw new InvalidOperationException("Option choice name is required.");
-        
-            var requiresBasePrice = options.Any(o => o.Choices.Any(c => c.PriceDelta == 0));
-            if (requiresBasePrice && request.BasePrice <= 0) throw new InvalidOperationException("Base price must be greater than 0 if option choices don't have a price delta."); 
-        }
-       
     }
 
     public async Task<ProductResult> DeleteProduct()
@@ -111,5 +85,90 @@ public class ProductsService(ITenantContext context, CmsDbContext database, bool
     public async Task<IEnumerable<ProductResult>> GetProducts()
     {
         return new List<ProductResult>();
+    }
+
+    private static void ValidateProductRequest(ProductRequest request)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        if (string.IsNullOrWhiteSpace(request.Name))
+            throw new ArgumentException("Name is required.", nameof(request.Name));
+
+        if (string.IsNullOrWhiteSpace(request.Description))
+            throw new ArgumentException("Description is required.", nameof(request.Description));
+
+        if (request.BasePrice is null)
+            throw new ArgumentException("Base price is required.", nameof(request.BasePrice));
+
+        if (request.IsActive is null)
+            throw new ArgumentException("IsActive is required.", nameof(request.IsActive));
+
+        var options = request.Options ?? [];
+
+        if (options.Any(o => o is null))
+            throw new ArgumentException("Options cannot contain null items.", nameof(request.Options));
+
+        foreach (var option in options)
+        {
+            if (string.IsNullOrWhiteSpace(option!.Name))
+                throw new ArgumentException("Option name is required.", nameof(request.Options));
+
+            var choices = option.Choices ?? [];
+
+            if (choices.Any(c => c is null))
+                throw new ArgumentException("Choices cannot contain null items.", nameof(request.Options));
+
+            if (choices.Length == 0)
+                throw new ArgumentException("Option must have at least one choice.", nameof(request.Options));
+
+            foreach (var choice in choices)
+            {
+                if (string.IsNullOrWhiteSpace(choice!.Name))
+                    throw new ArgumentException("Option choice name is required.", nameof(request.Options));
+
+                if (choice.PriceDelta is null)
+                    throw new ArgumentException("PriceDelta is required.", nameof(request.Options));
+
+                if (choice.SalePriceDelta is null)
+                    throw new ArgumentException("SalePriceDelta is required.", nameof(request.Options));
+
+                if (choice.IsActive is null)
+                    throw new ArgumentException("Option choice IsActive is required.", nameof(request.Options));
+            }
+        }
+    }
+    
+    private static ProductOption[] MapToProductOptions(ProductOptionRequest[] options)
+    {
+        return options.Select(option => new ProductOption
+        {
+            Name = option!.Name!,
+            IsRequired = option.IsRequired!.Value,
+            ProductOptionChoices = (option.Choices ?? []).Select(choice => new ProductOptionChoice
+            {
+                Name = choice!.Name!,
+                PriceDeltaCents = choice.PriceDelta!.Value,
+                SalePriceDeltaCents = choice.SalePriceDelta!.Value,
+                IsActive = choice.IsActive!.Value
+            }).ToArray()
+        }).ToArray();
+    }
+    
+    private async Task<ProductResult> WriteProduct(ProductRequest request, int tenantId)
+    {
+        var product = new Product
+        {
+            TenantId = tenantId,
+            Name = request.Name!,
+            Description = request.Description!,
+            BasePriceCents = request.BasePrice!.Value,
+            IsActive = request.IsActive!.Value,
+            ProductOptions = MapToProductOptions(request.Options!)
+        };
+
+        database.Products.Add(product);
+        await database.SaveChangesAsync();
+
+        return product.ToProductResult();
     }
 }
