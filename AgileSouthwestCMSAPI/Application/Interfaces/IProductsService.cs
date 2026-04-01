@@ -10,4 +10,5 @@ public interface IProductsService
     public Task<ProductResult> UpdateProduct(int id, ProductRequest request);
     public Task<ProductResult> DeleteProduct();
     public Task<IEnumerable<ProductResult>> GetProducts();
+    Task<ProductResult> PatchProduct(int id, PatchProductRequest request);
 }

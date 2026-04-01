@@ -71,7 +71,7 @@ public class ProductsService(ITenantContext context, CmsDbContext database, bool
                      ?? throw new UnauthorizedAccessException("Tenant not resolved.");
 
         var product = await database.Products
-            .Include(p  => p.ProductOptions)
+            .Include(p => p.ProductOptions)
             .ThenInclude(po => po.ProductOptionChoices)
             .FirstOrDefaultAsync(p => p.Id == id && p.TenantId == tenant.Id);
         return product == null ? throw new InvalidOperationException("Product not found.") : product.ToProductResult();
@@ -87,57 +87,157 @@ public class ProductsService(ITenantContext context, CmsDbContext database, bool
         return new List<ProductResult>();
     }
 
+    public async Task<ProductResult> PatchProduct(int id, PatchProductRequest request)
+    {
+        var tenant = context.Tenant
+                     ?? throw new UnauthorizedAccessException("Tenant not resolved.");
+
+        ArgumentNullException.ThrowIfNull(request);
+
+        var product = await database.Products
+            .Include(p => p.ProductOptions)
+            .ThenInclude(o => o.ProductOptionChoices)
+            .FirstOrDefaultAsync(p => p.Id == id && p.TenantId == tenant.Id);
+
+        if (product is null)
+            throw new KeyNotFoundException("Product not found.");
+
+        if (request.Name is not null)
+        {
+            if (string.IsNullOrWhiteSpace(request.Name))
+                throw new ArgumentException("Name cannot be empty.", nameof(request));
+
+            product.Name = request.Name;
+        }
+
+        if (request.Description is not null)
+        {
+            if (string.IsNullOrWhiteSpace(request.Description))
+                throw new ArgumentException("Description cannot be empty.", nameof(request));
+
+            product.Description = request.Description;
+        }
+
+        if (request.BasePrice is not null)
+        {
+            if (request.BasePrice < 0)
+                throw new ArgumentException("Base price cannot be negative.", nameof(request));
+
+            product.BasePriceCents = request.BasePrice.Value;
+        }
+
+        if (request.IsActive is not null)
+        {
+            product.IsActive = request.IsActive.Value;
+        }
+
+        if (request.Options is not null)
+        {
+            product.ProductOptions = request.Options.Select(option =>
+            {
+                if (option is null)
+                    throw new ArgumentException("Options cannot contain null items.", nameof(request));
+
+                if (string.IsNullOrWhiteSpace(option.Name))
+                    throw new ArgumentException("Option name is required.", nameof(request));
+
+                if (option.Choices is null)
+                    throw new ArgumentException("Choices are required for each option.", nameof(request));
+
+                if (option.Choices.Length == 0)
+                    throw new ArgumentException("Option must have at least one choice.", nameof(request));
+
+                var choices = option.Choices.Select(choice =>
+                {
+                    if (choice is null)
+                        throw new ArgumentException("Choices cannot contain null items.", nameof(request));
+
+                    if (string.IsNullOrWhiteSpace(choice.Name))
+                        throw new ArgumentException("Option choice name is required.", nameof(request));
+
+                    if (choice.PriceDelta is null)
+                        throw new ArgumentException("PriceDelta is required.", nameof(request));
+
+                    if (choice.SalePriceDelta is null)
+                        throw new ArgumentException("SalePriceDelta is required.", nameof(request));
+
+                    if (choice.IsActive is null)
+                        throw new ArgumentException("Option choice IsActive is required.", nameof(request));
+
+                    return new ProductOptionChoice
+                    {
+                        Name = choice.Name,
+                        PriceDeltaCents = choice.PriceDelta.Value,
+                        SalePriceDeltaCents = choice.SalePriceDelta.Value,
+                        IsActive = choice.IsActive.Value
+                    };
+                }).ToList();
+
+                return new ProductOption
+                {
+                    Name = option.Name,
+                    IsRequired = option.IsRequired ?? false,
+                    ProductOptionChoices = choices
+                };
+            }).ToList();
+        }
+
+        await database.SaveChangesAsync();
+
+        return product.ToProductResult();
+    }
+
     private static void ValidateProductRequest(ProductRequest request)
     {
         ArgumentNullException.ThrowIfNull(request);
 
         if (string.IsNullOrWhiteSpace(request.Name))
-            throw new ArgumentException("Name is required.", nameof(request.Name));
+            throw new ArgumentException("Name is required.", nameof(request));
 
         if (string.IsNullOrWhiteSpace(request.Description))
-            throw new ArgumentException("Description is required.", nameof(request.Description));
+            throw new ArgumentException("Description is required.", nameof(request));
 
         if (request.BasePrice is null)
-            throw new ArgumentException("Base price is required.", nameof(request.BasePrice));
+            throw new ArgumentException("Base price is required.", nameof(request));
 
         if (request.IsActive is null)
-            throw new ArgumentException("IsActive is required.", nameof(request.IsActive));
+            throw new ArgumentException("IsActive is required.", nameof(request));
 
         var options = request.Options ?? [];
 
         if (options.Any(o => o is null))
-            throw new ArgumentException("Options cannot contain null items.", nameof(request.Options));
+            throw new ArgumentException("Options cannot contain null items.", nameof(request));
 
         foreach (var option in options)
         {
             if (string.IsNullOrWhiteSpace(option!.Name))
-                throw new ArgumentException("Option name is required.", nameof(request.Options));
+                throw new ArgumentException("Option name is required.", nameof(request));
 
             var choices = option.Choices ?? [];
 
             if (choices.Any(c => c is null))
-                throw new ArgumentException("Choices cannot contain null items.", nameof(request.Options));
+                throw new ArgumentException("Choices cannot contain null items.", nameof(request));
 
             if (choices.Length == 0)
-                throw new ArgumentException("Option must have at least one choice.", nameof(request.Options));
+                throw new ArgumentException("Option must have at least one choice.", nameof(request));
 
             foreach (var choice in choices)
             {
                 if (string.IsNullOrWhiteSpace(choice!.Name))
-                    throw new ArgumentException("Option choice name is required.", nameof(request.Options));
+                    throw new ArgumentException("Option choice name is required.", nameof(request));
 
                 if (choice.PriceDelta is null)
-                    throw new ArgumentException("PriceDelta is required.", nameof(request.Options));
+                    throw new ArgumentException("PriceDelta is required.", nameof(request));
 
                 if (choice.SalePriceDelta is null)
-                    throw new ArgumentException("SalePriceDelta is required.", nameof(request.Options));
+                    throw new ArgumentException("SalePriceDelta is required.", nameof(request));
 
                 if (choice.IsActive is null)
-                    throw new ArgumentException("Option choice IsActive is required.", nameof(request.Options));
+                    throw new ArgumentException("Option choice IsActive is required.", nameof(request));
             }
         }
     }
-    
+
     private static ProductOption[] MapToProductOptions(ProductOptionRequest[] options)
     {
         return options.Select(option => new ProductOption
@@ -153,7 +253,7 @@ public class ProductsService(ITenantContext context, CmsDbContext database, bool
             }).ToArray()
         }).ToArray();
     }
-    
+
     private async Task<ProductResult> WriteProduct(ProductRequest request, int tenantId)
     {
         var product = new Product
