@@ -319,4 +319,192 @@ public class ProductsServiceTests
         Assert.Single(product.ProductOptions.ToList()[0].ProductOptionChoices);
         Assert.Equal("Small", product.ProductOptions.ToList()[0].ProductOptionChoices.ToList()[0].Name);
     }
+    
+    [Fact]
+    public async Task UpdateProduct_UpdatesProductAndReturnsResult()
+    {
+        await using var db = CreateDb();
+
+        var tenant = new Tenant
+        {
+            Id = 1,
+            Name = "Tenant",
+            SubDomain = "tenant"
+        };
+
+        db.Products.Add(new Product
+        {
+            Id = 10,
+            TenantId = tenant.Id,
+            Name = "Old Name",
+            Description = "Old Description",
+            BasePriceCents = 500,
+            IsActive = false,
+            ProductOptions = []
+        });
+        await db.SaveChangesAsync();
+
+        var tenantContext = new Mock<ITenantContext>();
+        tenantContext.SetupGet(x => x.Tenant).Returns(tenant);
+
+        var service = new ProductsService(tenantContext.Object, db);
+
+        var request = new ProductRequest
+        {
+            Name = "New Name",
+            Description = "New Description",
+            BasePrice = 1000,
+            IsActive = true,
+            Options =
+            [
+                new ProductOptionRequest
+                {
+                    Name = "Size",
+                    IsRequired = true,
+                    Choices =
+                    [
+                        new ProductOptionChoiceRequest
+                        {
+                            Name = "Small",
+                            PriceDelta = 0,
+                            SalePriceDelta = 0,
+                            IsActive = true
+                        }
+                    ]
+                }
+            ]
+        };
+
+        var result = await service.UpdateProduct(10, request);
+
+        Assert.NotNull(result);
+        Assert.Equal("New Name", result.Name);
+        Assert.Equal("New Description", result.Description);
+        Assert.Equal(1000, result.BasePrice);
+        Assert.True(result.IsActive);
+
+        var updatedProduct = await db.Products
+            .Include(p => p.ProductOptions)
+            .ThenInclude(o => o.ProductOptionChoices)
+            .SingleAsync(p => p.Id == 10);
+
+        Assert.Equal("New Name", updatedProduct.Name);
+        Assert.Equal("New Description", updatedProduct.Description);
+        Assert.Equal(1000, updatedProduct.BasePriceCents);
+        Assert.True(updatedProduct.IsActive);
+        Assert.Single(updatedProduct.ProductOptions);
+        Assert.Single(updatedProduct.ProductOptions.First().ProductOptionChoices);
+    }
+
+    [Fact]
+    public async Task UpdateProduct_ThrowsKeyNotFound_WhenProductMissing()
+    {
+        await using var db = CreateDb();
+
+        var tenant = new Tenant
+        {
+            Id = 1,
+            Name = "Tenant",
+            SubDomain = "tenant"
+        };
+
+        var tenantContext = new Mock<ITenantContext>();
+        tenantContext.SetupGet(x => x.Tenant).Returns(tenant);
+
+        var service = new ProductsService(tenantContext.Object, db);
+
+        var request = new ProductRequest
+        {
+            Name = "New Name",
+            Description = "New Description",
+            BasePrice = 1000,
+            IsActive = true,
+            Options = []
+        };
+
+        var ex = await Assert.ThrowsAsync<KeyNotFoundException>(
+            () => service.UpdateProduct(999, request));
+
+        Assert.Equal("Product not found.", ex.Message);
+    }
+
+    [Fact]
+    public async Task GetProduct_ReturnsProductResult()
+    {
+        await using var db = CreateDb();
+
+        var tenant = new Tenant
+        {
+            Id = 1,
+            Name = "Tenant",
+            SubDomain = "tenant"
+        };
+
+        db.Products.Add(new Product
+        {
+            Id = 10,
+            TenantId = tenant.Id,
+            Name = "Coffee",
+            Description = "Fresh coffee",
+            BasePriceCents = 1000,
+            IsActive = true,
+            ProductOptions =
+            [
+                new ProductOption
+                {
+                    Name = "Size",
+                    IsRequired = true,
+                    ProductOptionChoices =
+                    [
+                        new ProductOptionChoice
+                        {
+                            Name = "Small",
+                            PriceDeltaCents = 0,
+                            SalePriceDeltaCents = 0,
+                            IsActive = true
+                        }
+                    ]
+                }
+            ]
+        });
+        await db.SaveChangesAsync();
+
+        var tenantContext = new Mock<ITenantContext>();
+        tenantContext.SetupGet(x => x.Tenant).Returns(tenant);
+
+        var service = new ProductsService(tenantContext.Object, db);
+
+        var result = await service.GetProduct(10);
+
+        Assert.NotNull(result);
+        Assert.Equal("Coffee", result.Name);
+        Assert.Equal("Fresh coffee", result.Description);
+        Assert.Equal(1000, result.BasePrice);
+        Assert.True(result.IsActive);
+        Assert.Single(result.ProductOptions);
+        Assert.Single(result.ProductOptions.First().ProductOptionChoices);
+    }
+
+    [Fact]
+    public async Task GetProduct_ThrowsInvalidOperation_WhenProductMissing()
+    {
+        await using var db = CreateDb();
+
+        var tenant = new Tenant
+        {
+            Id = 1,
+            Name = "Tenant",
+            SubDomain = "tenant"
+        };
+
+        var tenantContext = new Mock<ITenantContext>();
+        tenantContext.SetupGet(x => x.Tenant).Returns(tenant);
+
+        var service = new ProductsService(tenantContext.Object, db);
+
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => service.GetProduct(999));
+
+        Assert.Equal("Product not found.", ex.Message);
+    }
 }
