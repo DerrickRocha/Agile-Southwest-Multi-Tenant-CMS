@@ -1,10 +1,9 @@
-
 namespace AgileSouthwestCMSAPI.Api.Requests.Products;
 
 public record PatchProductRequest(
-    string? Name,
-    string? Description,
-    int? BasePrice,
-    bool? IsActive,
-    ProductOptionRequest[]? Options
+    string? Name = null,
+    string? Description = null,
+    int? BasePrice = null,
+    bool? IsActive = null,
+    PatchProductOptionRequest[]? Options = null
 );

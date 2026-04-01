@@ -171,7 +171,7 @@ public class ProductsService(ITenantContext context, CmsDbContext database, bool
                         SalePriceDeltaCents = choice.SalePriceDelta.Value,
                         IsActive = choice.IsActive.Value
                     };
-                }).ToArray();
+                }).ToList();
 
                 return new ProductOption
                 {
@@ -179,7 +179,7 @@ public class ProductsService(ITenantContext context, CmsDbContext database, bool
                     IsRequired = option.IsRequired ?? false,
                     ProductOptionChoices = choices
                 };
-            }).ToArray();
+            }).ToList();
         }
 
         await database.SaveChangesAsync();
