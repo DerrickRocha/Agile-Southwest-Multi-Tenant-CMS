@@ -46,7 +46,9 @@ public class ProductsController(IProductsService service) : ControllerBase
     [HttpPatch("{id:int}")]
     public async Task<IActionResult> Patch(int id, [FromBody] PatchProductRequest request)
     {
-        return Ok();
+        var result = await service.PatchProduct(id, request);
+        return Ok(result);
+        
     }
     
 }
