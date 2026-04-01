@@ -36,6 +36,10 @@ public class ExceptionHandlingMiddleware(RequestDelegate next)
         {
             await WriteProblem(context, StatusCodes.Status400BadRequest, "Bad Request", ex.Message);
         }
+        catch (ArgumentException ex)
+        {
+            await WriteProblem(context, StatusCodes.Status400BadRequest, "Bad Request", ex.Message);
+        }
         catch
         {
             await WriteProblem(context, StatusCodes.Status500InternalServerError, "Internal Server Error", "An unexpected error occurred.");

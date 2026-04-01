@@ -1,5 +1,4 @@
 using AgileSouthwestCMSAPI.Api.Requests.Products;
-using AgileSouthwestCMSAPI.Application.DTOs.Products;
 using AgileSouthwestCMSAPI.Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -13,16 +12,17 @@ namespace AgileSouthwestCMSAPI.Api.Controllers;
 public class ProductsController(IProductsService service) : ControllerBase
 {
     [HttpPost]
-    public async Task<IActionResult> Create([FromBody] CreateProductRequest request)
+    public async Task<IActionResult> Create([FromBody] ProductRequest request)
     {
         var result = await service.CreateProduct(request);
         return CreatedAtAction(
-            nameof(Create),
+            nameof(Get),
+            new { id = result.Id },
             result
         );
     }
 
-    [HttpGet]
+    [HttpGet("{id:int}")]
     public async Task<IActionResult> Get(int id)
     {
         var result = await service.GetProduct(id);
@@ -37,9 +37,9 @@ public class ProductsController(IProductsService service) : ControllerBase
     }
 
     [HttpPut("{id:int}")]
-    public async Task<IActionResult> Update(int id, [FromBody] UpdateProductRequest request)
+    public async Task<IActionResult> Update(int id, [FromBody] ProductRequest request)
     {
-        await service.UpdateProduct(id, request);
-        return Ok();
+        var result = await service.UpdateProduct(id, request);
+        return Ok(result);
     }
 }
