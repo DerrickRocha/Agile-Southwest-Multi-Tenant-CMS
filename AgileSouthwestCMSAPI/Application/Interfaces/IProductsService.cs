@@ -9,6 +9,6 @@ public interface IProductsService
     public Task<ProductResult> GetProduct(int id);
     public Task<ProductResult> UpdateProduct(int id, ProductRequest request);
     public Task<ProductResult> DeleteProduct();
-    public Task<PagedResult<ProductListItemResult>> GetProducts(int page = 1, int pageSize = 20);
+    public Task<PagedResult<ProductListItemResult>> GetProducts(GetProductsQuery query);
     Task<ProductResult> PatchProduct(int id, PatchProductRequest request);
 }
