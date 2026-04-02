@@ -82,9 +82,57 @@ public class ProductsService(ITenantContext context, CmsDbContext database, bool
         return new ProductResult();
     }
 
-    public async Task<IEnumerable<ProductResult>> GetProducts()
+    public async Task<PagedResult<ProductListItemResult>> GetProducts(GetProductsQuery query)
     {
-        return new List<ProductResult>();
+        var tenant = context.Tenant
+                     ?? throw new UnauthorizedAccessException("Tenant not resolved.");
+
+        if (query.Page < 1)
+            throw new ArgumentException("Page must be greater than 0.", nameof(query.Page));
+
+        if (query.PageSize < 1)
+            throw new ArgumentException("Page size must be greater than 0.", nameof(query.PageSize));
+
+        const int maxPageSize = 100;
+        var pageSize = Math.Min(query.PageSize, maxPageSize);
+
+        var products = database.Products
+            .AsNoTracking()
+            .Where(p => p.TenantId == tenant.Id);
+
+        if (!string.IsNullOrWhiteSpace(query.Search))
+        {
+            var search = query.Search.Trim();
+
+            products = products.Where(p =>
+                p.Name.Contains(search) ||
+                p.Description.Contains(search));
+        }
+
+        if (query.IsActive is not null)
+        {
+            products = products.Where(p => p.IsActive == query.IsActive.Value);
+        }
+
+        var totalCount = await products.CountAsync();
+
+        var items = await products
+            .OrderBy(p => p.Name)
+            .ThenBy(p => p.Id)
+            .Skip((query.Page - 1) * pageSize)
+            .Take(pageSize)
+            .Select(p => new ProductListItemResult(
+                p.Id,
+                p.Name,
+                p.BasePriceCents,
+                p.IsActive))
+            .ToListAsync();
+
+        return new PagedResult<ProductListItemResult>(
+            items,
+            query.Page,
+            pageSize,
+            totalCount);
     }
 
     public async Task<ProductResult> PatchProduct(int id, PatchProductRequest request)

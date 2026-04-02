@@ -29,6 +29,13 @@ public class ProductsController(IProductsService service) : ControllerBase
         return Ok(result);
     }
 
+    [HttpGet]
+    public async Task<IActionResult> GetAll([FromQuery] GetProductsQuery query)
+    {
+        var result = await service.GetProducts(query);
+        return Ok(result);
+    }
+
     [HttpDelete]
     public async Task<IActionResult> Delete(int id)
     {
