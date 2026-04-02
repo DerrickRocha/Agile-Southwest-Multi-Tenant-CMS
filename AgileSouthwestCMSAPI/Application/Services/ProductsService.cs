@@ -82,9 +82,39 @@ public class ProductsService(ITenantContext context, CmsDbContext database, bool
         return new ProductResult();
     }
 
-    public async Task<IEnumerable<ProductResult>> GetProducts()
+    public async Task<PagedResult<ProductListItemResult>> GetProducts(int page = 1, int pageSize = 20)
     {
-        return new List<ProductResult>();
+        var tenant = context.Tenant
+                     ?? throw new UnauthorizedAccessException("Tenant not resolved.");
+
+        if (page < 1)
+            throw new ArgumentException("Page must be greater than 0.", nameof(page));
+
+        if (pageSize < 1)
+            throw new ArgumentException("Page size must be greater than 0.", nameof(pageSize));
+
+        const int maxPageSize = 100;
+        if (pageSize > maxPageSize)
+            pageSize = maxPageSize;
+
+        var query = database.Products
+            .AsNoTracking()
+            .Where(p => p.TenantId == tenant.Id);
+
+        var totalCount = await query.CountAsync();
+
+        var items = await query
+            .OrderBy(p => p.Id)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .Select(p => new ProductListItemResult(
+                p.Id,
+                p.Name,
+                p.BasePriceCents,
+                p.IsActive))
+            .ToListAsync();
+
+        return new PagedResult<ProductListItemResult>(items, page, pageSize, totalCount);
     }
 
     public async Task<ProductResult> PatchProduct(int id, PatchProductRequest request)
