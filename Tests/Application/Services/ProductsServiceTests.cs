@@ -724,4 +724,172 @@ public class ProductsServiceTests
         await Assert.ThrowsAsync<UnauthorizedAccessException>(
             () => service.PatchProduct(10, request));
     }
+    
+    [Fact]
+    public async Task GetProducts_ReturnsOnlyCurrentTenantsProducts()
+    {
+        await using var db = CreateDb();
+
+        var tenant = new Tenant
+        {
+            Id = 1,
+            Name = "Tenant",
+            SubDomain = "tenant"
+        };
+
+        var otherTenant = new Tenant
+        {
+            Id = 2,
+            Name = "Other Tenant",
+            SubDomain = "other"
+        };
+
+        db.Products.AddRange(
+            new Product
+            {
+                Id = 1,
+                TenantId = tenant.Id,
+                Name = "Coffee",
+                Description = "Fresh coffee",
+                BasePriceCents = 1000,
+                IsActive = true
+            },
+            new Product
+            {
+                Id = 2,
+                TenantId = tenant.Id,
+                Name = "Tea",
+                Description = "Green tea",
+                BasePriceCents = 700,
+                IsActive = true
+            },
+            new Product
+            {
+                Id = 3,
+                TenantId = otherTenant.Id,
+                Name = "Milk",
+                Description = "Whole milk",
+                BasePriceCents = 500,
+                IsActive = true
+            }
+        );
+
+        await db.SaveChangesAsync();
+
+        var tenantContext = new Mock<ITenantContext>();
+        tenantContext.SetupGet(x => x.Tenant).Returns(tenant);
+
+        var service = new ProductsService(tenantContext.Object, db);
+
+        var result = await service.GetProducts();
+
+        Assert.NotNull(result);
+        Assert.Equal(2, result.TotalCount);
+        Assert.Equal(2, result.Items.Count);
+        Assert.All(result.Items, item => Assert.NotEqual(3, item.Id));
+    }
+
+    [Fact]
+    public async Task GetProducts_ReturnsPagedResults()
+    {
+        await using var db = CreateDb();
+
+        var tenant = new Tenant
+        {
+            Id = 1,
+            Name = "Tenant",
+            SubDomain = "tenant"
+        };
+
+        for (var i = 1; i <= 5; i++)
+        {
+            db.Products.Add(new Product
+            {
+                Id = i,
+                TenantId = tenant.Id,
+                Name = $"Product {i}",
+                Description = $"Description {i}",
+                BasePriceCents = i * 100,
+                IsActive = true
+            });
+        }
+
+        await db.SaveChangesAsync();
+
+        var tenantContext = new Mock<ITenantContext>();
+        tenantContext.SetupGet(x => x.Tenant).Returns(tenant);
+
+        var service = new ProductsService(tenantContext.Object, db);
+
+        var result = await service.GetProducts(page: 2, pageSize: 2);
+
+        Assert.Equal(2, result.Page);
+        Assert.Equal(2, result.PageSize);
+        Assert.Equal(5, result.TotalCount);
+        Assert.Equal(2, result.Items.Count);
+
+        Assert.Equal("Product 3", result.Items[0].Name);
+        Assert.Equal("Product 4", result.Items[1].Name);
+    }
+
+    [Fact]
+    public async Task GetProducts_ReturnsEmptyList_WhenTenantHasNoProducts()
+    {
+        await using var db = CreateDb();
+
+        var tenant = new Tenant
+        {
+            Id = 1,
+            Name = "Tenant",
+            SubDomain = "tenant"
+        };
+
+        var tenantContext = new Mock<ITenantContext>();
+        tenantContext.SetupGet(x => x.Tenant).Returns(tenant);
+
+        var service = new ProductsService(tenantContext.Object, db);
+
+        var result = await service.GetProducts();
+
+        Assert.NotNull(result);
+        Assert.Equal(0, result.TotalCount);
+        Assert.Empty(result.Items);
+    }
+
+    [Fact]
+    public async Task GetProducts_ThrowsUnauthorized_WhenTenantMissing()
+    {
+        await using var db = CreateDb();
+
+        var tenantContext = new Mock<ITenantContext>();
+        tenantContext.SetupGet(x => x.Tenant).Returns((Tenant?)null);
+
+        var service = new ProductsService(tenantContext.Object, db);
+
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(
+            () => service.GetProducts());
+    }
+
+    [Fact]
+    public async Task GetProducts_ThrowsArgumentException_WhenPageIsInvalid()
+    {
+        await using var db = CreateDb();
+
+        var tenant = new Tenant
+        {
+            Id = 1,
+            Name = "Tenant",
+            SubDomain = "tenant"
+        };
+
+        var tenantContext = new Mock<ITenantContext>();
+        tenantContext.SetupGet(x => x.Tenant).Returns(tenant);
+
+        var service = new ProductsService(tenantContext.Object, db);
+
+        var ex = await Assert.ThrowsAsync<ArgumentException>(
+            () => service.GetProducts(page: 0, pageSize: 20));
+
+        Assert.Contains("Page must be greater than 0.", ex.Message);
+    }
 }
