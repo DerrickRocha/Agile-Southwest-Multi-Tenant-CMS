@@ -108,18 +108,19 @@ public class ProductsService(ITenantContext context, CmsDbContext database, bool
             .ThenInclude(po => po.ProductOptionChoices)
             .FirstOrDefaultAsync(p => p.Id == id && p.TenantId == tenantId);
         if (product is null) throw new KeyNotFoundException("Product not found.");
+        var now = DateTime.UtcNow;
         
         product.IsDeleted = true;
-        product.DeletedAt = DateTime.UtcNow;
+        product.DeletedAt = now;
 
         foreach (var option in product.ProductOptions)
         {
             option.IsDeleted = true;
-            option.DeletedAt = DateTime.UtcNow;
+            option.DeletedAt = now;
             foreach (var choice in option.ProductOptionChoices)
             {
                 choice.IsDeleted = true;
-                choice.DeletedAt = DateTime.UtcNow;
+                choice.DeletedAt = now;
             }
         }
         await database.SaveChangesAsync();
