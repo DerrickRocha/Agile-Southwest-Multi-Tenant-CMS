@@ -77,9 +77,17 @@ public class ProductsService(ITenantContext context, CmsDbContext database, bool
         return product == null ? throw new InvalidOperationException("Product not found.") : product.ToProductResult();
     }
 
-    public async Task<ProductResult> DeleteProduct()
+    public async Task<ProductResult> DeleteProduct(int id)
     {
-        return new ProductResult();
+        var tenant = context.Tenant ?? throw new UnauthorizedAccessException("Tenant not resolved.");
+        var product = await database.Products.FirstOrDefaultAsync(p => p.Id == id && p.TenantId == tenant.Id);
+        if (product is null) throw new KeyNotFoundException("Product not found.");
+        
+        product.IsDeleted = true;
+        product.DeletedAt = DateTime.UtcNow;
+        await database.SaveChangesAsync();
+        
+        return product.ToProductResult();
     }
 
     public async Task<PagedResult<ProductListItemResult>> GetProducts(GetProductsQuery query)
