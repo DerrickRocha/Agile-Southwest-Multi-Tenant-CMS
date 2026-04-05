@@ -21,6 +21,12 @@ public class ProductOption
 
     [Column("is_required")] 
     public bool IsRequired { get; set; } = true;
+    
+    [Column("is_deleted")]
+    public bool IsDeleted { get; set; }
+    
+    [Column("deleted_at")]
+    public DateTime? DeletedAt { get; set; }
 
     public Product Product { get; set; } = null!;
     
