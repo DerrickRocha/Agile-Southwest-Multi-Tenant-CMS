@@ -77,37 +77,41 @@ public class ProductsService(ITenantContext context, CmsDbContext database, bool
         return product == null ? throw new InvalidOperationException("Product not found.") : product.ToProductResult();
     }
 
-    public async Task<ProductResult> DeleteProduct(int id)
+    public async Task DeleteProduct(int id)
     {
         var tenant = context.Tenant ?? throw new UnauthorizedAccessException("Tenant not resolved.");
         var strategy = database.Database.CreateExecutionStrategy();
         if (skipTransactionsForTesting)
         {
-            return await DeleteProductFromDb(id, tenant.Id);
+            await DeleteProductFromDb(id, tenant.Id);
         }
-        return await strategy.ExecuteAsync(async () =>
+        else
         {
-            await using var transaction = await database.Database.BeginTransactionAsync();
-            try
+            await strategy.ExecuteAsync(async () =>
             {
-                var result = await DeleteProductFromDb(id, tenant.Id);
-                await transaction.CommitAsync();
-                return result;
-            } catch
-            {
-                await transaction.RollbackAsync();
-                throw;
-            }
-        });
+                await using var transaction = await database.Database.BeginTransactionAsync();
+                try
+                {
+                    await DeleteProductFromDb(id, tenant.Id);
+                    await transaction.CommitAsync();
+                } catch
+                {
+                    await transaction.RollbackAsync();
+                    throw;
+                }
+            });  
+        }
     }
 
-    private async Task<ProductResult> DeleteProductFromDb(int id, int tenantId)
+    private async Task DeleteProductFromDb(int id, int tenantId)
     {
         var product = await database.Products
             .Include(p =>  p.ProductOptions)
             .ThenInclude(po => po.ProductOptionChoices)
             .FirstOrDefaultAsync(p => p.Id == id && p.TenantId == tenantId);
         if (product is null) throw new KeyNotFoundException("Product not found.");
+        if (product.IsDeleted) throw new InvalidOperationException("Product already deleted.");
+        
         var now = DateTime.UtcNow;
         
         product.IsDeleted = true;
@@ -124,7 +128,6 @@ public class ProductsService(ITenantContext context, CmsDbContext database, bool
             }
         }
         await database.SaveChangesAsync();
-        return product.ToProductResult();
     }
 
     public async Task<PagedResult<ProductListItemResult>> GetProducts(GetProductsQuery query)
