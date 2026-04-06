@@ -115,6 +115,14 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
                 .HasColumnType("DATETIME(6)")
                 .HasDefaultValueSql("CURRENT_TIMESTAMP(6)")
                 .IsRequired();
+            
+            entity.Property(p => p.DeletedAt)
+                .HasColumnName("deleted_at")
+                .HasColumnType("DATETIME(6)");
+            
+            entity.Property(p => p.IsDeleted)
+                .HasColumnName("is_deleted")
+                .IsRequired();
         });
 
         builder.Entity<ProductOption>(entity =>
@@ -151,6 +159,14 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
                 .HasColumnName("updated_at")
                 .HasColumnType("DATETIME(6)")
                 .HasDefaultValueSql("CURRENT_TIMESTAMP(6)");
+            
+            entity.Property(o => o.DeletedAt)
+                .HasColumnName("deleted_at")
+                .HasColumnType("DATETIME(6)");
+            
+            entity.Property(o => o.IsDeleted)
+                .HasColumnName("is_deleted")
+                .IsRequired();
         });
         
         builder.Entity<ProductOptionChoice>(entity =>
@@ -194,6 +210,14 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
             
             entity.Property(o => o.IsActive)
                 .HasColumnName("is_active")
+                .IsRequired();
+            
+            entity.Property(o => o.DeletedAt)
+                .HasColumnName("deleted_at")
+                .HasColumnType("DATETIME(6)");
+
+            entity.Property(o => o.IsDeleted)
+                .HasColumnName("is_deleted")
                 .IsRequired();
         });
 
