@@ -71,10 +71,50 @@ public class ProductsService(ITenantContext context, CmsDbContext database, bool
                      ?? throw new UnauthorizedAccessException("Tenant not resolved.");
 
         var product = await database.Products
-            .Include(p => p.ProductOptions)
-            .ThenInclude(po => po.ProductOptionChoices)
-            .FirstOrDefaultAsync(p => p.Id == id && p.TenantId == tenant.Id);
-        return product == null ? throw new InvalidOperationException("Product not found.") : product.ToProductResult();
+            .AsNoTracking()
+            .Where(p => p.Id == id && p.TenantId == tenant.Id && !p.IsDeleted)
+            .Select(p => new ProductResult
+            {
+                Id = p.Id,
+                TenantId = p.TenantId,
+                Name = p.Name,
+                Description = p.Description,
+                BasePrice = p.BasePriceCents,
+                IsActive = p.IsActive,
+                CreatedAt = p.CreatedAt,
+                UpdatedAt = p.UpdatedAt,
+
+                ProductOptions = p.ProductOptions
+                    .Where(po => po.IsRequired && !po.IsDeleted) 
+                    .Select(po => new ProductOptionResult
+                    {
+                        Id = po.Id,
+                        ProductId = po.ProductId,
+                        Name = po.Name,
+                        IsRequired = po.IsRequired,
+                        CreatedAt = po.CreatedAt,
+                        UpdatedAt = po.UpdatedAt,
+
+                        ProductOptionChoices = po.ProductOptionChoices
+                            .Where(poc => poc.IsActive && !poc.IsDeleted)
+                            .Select(poc => new ProductOptionChoiceResult
+                            {
+                                Id = poc.Id,
+                                ProductOptionId = poc.ProductOptionId,
+                                Name = poc.Name,
+                                PriceDelta = poc.PriceDeltaCents,
+                                SalePriceDelta = poc.SalePriceDeltaCents,
+                                IsActive = poc.IsActive,
+                                CreatedAt = poc.CreatedAt,
+                                UpdatedAt = poc.UpdatedAt,
+                            })
+                            .ToArray()
+                    })
+                    .ToArray()
+            })
+            .FirstOrDefaultAsync();
+
+        return product ?? throw new InvalidOperationException("Product not found.");
     }
 
     public async Task DeleteProduct(int id)
@@ -146,7 +186,9 @@ public class ProductsService(ITenantContext context, CmsDbContext database, bool
 
         var products = database.Products
             .AsNoTracking()
-            .Where(p => p.TenantId == tenant.Id);
+            .Include(p => p.ProductOptions.Where(o => !o.IsDeleted))
+            .ThenInclude(po => po.ProductOptionChoices.Where(c => !c.IsDeleted))
+            .Where(p => p.TenantId == tenant.Id && !p.IsDeleted);
 
         if (!string.IsNullOrWhiteSpace(query.Search))
         {
