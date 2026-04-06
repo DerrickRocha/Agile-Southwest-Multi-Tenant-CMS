@@ -29,4 +29,8 @@ public class Tenant
     public byte[]? RowVersion { get; set; }
     
     // Navigation
-    public ICollection<UserTenant> UserTenants { get; set; } = new List<UserTenant>();}
+    public ICollection<UserTenant> UserTenants { get; set; } = new List<UserTenant>();
+    public ICollection<Product> Products { get; set; } = new List<Product>();
+}
+    
+    

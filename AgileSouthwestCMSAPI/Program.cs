@@ -144,6 +144,7 @@ builder.Services.AddScoped<ICmsUserContext, CmsUserContext>();
 // Application services
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ITenantsService, TenantsService>();
+builder.Services.AddScoped<IProductsService, ProductsService>();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddOpenApi();

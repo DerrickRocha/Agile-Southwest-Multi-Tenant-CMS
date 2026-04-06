@@ -27,4 +27,10 @@
     <ItemGroup>
         <ProjectReference Include="..\AgileSouthwestCMSAPI\AgileSouthwestCMSAPI.csproj" />
     </ItemGroup>
+
+    <ItemGroup>
+      <Reference Include="AgileSouthwestCMS">
+        <HintPath>..\..\AgileSouthwestCMS\publish\AgileSouthwestCMS.dll</HintPath>
+      </Reference>
+    </ItemGroup>
 </Project>
