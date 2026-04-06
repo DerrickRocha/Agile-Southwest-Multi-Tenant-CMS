@@ -19,10 +19,23 @@ public class ProductsControllerTests
     public async Task GetAll_ReturnsOk_WithPagedResults()
     {
         var query = new GetProductsQuery(Page: 1, PageSize: 20);
-        var result = new PagedResult<ProductListItemResult>(
+        var result = new PagedResult<ProductResult>(
             [
-                new ProductListItemResult(1, "Coffee", 1000, true),
-                new ProductListItemResult(2, "Tea", 700, true)
+                new ProductResult()
+                {
+                    Id = 1,
+                    Name = "Product 1",
+                    Description = "Description 1",
+                    BasePrice = 1000,
+                    IsActive = true
+                },
+                new ProductResult()
+                {
+                    Id = 2,
+                    Name = "Product 2",
+                    Description = "Description 2",
+                    BasePrice = 2000,
+                }
             ],
             1,
             20,

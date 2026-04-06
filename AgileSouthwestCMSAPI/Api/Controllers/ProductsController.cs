@@ -36,11 +36,11 @@ public class ProductsController(IProductsService service) : ControllerBase
         return Ok(result);
     }
 
-    [HttpDelete]
+    [HttpDelete("{id:int}")]
     public async Task<IActionResult> Delete(int id)
     {
-        var result = await service.DeleteProduct();
-        return Ok();
+        await service.DeleteProduct(id);
+        return NoContent();
     }
 
     [HttpPut("{id:int}")]

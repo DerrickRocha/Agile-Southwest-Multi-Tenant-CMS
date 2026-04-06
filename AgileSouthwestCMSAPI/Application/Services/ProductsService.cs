@@ -71,18 +71,106 @@ public class ProductsService(ITenantContext context, CmsDbContext database, bool
                      ?? throw new UnauthorizedAccessException("Tenant not resolved.");
 
         var product = await database.Products
-            .Include(p => p.ProductOptions)
-            .ThenInclude(po => po.ProductOptionChoices)
-            .FirstOrDefaultAsync(p => p.Id == id && p.TenantId == tenant.Id);
-        return product == null ? throw new InvalidOperationException("Product not found.") : product.ToProductResult();
+            .AsNoTracking()
+            .Where(p => p.Id == id && p.TenantId == tenant.Id && !p.IsDeleted && p.IsActive)
+            .Select(p => new ProductResult
+            {
+                Id = p.Id,
+                TenantId = p.TenantId,
+                Name = p.Name,
+                Description = p.Description,
+                BasePrice = p.BasePriceCents,
+                IsActive = p.IsActive,
+                CreatedAt = p.CreatedAt,
+                UpdatedAt = p.UpdatedAt,
+
+                ProductOptions = p.ProductOptions
+                    .Where(po => po.IsRequired && !po.IsDeleted) 
+                    .Select(po => new ProductOptionResult
+                    {
+                        Id = po.Id,
+                        ProductId = po.ProductId,
+                        Name = po.Name,
+                        IsRequired = po.IsRequired,
+                        CreatedAt = po.CreatedAt,
+                        UpdatedAt = po.UpdatedAt,
+
+                        ProductOptionChoices = po.ProductOptionChoices
+                            .Where(poc => poc.IsActive && !poc.IsDeleted)
+                            .Select(poc => new ProductOptionChoiceResult
+                            {
+                                Id = poc.Id,
+                                ProductOptionId = poc.ProductOptionId,
+                                Name = poc.Name,
+                                PriceDelta = poc.PriceDeltaCents,
+                                SalePriceDelta = poc.SalePriceDeltaCents,
+                                IsActive = poc.IsActive,
+                                CreatedAt = poc.CreatedAt,
+                                UpdatedAt = poc.UpdatedAt,
+                            })
+                            .ToArray()
+                    })
+                    .ToArray()
+            })
+            .FirstOrDefaultAsync();
+
+        return product ?? throw new InvalidOperationException("Product not found.");
     }
 
-    public async Task<ProductResult> DeleteProduct()
+    public async Task DeleteProduct(int id)
     {
-        return new ProductResult();
+        var tenant = context.Tenant ?? throw new UnauthorizedAccessException("Tenant not resolved.");
+        var strategy = database.Database.CreateExecutionStrategy();
+        if (skipTransactionsForTesting)
+        {
+            await DeleteProductFromDb(id, tenant.Id);
+        }
+        else
+        {
+            await strategy.ExecuteAsync(async () =>
+            {
+                await using var transaction = await database.Database.BeginTransactionAsync();
+                try
+                {
+                    await DeleteProductFromDb(id, tenant.Id);
+                    await transaction.CommitAsync();
+                } catch
+                {
+                    await transaction.RollbackAsync();
+                    throw;
+                }
+            });  
+        }
     }
 
-    public async Task<PagedResult<ProductListItemResult>> GetProducts(GetProductsQuery query)
+    private async Task DeleteProductFromDb(int id, int tenantId)
+    {
+        var product = await database.Products
+            .Include(p =>  p.ProductOptions)
+            .ThenInclude(po => po.ProductOptionChoices)
+            .FirstOrDefaultAsync(p => p.Id == id && p.TenantId == tenantId);
+        if (product is null) throw new KeyNotFoundException("Product not found.");
+        if (product.IsDeleted) throw new InvalidOperationException("Product already deleted.");
+        
+        var now = DateTime.UtcNow;
+        
+        product.IsDeleted = true;
+        product.DeletedAt = now;
+
+        foreach (var option in product.ProductOptions)
+        {
+            option.IsDeleted = true;
+            option.DeletedAt = now;
+            foreach (var choice in option.ProductOptionChoices)
+            {
+                choice.IsDeleted = true;
+                choice.DeletedAt = now;
+            }
+        }
+        await database.SaveChangesAsync();
+    }
+
+    public async Task<PagedResult<ProductResult>> GetProducts(GetProductsQuery query)
     {
         var tenant = context.Tenant
                      ?? throw new UnauthorizedAccessException("Tenant not resolved.");
@@ -96,39 +184,67 @@ public class ProductsService(ITenantContext context, CmsDbContext database, bool
         const int maxPageSize = 100;
         var pageSize = Math.Min(query.PageSize, maxPageSize);
 
-        var products = database.Products
+        var result = database.Products
             .AsNoTracking()
-            .Where(p => p.TenantId == tenant.Id);
+            .Where(p => p.TenantId == tenant.Id && !p.IsDeleted && p.IsActive)
+            .Select(p => new ProductResult()
+            {
+                Id = p.Id,
+                TenantId = p.TenantId,
+                Name = p.Name,
+                Description = p.Description,
+                BasePrice = p.BasePriceCents,
+                IsActive = p.IsActive,
+                CreatedAt = p.CreatedAt,
+                UpdatedAt = p.UpdatedAt,
+                ProductOptions = p.ProductOptions.Select(o => new ProductOptionResult
+                {
+                    Id = o.Id,
+                    ProductId = o.ProductId,
+                    Name = o.Name,
+                    IsRequired = o.IsRequired,
+                    CreatedAt = o.CreatedAt,
+                    UpdatedAt = o.UpdatedAt,
+                    ProductOptionChoices = o.ProductOptionChoices.Select(c => 
+                        new ProductOptionChoiceResult
+                        {
+                            Id = c.Id,
+                            ProductOptionId = c.ProductOptionId,
+                            Name = c.Name,
+                            PriceDelta = c.PriceDeltaCents,
+                            SalePriceDelta = c.SalePriceDeltaCents,
+                            IsActive = c.IsActive,
+                            CreatedAt = c.CreatedAt,
+                            UpdatedAt = c.UpdatedAt
+                        }
+                    ).ToArray()
+                }).ToArray()
+            });
 
         if (!string.IsNullOrWhiteSpace(query.Search))
         {
             var search = query.Search.Trim();
 
-            products = products.Where(p =>
+            result = result.Where(p =>
                 p.Name.Contains(search) ||
                 p.Description.Contains(search));
         }
 
         if (query.IsActive is not null)
         {
-            products = products.Where(p => p.IsActive == query.IsActive.Value);
+            result = result.Where(p => p.IsActive == query.IsActive.Value);
         }
 
-        var totalCount = await products.CountAsync();
+        var totalCount = await result.CountAsync();
 
-        var items = await products
+        var items = await result
             .OrderBy(p => p.Name)
             .ThenBy(p => p.Id)
             .Skip((query.Page - 1) * pageSize)
             .Take(pageSize)
-            .Select(p => new ProductListItemResult(
-                p.Id,
-                p.Name,
-                p.BasePriceCents,
-                p.IsActive))
             .ToListAsync();
 
-        return new PagedResult<ProductListItemResult>(
+        return new PagedResult<ProductResult>(
             items,
             query.Page,
             pageSize,

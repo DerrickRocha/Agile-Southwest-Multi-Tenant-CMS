@@ -726,7 +726,7 @@ public class ProductsServiceTests
     }
     
     [Fact]
-    public async Task GetProducts_ReturnsOnlyCurrentTenantsProducts()
+    public async Task GetProducts_ReturnsOnlyCurrentTenantsActiveProducts()
     {
         await using var db = CreateDb();
 
@@ -742,6 +742,15 @@ public class ProductsServiceTests
                 Description = "Fresh coffee",
                 BasePriceCents = 1000,
                 IsActive = true
+            },
+            new Product
+            {
+                Id = 3,
+                TenantId = tenant.Id,
+                Name = "Coffee",
+                Description = "Fresh coffee",
+                BasePriceCents = 1000,
+                IsActive = false
             },
             new Product
             {
@@ -912,5 +921,61 @@ public class ProductsServiceTests
 
         await Assert.ThrowsAsync<UnauthorizedAccessException>(
             () => service.GetProducts(new GetProductsQuery()));
+    }
+    
+    [Fact]
+    public async Task DeleteProduct_DeletesProduct()
+    {
+        var tenant = new Tenant { Id = 1, Name = "Tenant", SubDomain = "tenant" };
+
+        var tenantContext = new Mock<ITenantContext>();
+        tenantContext.SetupGet(x => x.Tenant).Returns(tenant);
+        await using var db = CreateDb();
+        var product = new Product { Id = 1, TenantId = tenant.Id, Name = "Product", IsDeleted = false, BasePriceCents = 100, IsActive = true, Description = "Description", ProductOptions = new List<ProductOption>()};
+        db.Products.Add(product);
+        await db.SaveChangesAsync();
+        
+        var service = new ProductsService(tenantContext.Object, db, true);
+        await service.DeleteProduct(1);
+        
+        var deletedProduct = await db.Products.SingleAsync(p => p.Id == 1);
+        Assert.True(deletedProduct.IsDeleted);
+    }
+    
+    [Fact]
+    public async Task DeleteProduct_ThrowsKeyNotFound_WhenProductMissing() {
+        var tenant = new Tenant { Id = 1, Name = "Tenant", SubDomain = "tenant" };
+        var tenantContext = new Mock<ITenantContext>();
+        tenantContext.SetupGet(x => x.Tenant).Returns(tenant);
+        await using var db = CreateDb();
+        var product = new Product { Id = 2, TenantId = tenant.Id, Name = "Product", IsDeleted = false, BasePriceCents = 100, IsActive = true, Description = "Description", ProductOptions = new List<ProductOption>()};
+        db.Products.Add(product);
+        await db.SaveChangesAsync();
+        
+        var service = new ProductsService(tenantContext.Object, db, true);
+        await Assert.ThrowsAsync<KeyNotFoundException>(() => service.DeleteProduct(1));
+    }
+    
+    [Fact]
+    public async Task DeleteProduct_ThrowsUnauthorized_WhenTenantMissing() {
+        var tenantContext = new Mock<ITenantContext>();
+        tenantContext.SetupGet(x => x.Tenant).Returns((Tenant?)null);
+        await using var db = CreateDb();
+        var product = new Product { Id = 1, TenantId = 1, Name = "Product", IsDeleted = false, BasePriceCents = 100, IsActive = true, Description = "Description", ProductOptions = new List<ProductOption>()};
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(() => new ProductsService(tenantContext.Object, db, true).DeleteProduct(1));
+    }
+    
+    [Fact]
+    public async Task DeleteProduct_ThrowsInvalidOperationException_WhenProductIsDeleted() {
+        var tenant = new Tenant { Id = 1, Name = "Tenant", SubDomain = "tenant" };
+        var tenantContext = new Mock<ITenantContext>();
+        tenantContext.SetupGet(x => x.Tenant).Returns(tenant);
+        await using var db = CreateDb();
+        var product = new Product { Id = 1, TenantId = tenant.Id, Name = "Product", IsDeleted = true, BasePriceCents = 100, IsActive = true, Description = "Description", ProductOptions = new List<ProductOption>()};
+        db.Products.Add(product);
+        await db.SaveChangesAsync();
+        
+        var service = new ProductsService(tenantContext.Object, db, true);
+        await Assert.ThrowsAsync<InvalidOperationException>(() => service.DeleteProduct(1));   
     }
 }

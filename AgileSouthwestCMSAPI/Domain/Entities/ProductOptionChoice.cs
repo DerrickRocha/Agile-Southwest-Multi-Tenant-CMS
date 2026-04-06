@@ -27,6 +27,12 @@ public class ProductOptionChoice
     
     [Column("updated_at")]
     public DateTime UpdatedAt { get; set; }
+    
+    [Column("is_deleted")]
+    public bool IsDeleted { get; set; }
+    
+    [Column("deleted_at")]
+    public DateTime? DeletedAt { get; set; }
 
     public ProductOption ProductOption { get; set; } = null!;
 }
