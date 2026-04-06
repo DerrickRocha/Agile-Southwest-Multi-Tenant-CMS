@@ -72,7 +72,7 @@ public class ProductsService(ITenantContext context, CmsDbContext database, bool
 
         var product = await database.Products
             .AsNoTracking()
-            .Where(p => p.Id == id && p.TenantId == tenant.Id && !p.IsDeleted)
+            .Where(p => p.Id == id && p.TenantId == tenant.Id && !p.IsDeleted && p.IsActive)
             .Select(p => new ProductResult
             {
                 Id = p.Id,
@@ -170,7 +170,7 @@ public class ProductsService(ITenantContext context, CmsDbContext database, bool
         await database.SaveChangesAsync();
     }
 
-    public async Task<PagedResult<ProductListItemResult>> GetProducts(GetProductsQuery query)
+    public async Task<PagedResult<ProductResult>> GetProducts(GetProductsQuery query)
     {
         var tenant = context.Tenant
                      ?? throw new UnauthorizedAccessException("Tenant not resolved.");
@@ -184,41 +184,67 @@ public class ProductsService(ITenantContext context, CmsDbContext database, bool
         const int maxPageSize = 100;
         var pageSize = Math.Min(query.PageSize, maxPageSize);
 
-        var products = database.Products
+        var result = database.Products
             .AsNoTracking()
-            .Include(p => p.ProductOptions.Where(o => !o.IsDeleted))
-            .ThenInclude(po => po.ProductOptionChoices.Where(c => !c.IsDeleted))
-            .Where(p => p.TenantId == tenant.Id && !p.IsDeleted);
+            .Where(p => p.TenantId == tenant.Id && !p.IsDeleted && p.IsActive)
+            .Select(p => new ProductResult()
+            {
+                Id = p.Id,
+                TenantId = p.TenantId,
+                Name = p.Name,
+                Description = p.Description,
+                BasePrice = p.BasePriceCents,
+                IsActive = p.IsActive,
+                CreatedAt = p.CreatedAt,
+                UpdatedAt = p.UpdatedAt,
+                ProductOptions = p.ProductOptions.Select(o => new ProductOptionResult
+                {
+                    Id = o.Id,
+                    ProductId = o.ProductId,
+                    Name = o.Name,
+                    IsRequired = o.IsRequired,
+                    CreatedAt = o.CreatedAt,
+                    UpdatedAt = o.UpdatedAt,
+                    ProductOptionChoices = o.ProductOptionChoices.Select(c => 
+                        new ProductOptionChoiceResult
+                        {
+                            Id = c.Id,
+                            ProductOptionId = c.ProductOptionId,
+                            Name = c.Name,
+                            PriceDelta = c.PriceDeltaCents,
+                            SalePriceDelta = c.SalePriceDeltaCents,
+                            IsActive = c.IsActive,
+                            CreatedAt = c.CreatedAt,
+                            UpdatedAt = c.UpdatedAt
+                        }
+                    ).ToArray()
+                }).ToArray()
+            });
 
         if (!string.IsNullOrWhiteSpace(query.Search))
         {
             var search = query.Search.Trim();
 
-            products = products.Where(p =>
+            result = result.Where(p =>
                 p.Name.Contains(search) ||
                 p.Description.Contains(search));
         }
 
         if (query.IsActive is not null)
         {
-            products = products.Where(p => p.IsActive == query.IsActive.Value);
+            result = result.Where(p => p.IsActive == query.IsActive.Value);
         }
 
-        var totalCount = await products.CountAsync();
+        var totalCount = await result.CountAsync();
 
-        var items = await products
+        var items = await result
             .OrderBy(p => p.Name)
             .ThenBy(p => p.Id)
             .Skip((query.Page - 1) * pageSize)
             .Take(pageSize)
-            .Select(p => new ProductListItemResult(
-                p.Id,
-                p.Name,
-                p.BasePriceCents,
-                p.IsActive))
             .ToListAsync();
 
-        return new PagedResult<ProductListItemResult>(
+        return new PagedResult<ProductResult>(
             items,
             query.Page,
             pageSize,

@@ -726,7 +726,7 @@ public class ProductsServiceTests
     }
     
     [Fact]
-    public async Task GetProducts_ReturnsOnlyCurrentTenantsProducts()
+    public async Task GetProducts_ReturnsOnlyCurrentTenantsActiveProducts()
     {
         await using var db = CreateDb();
 
@@ -742,6 +742,15 @@ public class ProductsServiceTests
                 Description = "Fresh coffee",
                 BasePriceCents = 1000,
                 IsActive = true
+            },
+            new Product
+            {
+                Id = 3,
+                TenantId = tenant.Id,
+                Name = "Coffee",
+                Description = "Fresh coffee",
+                BasePriceCents = 1000,
+                IsActive = false
             },
             new Product
             {
