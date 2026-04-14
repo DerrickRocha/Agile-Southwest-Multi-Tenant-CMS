@@ -931,7 +931,7 @@ public class ProductsServiceTests
         var tenantContext = new Mock<ITenantContext>();
         tenantContext.SetupGet(x => x.Tenant).Returns(tenant);
         await using var db = CreateDb();
-        var product = new Product { Id = 1, TenantId = tenant.Id, Name = "Product", IsDeleted = false, BasePriceCents = 100, IsActive = true, Description = "Description", ProductOptions = new List<ProductOption>()};
+        var product = new Product { Id = 1, TenantId = tenant.Id, Name = "Product", BasePriceCents = 100, IsActive = true, Description = "Description", ProductOptions = new List<ProductOption>()};
         db.Products.Add(product);
         await db.SaveChangesAsync();
         
@@ -939,7 +939,7 @@ public class ProductsServiceTests
         await service.DeleteProduct(1);
         
         var deletedProduct = await db.Products.SingleAsync(p => p.Id == 1);
-        Assert.True(deletedProduct.IsDeleted);
+        Assert.NotNull(deletedProduct.DeletedAt);
     }
     
     [Fact]
@@ -948,7 +948,7 @@ public class ProductsServiceTests
         var tenantContext = new Mock<ITenantContext>();
         tenantContext.SetupGet(x => x.Tenant).Returns(tenant);
         await using var db = CreateDb();
-        var product = new Product { Id = 2, TenantId = tenant.Id, Name = "Product", IsDeleted = false, BasePriceCents = 100, IsActive = true, Description = "Description", ProductOptions = new List<ProductOption>()};
+        var product = new Product { Id = 2, TenantId = tenant.Id, Name = "Product", BasePriceCents = 100, IsActive = true, Description = "Description", ProductOptions = new List<ProductOption>()};
         db.Products.Add(product);
         await db.SaveChangesAsync();
         
@@ -961,7 +961,7 @@ public class ProductsServiceTests
         var tenantContext = new Mock<ITenantContext>();
         tenantContext.SetupGet(x => x.Tenant).Returns((Tenant?)null);
         await using var db = CreateDb();
-        var product = new Product { Id = 1, TenantId = 1, Name = "Product", IsDeleted = false, BasePriceCents = 100, IsActive = true, Description = "Description", ProductOptions = new List<ProductOption>()};
+        var product = new Product { Id = 1, TenantId = 1, Name = "Product", BasePriceCents = 100, IsActive = true, Description = "Description", ProductOptions = new List<ProductOption>()};
         await Assert.ThrowsAsync<UnauthorizedAccessException>(() => new ProductsService(tenantContext.Object, db, true).DeleteProduct(1));
     }
     
@@ -971,7 +971,7 @@ public class ProductsServiceTests
         var tenantContext = new Mock<ITenantContext>();
         tenantContext.SetupGet(x => x.Tenant).Returns(tenant);
         await using var db = CreateDb();
-        var product = new Product { Id = 1, TenantId = tenant.Id, Name = "Product", IsDeleted = true, BasePriceCents = 100, IsActive = true, Description = "Description", ProductOptions = new List<ProductOption>()};
+        var product = new Product { Id = 1, TenantId = tenant.Id, Name = "Product", BasePriceCents = 100, IsActive = true, Description = "Description", ProductOptions = new List<ProductOption>()};
         db.Products.Add(product);
         await db.SaveChangesAsync();
         
