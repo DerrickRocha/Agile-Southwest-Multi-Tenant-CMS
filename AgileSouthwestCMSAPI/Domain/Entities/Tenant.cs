@@ -1,6 +1,4 @@
-using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using AgileSouthwestCMSAPI.Domain.Enums;
 
 namespace AgileSouthwestCMSAPI.Domain.Entities;
 
@@ -31,6 +29,9 @@ public class Tenant
     // Navigation
     public ICollection<UserTenant> UserTenants { get; set; } = new List<UserTenant>();
     public ICollection<Product> Products { get; set; } = new List<Product>();
+    public ICollection<Store> Stores { get; set; } = new List<Store>();
+
+    public ICollection<Inventory> Inventory { get; set; } = new List<Inventory>();
 }
     
     

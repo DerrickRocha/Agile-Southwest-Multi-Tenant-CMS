@@ -72,7 +72,7 @@ public class ProductsService(ITenantContext context, CmsDbContext database, bool
 
         var product = await database.Products
             .AsNoTracking()
-            .Where(p => p.Id == id && p.TenantId == tenant.Id && !p.IsDeleted && p.IsActive)
+            .Where(p => p.Id == id && p.TenantId == tenant.Id && p.DeletedAt != null && p.IsActive)
             .Select(p => new ProductResult
             {
                 Id = p.Id,
@@ -85,7 +85,7 @@ public class ProductsService(ITenantContext context, CmsDbContext database, bool
                 UpdatedAt = p.UpdatedAt,
 
                 ProductOptions = p.ProductOptions
-                    .Where(po => po.IsRequired && !po.IsDeleted) 
+                    .Where(po => po.IsRequired && po.DeletedAt != null) 
                     .Select(po => new ProductOptionResult
                     {
                         Id = po.Id,
@@ -96,7 +96,7 @@ public class ProductsService(ITenantContext context, CmsDbContext database, bool
                         UpdatedAt = po.UpdatedAt,
 
                         ProductOptionChoices = po.ProductOptionChoices
-                            .Where(poc => poc.IsActive && !poc.IsDeleted)
+                            .Where(poc => poc.IsActive && poc.DeletedAt != null)
                             .Select(poc => new ProductOptionChoiceResult
                             {
                                 Id = poc.Id,
@@ -150,20 +150,17 @@ public class ProductsService(ITenantContext context, CmsDbContext database, bool
             .ThenInclude(po => po.ProductOptionChoices)
             .FirstOrDefaultAsync(p => p.Id == id && p.TenantId == tenantId);
         if (product is null) throw new KeyNotFoundException("Product not found.");
-        if (product.IsDeleted) throw new InvalidOperationException("Product already deleted.");
+        if (product.DeletedAt != null) throw new InvalidOperationException("Product already deleted.");
         
         var now = DateTime.UtcNow;
         
-        product.IsDeleted = true;
         product.DeletedAt = now;
 
         foreach (var option in product.ProductOptions)
         {
-            option.IsDeleted = true;
             option.DeletedAt = now;
             foreach (var choice in option.ProductOptionChoices)
             {
-                choice.IsDeleted = true;
                 choice.DeletedAt = now;
             }
         }
@@ -186,7 +183,7 @@ public class ProductsService(ITenantContext context, CmsDbContext database, bool
 
         var result = database.Products
             .AsNoTracking()
-            .Where(p => p.TenantId == tenant.Id && !p.IsDeleted && p.IsActive)
+            .Where(p => p.TenantId == tenant.Id && p.DeletedAt != null && p.IsActive)
             .Select(p => new ProductResult()
             {
                 Id = p.Id,
