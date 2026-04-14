@@ -971,7 +971,7 @@ public class ProductsServiceTests
         var tenantContext = new Mock<ITenantContext>();
         tenantContext.SetupGet(x => x.Tenant).Returns(tenant);
         await using var db = CreateDb();
-        var product = new Product { Id = 1, TenantId = tenant.Id, Name = "Product", BasePriceCents = 100, IsActive = true, Description = "Description", ProductOptions = new List<ProductOption>()};
+        var product = new Product { Id = 1, TenantId = tenant.Id, Name = "Product", BasePriceCents = 100, IsActive = true, Description = "Description", ProductOptions = new List<ProductOption>(), DeletedAt = DateTime.Now};
         db.Products.Add(product);
         await db.SaveChangesAsync();
         

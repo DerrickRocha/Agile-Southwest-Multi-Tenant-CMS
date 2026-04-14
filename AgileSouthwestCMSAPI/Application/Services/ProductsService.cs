@@ -72,7 +72,7 @@ public class ProductsService(ITenantContext context, CmsDbContext database, bool
 
         var product = await database.Products
             .AsNoTracking()
-            .Where(p => p.Id == id && p.TenantId == tenant.Id && p.DeletedAt != null && p.IsActive)
+            .Where(p => p.Id == id && p.TenantId == tenant.Id && p.DeletedAt == null && p.IsActive)
             .Select(p => new ProductResult
             {
                 Id = p.Id,
@@ -85,7 +85,7 @@ public class ProductsService(ITenantContext context, CmsDbContext database, bool
                 UpdatedAt = p.UpdatedAt,
 
                 ProductOptions = p.ProductOptions
-                    .Where(po => po.IsRequired && po.DeletedAt != null) 
+                    .Where(po => po.IsRequired && po.DeletedAt == null) 
                     .Select(po => new ProductOptionResult
                     {
                         Id = po.Id,
@@ -96,7 +96,7 @@ public class ProductsService(ITenantContext context, CmsDbContext database, bool
                         UpdatedAt = po.UpdatedAt,
 
                         ProductOptionChoices = po.ProductOptionChoices
-                            .Where(poc => poc.IsActive && poc.DeletedAt != null)
+                            .Where(poc => poc.IsActive && poc.DeletedAt == null)
                             .Select(poc => new ProductOptionChoiceResult
                             {
                                 Id = poc.Id,
@@ -183,7 +183,7 @@ public class ProductsService(ITenantContext context, CmsDbContext database, bool
 
         var result = database.Products
             .AsNoTracking()
-            .Where(p => p.TenantId == tenant.Id && p.DeletedAt != null && p.IsActive)
+            .Where(p => p.TenantId == tenant.Id && p.DeletedAt == null && p.IsActive)
             .Select(p => new ProductResult()
             {
                 Id = p.Id,
