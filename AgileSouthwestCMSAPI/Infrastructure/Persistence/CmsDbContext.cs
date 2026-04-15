@@ -17,10 +17,7 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
-
-        // =========================
-        // tenants
-        // =========================
+        
         builder.Entity<Tenant>(entity =>
         {
             entity.ToTable("tenants");
@@ -29,7 +26,7 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
 
             entity.Property(t => t.Id)
                 .HasColumnName("id")
-                .ValueGeneratedOnAdd(); // AUTO_INCREMENT
+                .ValueGeneratedOnAdd();
 
             entity.Property(t => t.Name)
                 .HasColumnName("name")
@@ -130,6 +127,8 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
 
             entity.HasIndex(p => new { p.TenantId, p.Name })
                 .HasDatabaseName("product_tenant_name_idx");
+
+            entity.HasQueryFilter(p => p.DeletedAt == null);
         });
 
         builder.Entity<ProductOption>(entity =>
@@ -181,6 +180,8 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
 
             entity.HasIndex(o => o.TenantId)
                 .HasDatabaseName("product_option_tenant_idx");
+
+            entity.HasQueryFilter(o => o.DeletedAt == null);
         });
 
         builder.Entity<ProductOptionChoice>(entity =>
@@ -199,9 +200,11 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
             entity.Property(p => p.ProductOptionId)
                 .HasColumnName("option_id")
                 .IsRequired();
+            
             entity.HasOne(o => o.ProductOption)
                 .WithMany(p => p.ProductOptionChoices)
-                .HasForeignKey(o => new { o.ProductOptionId, o.TenantId})
+                .HasForeignKey(c => new { c.ProductOptionId, c.TenantId})
+                .HasPrincipalKey(po => new { po.Id, po.TenantId }) // Explicit principal key
                 .OnDelete(DeleteBehavior.Cascade);
 
             entity.Property(o => o.Name)
@@ -240,6 +243,8 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
 
             entity.HasIndex(c => c.TenantId)
                 .HasDatabaseName("product_option_choice_tenant_idx");
+
+            entity.HasQueryFilter(c => c.DeletedAt == null);
         });
 
         // =========================
@@ -391,6 +396,8 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
 
             entity.HasIndex(s => s.TenantId)
                 .HasDatabaseName("stores_tenant_id_idx");
+
+            entity.HasQueryFilter(s => s.DeletedAt == null);
         });
 
         builder.Entity<Inventory>(entity =>
@@ -477,6 +484,8 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
     
                 // Check constraint for quantity >= 0
                 entity.ToTable(t => t.HasCheckConstraint("CK_inventory_quantity", "quantity >= 0"));
+
+                entity.HasQueryFilter(i => i.DeletedAt == null);
             }
         );
     }
