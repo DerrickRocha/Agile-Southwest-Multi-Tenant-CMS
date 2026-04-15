@@ -44,14 +44,14 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
 
             entity.Property(t => t.CreatedAt)
                 .HasColumnName("created_at")
-                .HasColumnType("DATETIME(6)")
-                .HasDefaultValueSql("CURRENT_TIMESTAMP(6)")
+                .HasColumnType("TIMESTAMP")
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
                 .IsRequired();
 
             entity.Property(t => t.UpdatedAt)
                 .HasColumnName("updated_at")
-                .HasColumnType("DATETIME(6)")
-                .HasDefaultValueSql("CURRENT_TIMESTAMP(6)")
+                .HasColumnType("TIMESTAMP")
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
                 .IsRequired();
 
             entity.Property(t => t.RowVersion)
@@ -352,7 +352,10 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
                 .ValueGeneratedOnAdd();
 
             entity.Property(s => s.TenantId)
-                .HasColumnName("tenant_id");
+                .HasColumnName("tenant_id")
+                .IsRequired();
+            
+            
             entity.HasOne(s => s.Tenant)
                 .WithMany(t => t.Stores)
                 .HasForeignKey(s => s.TenantId)
@@ -410,7 +413,8 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
                     .ValueGeneratedOnAdd();
                 
                 entity.Property(i => i.TenantId)
-                    .HasColumnName("tenant_id");
+                    .HasColumnName("tenant_id")
+                    .IsRequired();
                 
                 entity.Property(i => i.StoreId)
                     .HasColumnName("store_id")
@@ -506,22 +510,21 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
     private void ApplyTimestamps()
     {
         var now = DateTime.UtcNow;
-
-        foreach (var entry in ChangeTracker.Entries())
+        var entries = ChangeTracker.Entries();
+    
+        foreach (var entry in entries)
         {
             if (entry.State == EntityState.Added)
             {
-                if (entry.Properties.Any(p => p.Metadata.Name == nameof(Tenant.CreatedAt)))
-                    entry.Property(nameof(Tenant.CreatedAt)).CurrentValue = now;
-
-                if (entry.Properties.Any(p => p.Metadata.Name == nameof(Tenant.UpdatedAt)))
-                    entry.Property(nameof(Tenant.UpdatedAt)).CurrentValue = now;
+                if (entry.Property("CreatedAt") != null)
+                    entry.Property("CreatedAt").CurrentValue = now;
+                if (entry.Property("UpdatedAt") != null)
+                    entry.Property("UpdatedAt").CurrentValue = now;
             }
-
-            if (entry.State == EntityState.Modified)
+            else if (entry.State == EntityState.Modified)
             {
-                if (entry.Properties.Any(p => p.Metadata.Name == nameof(Tenant.UpdatedAt)))
-                    entry.Property(nameof(Tenant.UpdatedAt)).CurrentValue = now;
+                if (entry.Property("UpdatedAt") != null)
+                    entry.Property("UpdatedAt").CurrentValue = now;
             }
         }
     }
