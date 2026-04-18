@@ -20,8 +20,9 @@ public class InventoryController(IInventoryService service) : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetItem()
+    public async Task<IActionResult> GetItem(int id)
     {
-        return Ok();
+        var result = await service.GetInventoryItem(id);
+        return Ok(result);
     }
 }

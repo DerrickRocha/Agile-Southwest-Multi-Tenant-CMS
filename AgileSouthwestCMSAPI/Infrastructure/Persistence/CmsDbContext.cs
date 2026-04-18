@@ -14,6 +14,10 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
     public DbSet<ProductOption> ProductOptions => Set<ProductOption>();
     public DbSet<ProductOptionChoice> ProductOptionChoices => Set<ProductOptionChoice>();
 
+    public DbSet<Inventory> Inventory => Set<Inventory>();
+
+    public DbSet<Store> Stores => Set<Store>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);

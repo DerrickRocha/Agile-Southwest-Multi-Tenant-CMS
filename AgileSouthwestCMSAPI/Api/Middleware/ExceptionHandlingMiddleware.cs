@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using AgileSouthwestCMSAPI.Application.Exceptions;
 using Amazon.CognitoIdentityProvider.Model;
 using Microsoft.AspNetCore.Mvc;
@@ -39,6 +40,14 @@ public class ExceptionHandlingMiddleware(RequestDelegate next)
         catch (ArgumentException ex)
         {
             await WriteProblem(context, StatusCodes.Status400BadRequest, "Bad Request", ex.Message);
+        }
+        catch (NotFoundException exception)
+        {
+            await WriteProblem(context, StatusCodes.Status404NotFound, "Not Found", exception.Message);
+        }
+        catch (ValidationException exception)
+        {
+            await WriteProblem(context, StatusCodes.Status400BadRequest, "Validation error", exception.Message);
         }
         catch
         {
