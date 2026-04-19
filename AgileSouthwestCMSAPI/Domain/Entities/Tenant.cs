@@ -23,6 +23,9 @@ public class Tenant
     [Column( "updated_at" )]
     public DateTime UpdatedAt { get; set; }
     
+    [Column("deleted_at")]
+    public DateTime? DeletedAt { get; set; }
+    
     [Column( "row_version")]
     public byte[]? RowVersion { get; set; }
     

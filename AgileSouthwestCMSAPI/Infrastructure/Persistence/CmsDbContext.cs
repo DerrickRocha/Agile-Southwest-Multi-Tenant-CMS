@@ -58,6 +58,10 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
                 .IsRequired();
 
+            entity.Property(t => t.DeletedAt)
+                .HasColumnName("deleted_at")
+                .HasColumnType("TIMESTAMP");
+
             entity.Property(t => t.RowVersion)
                 .HasColumnName("row_version")
                 .IsRowVersion();
@@ -288,15 +292,17 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
 
             entity.Property(u => u.CreatedAt)
                 .HasColumnName("created_at")
-                .HasColumnType("DATETIME(6)")
-                .HasDefaultValueSql("CURRENT_TIMESTAMP(6)")
-                .IsRequired();
+                .HasColumnType("TIMESTAMP")
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
             entity.Property(u => u.UpdatedAt)
                 .HasColumnName("updated_at")
-                .HasColumnType("DATETIME(6)")
-                .HasDefaultValueSql("CURRENT_TIMESTAMP(6)")
-                .IsRequired();
+                .HasColumnType("TIMESTAMP")
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+            entity.Property(u => u.DeletedAt)
+                .HasColumnName("deleted_at")
+                .HasColumnType("TIMESTAMP");
 
             entity.HasIndex(u => u.Email)
                 .HasDatabaseName("uq_cms_users_email")
@@ -329,6 +335,20 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
                 .HasConversion<string>()
                 .HasMaxLength(50)
                 .IsRequired();
+            
+            entity.Property(ut => ut.CreatedAt)
+                .HasColumnName("created_at")
+                .HasColumnType("TIMESTAMP")
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+            entity.Property(ut => ut.UpdatedAt)
+                .HasColumnName("updated_at")
+                .HasColumnType("TIMESTAMP")
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+            entity.Property(ut => ut.DeletedAt)
+                .HasColumnName("deleted_at")
+                .HasColumnType("TIMESTAMP");
 
             entity.HasOne(ut => ut.User)
                 .WithMany(u => u.UserTenants)
