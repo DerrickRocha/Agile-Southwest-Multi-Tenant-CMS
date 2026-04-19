@@ -938,8 +938,8 @@ public class ProductsServiceTests
         var service = new ProductsService(tenantContext.Object, db, true);
         await service.DeleteProduct(1);
         
-        var deletedProduct = await db.Products.SingleAsync(p => p.Id == 1);
-        Assert.NotNull(deletedProduct.DeletedAt);
+        var deletedProduct = await db.Products.FirstOrDefaultAsync(p => p.Id == 1);
+        Assert.Null(deletedProduct);
     }
     
     [Fact]
@@ -976,6 +976,6 @@ public class ProductsServiceTests
         await db.SaveChangesAsync();
         
         var service = new ProductsService(tenantContext.Object, db, true);
-        await Assert.ThrowsAsync<InvalidOperationException>(() => service.DeleteProduct(1));   
+        await Assert.ThrowsAsync<KeyNotFoundException>(() => service.DeleteProduct(1));   
     }
 }
