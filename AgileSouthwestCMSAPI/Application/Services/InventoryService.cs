@@ -33,7 +33,7 @@ public class InventoryService(ITenantContext context, CmsDbContext database, boo
         }
 
         var store =
-            database.Stores.FirstOrDefault(s =>
+            await database.Stores.FirstOrDefaultAsync(s =>
                 s.Id == request.StoreId && s.TenantId == tenant.Id && s.DeletedAt == null) ??
             throw new NotFoundException($"Store with ID {request.StoreId} not found");
         
@@ -42,7 +42,7 @@ public class InventoryService(ITenantContext context, CmsDbContext database, boo
             throw new ValidationException($"Store '{store.Name}' is not active");
         }
 
-        var product = database.Products.FirstOrDefault(p => p.Id == request.ProductId && p.TenantId == tenant.Id) ??
+        var product = await database.Products.FirstOrDefaultAsync(p => p.Id == request.ProductId && p.TenantId == tenant.Id && p.DeletedAt == null) ??
                       throw new NotFoundException($"Product with ID {request.ProductId} not found");
 
         if (!product.IsActive)
