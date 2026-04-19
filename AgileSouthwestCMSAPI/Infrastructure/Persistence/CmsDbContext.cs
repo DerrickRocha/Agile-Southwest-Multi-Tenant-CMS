@@ -14,6 +14,10 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
     public DbSet<ProductOption> ProductOptions => Set<ProductOption>();
     public DbSet<ProductOptionChoice> ProductOptionChoices => Set<ProductOptionChoice>();
 
+    public DbSet<Inventory> Inventory => Set<Inventory>();
+
+    public DbSet<Store> Stores => Set<Store>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
@@ -393,7 +397,7 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
                 .HasColumnName("deleted_at")
                 .HasColumnType("timestamp");
 
-            entity.HasIndex(s => new { s.TenantId, s.SubDomain, s.DeletedAt })
+            entity.HasIndex(s => new { s.TenantId, s.SubDomain })
                 .IsUnique()
                 .HasDatabaseName("stores_tenant_subdomain_uk");
 
@@ -466,7 +470,7 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
                     .HasConstraintName("inventory_product_tenant_id_fk");
                 
                 // Unique constraint
-                entity.HasIndex(i => new { i.TenantId, i.StoreId, i.ProductId, i.DeletedAt })
+                entity.HasIndex(i => new { i.TenantId, i.StoreId, i.ProductId })
                     .IsUnique()
                     .HasDatabaseName("inventory_tenant_store_product_uk");
     
