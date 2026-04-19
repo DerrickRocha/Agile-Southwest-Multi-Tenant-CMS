@@ -31,6 +31,8 @@ public class Product
     [Column("deleted_at")]
     public DateTime? DeletedAt { get; set; }
     
+    
+    public DateTime RowVersion { get; set; }
     public Tenant Tenant { get; set; } = null!;
     
     public ICollection<ProductOption> ProductOptions { get; set; } = new List<ProductOption>();

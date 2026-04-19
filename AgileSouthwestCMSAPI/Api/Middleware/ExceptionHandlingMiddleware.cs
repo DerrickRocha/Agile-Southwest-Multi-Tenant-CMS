@@ -49,7 +49,7 @@ public class ExceptionHandlingMiddleware(RequestDelegate next)
         {
             await WriteProblem(context, StatusCodes.Status400BadRequest, "Validation error", exception.Message);
         }
-        catch
+        catch(Exception e)
         {
             await WriteProblem(context, StatusCodes.Status500InternalServerError, "Internal Server Error", "An unexpected error occurred.");
         }

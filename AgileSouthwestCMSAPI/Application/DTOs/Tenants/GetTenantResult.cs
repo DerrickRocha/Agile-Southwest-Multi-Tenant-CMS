@@ -12,5 +12,4 @@ public class GetTenantResult
 
     public string CustomDomain { set; get; } = "";
     
-    public byte[]? RowVersion { get; set; }
-}
+    public DateTime? RowVersion { get; set; }}

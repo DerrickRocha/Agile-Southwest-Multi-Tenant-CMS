@@ -7,5 +7,4 @@ public class UpdateTenantRequest
     public string SubDomain {set; get;}
     public string? CustomDomain {set; get;}
     
-    public byte[] RowVersion { get; set; }
-}
+    public DateTime RowVersion { get; set; }}

@@ -11,6 +11,7 @@ public class Inventory
     public DateTime UpdatedAt { get; set; }
     public DateTime? DeletedAt { get; set; }
     
+    public DateTime RowVersion { get; set; }    
     // Navigation properties
     public Tenant Tenant { get; set; } = null!;
     public Store Store { get; set; } = null!;

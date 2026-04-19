@@ -25,4 +25,5 @@ public class UserTenant
     
     [Column("deleted_at")]
     public DateTime? DeletedAt { get; set; }
-}
+    
+    public DateTime RowVersion { get; set; }}

@@ -27,7 +27,8 @@ public class ProductOption
     
     [Column("deleted_at")]
     public DateTime? DeletedAt { get; set; }
-
+    
+    public DateTime RowVersion { get; set; }
     public Product Product { get; set; } = null!;
 
     public Tenant Tenant { get; set; } = null!;
