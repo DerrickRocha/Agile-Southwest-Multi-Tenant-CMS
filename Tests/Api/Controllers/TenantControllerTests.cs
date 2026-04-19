@@ -16,13 +16,14 @@ public class TenantControllerTests
     [Fact]
     public async Task GetTenant_ReturnsOk_WithTenant()
     {
+        var fixedDate = new DateTime(2024, 1, 15, 10, 30, 0, DateTimeKind.Utc);
         var result = new GetTenantResult
         {
             TenantId = 1,
             Name = "Test Tenant",
             SubDomain = "test",
             CustomDomain = "",
-            RowVersion = [1]
+            RowVersion = fixedDate
         };
 
         _tenantService
@@ -46,6 +47,7 @@ public class TenantControllerTests
             Name = "Tenant",
             SubDomain = "tenant"
         };
+        var fixedDate = new DateTime(2024, 1, 15, 10, 30, 0, DateTimeKind.Utc);
 
         var result = new AddTenantResult
         {
@@ -53,7 +55,7 @@ public class TenantControllerTests
             Name = "Tenant",
             SubDomain = "tenant",
             CustomDomain = "",
-            RowVersion = [1]
+            RowVersion = fixedDate
         };
 
         _tenantService
@@ -71,11 +73,13 @@ public class TenantControllerTests
     [Fact]
     public async Task UpdateTenant_ReturnsOk_WithUpdatedTenant()
     {
+        var fixedDate = new DateTime(2024, 1, 15, 10, 30, 0, DateTimeKind.Utc);
+
         var request = new UpdateTenantRequest
         {
             Name = "Updated",
             SubDomain = "updated",
-            RowVersion = [1]
+            RowVersion = fixedDate
         };
 
         var result = new UpdateTenantResult
@@ -84,7 +88,7 @@ public class TenantControllerTests
             Name = "Updated",
             SubDomain = "updated",
             CustomDomain = "",
-            RowVersion = [2]
+            RowVersion = fixedDate
         };
 
         _tenantService

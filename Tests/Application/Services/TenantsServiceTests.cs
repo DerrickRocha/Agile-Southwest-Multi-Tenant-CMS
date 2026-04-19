@@ -86,12 +86,14 @@ public class TenantsServiceTests
     [Fact]
     public async Task GetTenant_ReturnsTenantFromContext()
     {
+        var fixedDate = new DateTime(2024, 1, 15, 10, 30, 0, DateTimeKind.Utc);
+
         var tenant = new Tenant
         {
             Id = 1,
             Name = "Tenant",
             SubDomain = "tenant",
-            RowVersion = [1]
+            RowVersion = fixedDate
         };
 
         var tenantContext = new Mock<ITenantContext>();
@@ -110,6 +112,8 @@ public class TenantsServiceTests
     [Fact]
     public async Task UpdateTenant_UpdatesTenant()
     {
+        var fixedDate = new DateTime(2024, 1, 15, 10, 30, 0, DateTimeKind.Utc);
+
         var db = CreateDb();
 
         var tenant = new Tenant
@@ -117,7 +121,7 @@ public class TenantsServiceTests
             Id = 1,
             Name = "Old",
             SubDomain = "old",
-            RowVersion = [1]
+            RowVersion = fixedDate
         };
 
         db.Tenants.Add(tenant);
@@ -184,6 +188,8 @@ public class TenantsServiceTests
     [Fact]
     public async Task UpdateTenant_ShouldThrow_WhenUserNotInTenant()
     {
+        var fixedDate = new DateTime(2024, 1, 15, 10, 30, 0, DateTimeKind.Utc);
+
         var db = CreateDb();
 
         var tenant = new Tenant
@@ -191,7 +197,7 @@ public class TenantsServiceTests
             Id = 1,
             Name = "TenantA",
             SubDomain = "a",
-            RowVersion = [1]
+            RowVersion = fixedDate
         };
 
         db.Tenants.Add(tenant);
@@ -208,7 +214,7 @@ public class TenantsServiceTests
         {
             Name = "Hacked",
             SubDomain = "hacked",
-            RowVersion = [1]
+            RowVersion = fixedDate
         };
 
         await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
@@ -218,6 +224,8 @@ public class TenantsServiceTests
     [Fact]
     public async Task UpdateTenant_ShouldThrow_WhenUserIsNotAdmin()
     {
+        var fixedDate = new DateTime(2024, 1, 15, 10, 30, 0, DateTimeKind.Utc);
+
         var db = CreateDb();
 
         var tenant = new Tenant
@@ -225,7 +233,7 @@ public class TenantsServiceTests
             Id = 1,
             Name = "Tenant",
             SubDomain = "tenant",
-            RowVersion = new byte[] {1}
+            RowVersion = fixedDate
         };
 
         db.Tenants.Add(tenant);
@@ -257,6 +265,8 @@ public class TenantsServiceTests
     [Fact]
     public async Task UpdateTenant_ShouldThrow_WhenSubdomainAlreadyExists()
     {
+        var fixedDate = new DateTime(2024, 1, 15, 10, 30, 0, DateTimeKind.Utc);
+
         var db = CreateDb();
 
         var tenantA = new Tenant
@@ -264,7 +274,7 @@ public class TenantsServiceTests
             Id = 1,
             Name = "TenantA",
             SubDomain = "a",
-            RowVersion = new byte[] {1}
+            RowVersion = fixedDate
         };
 
         var tenantB = new Tenant
@@ -272,7 +282,7 @@ public class TenantsServiceTests
             Id = 2,
             Name = "TenantB",
             SubDomain = "b",
-            RowVersion = new byte[] {1}
+            RowVersion = fixedDate
         };
 
         db.Tenants.AddRange(tenantA, tenantB);
@@ -304,13 +314,14 @@ public class TenantsServiceTests
     public async Task UpdateTenant_ShouldThrow_WhenRowVersionMismatch()
     {
         var db = CreateDb();
+        var fixedDate = new DateTime(2024, 1, 15, 10, 30, 0, DateTimeKind.Utc);
 
         var tenant = new Tenant
         {
             Id = 1,
             Name = "Tenant",
             SubDomain = "tenant",
-            RowVersion = [1]
+            RowVersion = fixedDate
         };
 
         db.Tenants.Add(tenant);
@@ -326,12 +337,13 @@ public class TenantsServiceTests
         var userContext = new Mock<ICmsUserContext>();
 
         var service = new TenantsService(db, tenantContext.Object, userContext.Object);
+        var anotherDate = new DateTime(2023, 1, 15, 10, 30, 0, DateTimeKind.Utc);
 
         var request = new UpdateTenantRequest
         {
             Name = "Updated",
             SubDomain = "updated",
-            RowVersion = new byte[] {9}
+            RowVersion = anotherDate
         };
         await Assert.ThrowsAsync<ConcurrencyException>(() =>
             service.UpdateTenant(request));
