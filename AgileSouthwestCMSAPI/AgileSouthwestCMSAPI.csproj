@@ -34,8 +34,4 @@
     
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Api\Requests\Stores\" />
-  </ItemGroup>
-
 </Project>
