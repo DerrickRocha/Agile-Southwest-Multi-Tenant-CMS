@@ -16,10 +16,20 @@ public class InventoryService(ITenantContext context, CmsDbContext database, boo
     {
         var tenant = context.Tenant
                      ?? throw new UnauthorizedAccessException("Tenant not resolved.");
-        
-        if (request.Quantity < 0)
+        var quantity = request.Quantity ?? throw new ArgumentException("Quantity cannot be null");
+        if (quantity < 0)
         {
-            throw new ValidationException("Quantity cannot be negative.");
+            throw new ValidationException("quantity cannot be negative.");
+        }
+
+        if (request.ProductId == null)
+        {
+            throw new ArgumentException("productId cannot be null");
+        }
+
+        if (request.StoreId == null)
+        {
+            throw new ArgumentException("storeId cannot be null.");
         }
 
         var store =
@@ -49,14 +59,14 @@ public class InventoryService(ITenantContext context, CmsDbContext database, boo
         if (existingInventory != null)
         {
             // Update existing inventory
-            existingInventory.Quantity += request.Quantity;
+            existingInventory.Quantity += quantity;
             await database.SaveChangesAsync();
             return new AddToInventoryResult(existingInventory.Id);
         }
         
         var item = new Inventory()
         {
-            Quantity = request.Quantity,
+            Quantity = quantity,
             Product = product,
             Tenant = tenant,
             Store = store
