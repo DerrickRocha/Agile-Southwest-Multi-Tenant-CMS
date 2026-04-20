@@ -7,6 +7,9 @@ public class ProductOptionChoice
     [Column("id")]
     public int Id { get; set; }
     
+    [Column("tenant_id")]
+    public int TenantId { get; set; }
+    
     [Column("option_id")]
     public int ProductOptionId { get; set; }
     
@@ -28,11 +31,11 @@ public class ProductOptionChoice
     [Column("updated_at")]
     public DateTime UpdatedAt { get; set; }
     
-    [Column("is_deleted")]
-    public bool IsDeleted { get; set; }
-    
     [Column("deleted_at")]
     public DateTime? DeletedAt { get; set; }
-
+    
+    public DateTime RowVersion { get; set; }
     public ProductOption ProductOption { get; set; } = null!;
+    
+    public Tenant? Tenant { get; set; }
 }

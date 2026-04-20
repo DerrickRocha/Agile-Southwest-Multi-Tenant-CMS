@@ -7,6 +7,9 @@ public class ProductOption
     [Column("id")]
     public int Id { get; set; }
     
+    [Column("tenant_id")]
+    public int TenantId { get; set; }
+    
     [Column("product_id")]
     public int ProductId { get; set; }
     
@@ -22,13 +25,13 @@ public class ProductOption
     [Column("is_required")] 
     public bool IsRequired { get; set; } = true;
     
-    [Column("is_deleted")]
-    public bool IsDeleted { get; set; }
-    
     [Column("deleted_at")]
     public DateTime? DeletedAt { get; set; }
-
+    
+    public DateTime RowVersion { get; set; }
     public Product Product { get; set; } = null!;
+
+    public Tenant Tenant { get; set; } = null!;
     
     public ICollection<ProductOptionChoice> ProductOptionChoices { get; set; } = new List<ProductOptionChoice>();
 }

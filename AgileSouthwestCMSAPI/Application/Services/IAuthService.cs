@@ -67,25 +67,21 @@ public class AuthService(
         var tenant = new Tenant
         {
             Name = request.CompanyName,
-            SubDomain = normalizedSubdomain,
+            SubDomain = normalizedSubdomain
         };
-
-        database.Tenants.Add(tenant);
-
+        
+        var userTenant = new UserTenant { Role = UserTenantRole.Admin, Tenant = tenant};
         var user = new CmsUser
         {
             CognitoUserId = cognitoSub,
             Email = request.Email,
             Role = UserRole.Admin,
-            Status = UserStatus.Active
+            Status = UserStatus.Active,
+            UserTenants = [userTenant]
         };
                 
         database.CmsUsers.Add(user);
-                
-        var userTenant = new UserTenant { TenantId = tenant.Id, UserId = user.Id, Role = UserTenantRole.Admin};
-                
-        database.UserTenants.Add(userTenant);
-
+        
         await database.SaveChangesAsync();
         return new SignupResult
         {

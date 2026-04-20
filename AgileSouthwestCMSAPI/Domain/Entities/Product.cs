@@ -28,14 +28,15 @@ public class Product
     [Column("updated_at")]
     public DateTime UpdatedAt { get; set; }
     
-    [Column("is_deleted")]
-    public bool IsDeleted { get; set; }
-    
     [Column("deleted_at")]
     public DateTime? DeletedAt { get; set; }
     
+    
+    public DateTime RowVersion { get; set; }
     public Tenant Tenant { get; set; } = null!;
     
     public ICollection<ProductOption> ProductOptions { get; set; } = new List<ProductOption>();
+    
+    public ICollection<Inventory> Inventory { get; set; } = new List<Inventory>();
 
 }
