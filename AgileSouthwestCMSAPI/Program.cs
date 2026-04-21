@@ -149,6 +149,8 @@ builder.Services.AddScoped<IProductsService, ProductsService>();
 builder.Services.AddScoped<IInventoryService, InventoryService>();
 
 builder.Services.AddScoped<IStoresService, StoresService>();
+
+builder.Services.AddScoped<IS3Service, S3Service>();
 builder.Services.AddScoped<IImagesService, ImagesService>();
 
 builder.Services.AddEndpointsApiExplorer();

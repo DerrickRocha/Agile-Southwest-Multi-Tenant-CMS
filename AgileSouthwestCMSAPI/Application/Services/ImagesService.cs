@@ -1,11 +1,12 @@
 using AgileSouthwestCMSAPI.Application.DTOs.Images;
+using AgileSouthwestCMSAPI.Application.DTOs.S3;
 using AgileSouthwestCMSAPI.Application.Interfaces;
 
 namespace AgileSouthwestCMSAPI.Application.Services;
 
-public class ImagesService: IImagesService
+public class ImagesService(IS3Service s3Service): IImagesService
 {
-    public Task<ImageResult> AddImage(IFormFile file)
+    public async Task<ImageResult> AddImage(IFormFile file)
     {
         if (file == null || file.Length == 0)
             throw new BadHttpRequestException("No file uploaded");
@@ -31,12 +32,17 @@ public class ImagesService: IImagesService
         if (!IsValidImageSignature(stream, extension))
             throw new BadHttpRequestException("File content does not match its extension");
         
-        //1. Upload file to s3.
-        //2. Get Url from s3 and add image record to agile southwest database.
-        // 3. Return image result.
-        return Task.FromResult(new ImageResult(1));
+        var s3Result = await s3Service.UploadImage();
+        var imageResult = AddImageToDatabase(s3Result);
+        
+        return imageResult;
     }
-    
+
+    private ImageResult AddImageToDatabase(S3ImageResult s3Result)
+    {
+        return new ImageResult(1);
+    }
+
     private bool IsValidImageSignature(Stream stream, string extension)
     {
         stream.Position = 0;
