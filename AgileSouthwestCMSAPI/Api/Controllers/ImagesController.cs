@@ -1,4 +1,3 @@
-using AgileSouthwestCMSAPI.Api.Requests.Images;
 using AgileSouthwestCMSAPI.Application.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
@@ -6,11 +5,14 @@ namespace AgileSouthwestCMSAPI.Api.Controllers;
 
 [ApiController]
 [Route("[controller]")]
+[Produces("application/json")]
 public class ImagesController(IImagesService service): ControllerBase
 {
-    public async Task<IActionResult> Post([FromBody] AddImagesRequest request)
+    
+    [HttpPost]
+    public async Task<IActionResult> Post(IFormFileCollection files)
     {
-        var result = await service.AddImages(request);
+        var result = await service.AddImages(files);
         return CreatedAtAction(nameof(Get), new { id = result.Id }, result);
     }
 
