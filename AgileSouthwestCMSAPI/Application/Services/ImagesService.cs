@@ -5,7 +5,7 @@ namespace AgileSouthwestCMSAPI.Application.Services;
 
 public class ImagesService: IImagesService
 {
-    public Task<ImageResult> AddImages(IFormFile file)
+    public Task<ImageResult> AddImage(IFormFile file)
     {
         if (file == null || file.Length == 0)
             throw new BadHttpRequestException("No file uploaded");
@@ -26,6 +26,31 @@ public class ImagesService: IImagesService
         if (file.Length > maxSize)
             throw new BadHttpRequestException($"File size exceeds {maxSize / 1024 / 1024}MB limit");
         
+        // 4. Validate magic bytes (defeats file renaming attacks)
+        using var stream = file.OpenReadStream();
+        if (!IsValidImageSignature(stream, extension))
+            throw new BadHttpRequestException("File content does not match its extension");
+        
+        //1. Upload file to s3.
+        //2. Get Url from s3 and add image record to agile southwest database.
+        // 3. Return image result.
         return Task.FromResult(new ImageResult(1));
+    }
+    
+    private bool IsValidImageSignature(Stream stream, string extension)
+    {
+        stream.Position = 0;
+        using var reader = new BinaryReader(stream);
+        var header = reader.ReadBytes(8);
+        stream.Position = 0;
+    
+        return extension switch
+        {
+            ".jpg" or ".jpeg" => header[0] == 0xFF && header[1] == 0xD8,
+            ".png" => header[0] == 0x89 && header[1] == 0x50 && header[2] == 0x4E && header[3] == 0x47,
+            ".gif" => header[0] == 0x47 && header[1] == 0x49 && header[2] == 0x46,
+            ".webp" => header[0] == 0x52 && header[1] == 0x49 && header[2] == 0x46 && header[3] == 0x46,
+            _ => false
+        };
     }
 }
