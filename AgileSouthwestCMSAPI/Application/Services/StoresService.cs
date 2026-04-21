@@ -1,4 +1,5 @@
 using AgileSouthwestCMSAPI.Api.Requests.inventory;
+using AgileSouthwestCMSAPI.Api.Requests.Stores;
 using AgileSouthwestCMSAPI.Application.DTOs.Stores;
 using AgileSouthwestCMSAPI.Application.Interfaces;
 using AgileSouthwestCMSAPI.Domain.Entities;
