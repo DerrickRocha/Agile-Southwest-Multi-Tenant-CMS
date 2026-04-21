@@ -10,9 +10,9 @@ public class ImagesController(IImagesService service): ControllerBase
 {
     
     [HttpPost]
-    public async Task<IActionResult> Post(IFormFileCollection files)
+    public async Task<IActionResult> Post(IFormFile file)
     {
-        var result = await service.AddImages(files);
+        var result = await service.AddImages(file);
         return CreatedAtAction(nameof(Get), new { id = result.Id }, result);
     }
 
