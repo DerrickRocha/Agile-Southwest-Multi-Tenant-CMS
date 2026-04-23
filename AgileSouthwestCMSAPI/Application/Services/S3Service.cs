@@ -27,8 +27,9 @@ public class S3Service(IAmazonS3 s3, IOptions<S3Settings> settings): IS3Service
                 CannedACL = S3CannedACL.PublicRead
             };
 
-            var fileTransferUtility = new TransferUtility(s3);
+            using var fileTransferUtility = new TransferUtility(s3);
             await fileTransferUtility.UploadAsync(uploadRequest);
+            
             var region = s3.Config.RegionEndpoint?.SystemName ?? "us-east-1";
             var imageUrl = $"https://{settings.Value.BucketName}.s3.{region}.amazonaws.com/{key}";
             return new S3ImageResult(imageUrl, file.FileName, file.Length, file.ContentType);
