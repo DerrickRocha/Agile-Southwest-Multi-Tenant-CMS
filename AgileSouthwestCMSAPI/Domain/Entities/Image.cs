@@ -8,11 +8,11 @@ public class Image
     
     public string Url { set; get; } 
     
-    public string OriginalFileName { set; get; }
+    public string? OriginalFileName { set; get; }
     
-    public long FileSize { get; set; }   
+    public long? FileSize { get; set; }   
     
-    public string ContentType { get; set; }
+    public string? ContentType { get; set; }
     
     public DateTime CreatedAt { get; set; }
     
