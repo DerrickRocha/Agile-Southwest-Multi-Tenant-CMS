@@ -562,8 +562,16 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
                     .HasMaxLength(255)
                     .IsRequired();
 
-                entity.Property(i => i.Description)
-                    .HasColumnName("description")
+                entity.Property(i => i.OriginalFileName)
+                    .HasColumnName("original_filename")
+                    .HasMaxLength(255)
+                    .IsRequired();
+
+                entity.Property(i => i.FileSize)
+                    .IsRequired();
+
+                entity.Property(i => i.ContentType)
+                    .HasMaxLength(100)
                     .IsRequired();
                 
                 entity.Property(i => i.CreatedAt)
