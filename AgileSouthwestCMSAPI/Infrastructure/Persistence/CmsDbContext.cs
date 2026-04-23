@@ -10,13 +10,18 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
     public DbSet<Tenant> Tenants => Set<Tenant>();
     public DbSet<UserTenant> UserTenants => Set<UserTenant>();
 
+    public DbSet<Image> Images => Set<Image>();
     public DbSet<Product> Products => Set<Product>();
     public DbSet<ProductOption> ProductOptions => Set<ProductOption>();
     public DbSet<ProductOptionChoice> ProductOptionChoices => Set<ProductOptionChoice>();
 
+    public DbSet<ProductImage> ProductImages => Set<ProductImage>();
+
     public DbSet<Inventory> Inventory => Set<Inventory>();
 
     public DbSet<Store> Stores => Set<Store>();
+    
+    
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -568,9 +573,11 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
                     .IsRequired();
 
                 entity.Property(i => i.FileSize)
+                    .HasColumnName("file_size")
                     .IsRequired();
 
                 entity.Property(i => i.ContentType)
+                    .HasColumnName("content_type")
                     .HasMaxLength(100)
                     .IsRequired();
                 

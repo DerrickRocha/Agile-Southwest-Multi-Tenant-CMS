@@ -16,6 +16,7 @@ public class ImagesController(IImagesService service): ControllerBase
         return CreatedAtAction(nameof(Get), new { id = result.Id }, result);
     }
 
+    [HttpGet("{id:int}")]
     public async Task<IActionResult> Get()
     {
         return Ok();

@@ -16,7 +16,7 @@ public class S3Service(IAmazonS3 s3, IOptions<S3Settings> settings): IS3Service
         {
             using var newMemoryStream = new MemoryStream();
             await file.CopyToAsync(newMemoryStream);
-            var key = Guid.NewGuid().ToString() + Path.GetExtension(file.FileName);
+            var key = Guid.NewGuid() + Path.GetExtension(file.FileName);
             var uploadRequest = new TransferUtilityUploadRequest
             {
                 InputStream = newMemoryStream,
@@ -31,7 +31,7 @@ public class S3Service(IAmazonS3 s3, IOptions<S3Settings> settings): IS3Service
             var fileTransferUtility = new TransferUtility(s3);
             await fileTransferUtility.UploadAsync(uploadRequest);
             var imageUrl = $"https://{settings.Value.BucketName}.s3.amazonaws.com/{key}";
-            return new S3ImageResult(imageUrl);
+            return new S3ImageResult(imageUrl, file.FileName, file.Length, file.ContentType);
         }
         catch (Exception e)
         {
