@@ -14,14 +14,12 @@ public class S3Service(IAmazonS3 s3, IOptions<S3Settings> settings): IS3Service
         if (file == null || file.Length == 0) throw new BadHttpRequestException("No file uploaded.");
         try
         {
-            using var newMemoryStream = new MemoryStream();
-            await file.CopyToAsync(newMemoryStream);
-            newMemoryStream.Position = 0;  // CRITICAL: Reset to beginning
+            await using var fileStream = file.OpenReadStream();  // Direct stream
             
             var key = Guid.NewGuid() + Path.GetExtension(file.FileName);
             var uploadRequest = new TransferUtilityUploadRequest
             {
-                InputStream = newMemoryStream,
+                InputStream = fileStream,
                 Key = key,
                 BucketName = settings.Value.BucketName,
                 ContentType = file.ContentType,
