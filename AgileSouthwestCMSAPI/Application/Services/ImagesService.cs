@@ -27,12 +27,7 @@ public class ImagesService(IS3Service s3Service): IImagesService
         if (file.Length > maxSize)
             throw new BadHttpRequestException($"File size exceeds {maxSize / 1024 / 1024}MB limit");
         
-        // 4. Validate magic bytes (defeats file renaming attacks)
-        using var stream = file.OpenReadStream();
-        if (!IsValidImageSignature(stream, extension))
-            throw new BadHttpRequestException("File content does not match its extension");
-        
-        var s3Result = await s3Service.UploadImage();
+        var s3Result = await s3Service.UploadImage(file);
         var imageResult = AddImageToDatabase(s3Result);
         
         return imageResult;

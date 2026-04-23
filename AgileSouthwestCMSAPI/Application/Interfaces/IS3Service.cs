@@ -4,5 +4,5 @@ namespace AgileSouthwestCMSAPI.Application.Interfaces;
 
 public interface IS3Service
 {
-    public Task<S3ImageResult> UploadImage();
+    public Task<S3ImageResult> UploadImage(IFormFile file);
 }

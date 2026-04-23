@@ -35,8 +35,4 @@
     
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Api\Requests\Images\" />
-  </ItemGroup>
-
 </Project>

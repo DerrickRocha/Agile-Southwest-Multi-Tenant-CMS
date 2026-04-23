@@ -6,12 +6,14 @@ using AgileSouthwestCMSAPI.Application.Services;
 using AgileSouthwestCMSAPI.Domain.ValueObjects;
 using AgileSouthwestCMSAPI.Infrastructure.Configuration;
 using AgileSouthwestCMSAPI.Infrastructure.Persistence;
+using Amazon;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Amazon.CognitoIdentityProvider;
+using Amazon.S3;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.ResponseCompression;
 
@@ -129,13 +131,25 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
     options.KnownProxies.Clear();
 });
 
-// AWS / Cognito
+// AWS 
 builder.Services.AddDefaultAWSOptions(builder.Configuration.GetAWSOptions());
+// Cognito
 builder.Services.AddAWSService<IAmazonCognitoIdentityProvider>();
 builder.Services.Configure<CognitoSettings>(
     builder.Configuration.GetSection("Cognito"));
 
 builder.Services.AddSingleton<ICognitoService, CognitoService>();
+
+// S3
+builder.Services.Configure<S3Settings>(builder.Configuration.GetSection("S3"));
+
+builder.Services.AddSingleton<IAmazonS3>(sp =>
+{
+    var configuration = sp.GetRequiredService<IConfiguration>();
+    var region = RegionEndpoint.GetBySystemName(configuration["S3:Region"]);
+    return new AmazonS3Client(region);
+});
+builder.Services.AddSingleton<IS3Service, S3Service>();
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ITenantContext, TenantContext>();
@@ -150,7 +164,6 @@ builder.Services.AddScoped<IInventoryService, InventoryService>();
 
 builder.Services.AddScoped<IStoresService, StoresService>();
 
-builder.Services.AddScoped<IS3Service, S3Service>();
 builder.Services.AddScoped<IImagesService, ImagesService>();
 
 builder.Services.AddEndpointsApiExplorer();
