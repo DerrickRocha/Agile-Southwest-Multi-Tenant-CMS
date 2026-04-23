@@ -551,7 +551,7 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
             {
                 entity.ToTable("images");
 
-                entity.HasKey(i => new { i.Id, i.TenantId });
+                entity.HasKey(i => i.Id);
 
                 entity.Property(i => i.Id)
                     .HasColumnName("id")
@@ -564,7 +564,7 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
 
                 entity.Property(i => i.Url)
                     .HasColumnName("url")
-                    .HasMaxLength(255)
+                    .HasMaxLength(2048)
                     .IsRequired();
 
                 entity.Property(i => i.OriginalFileName)
@@ -579,7 +579,7 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
                 entity.Property(i => i.ContentType)
                     .HasColumnName("content_type")
                     .HasMaxLength(100)
-                    .IsRequired();
+                    .IsRequired(false);
                 
                 entity.Property(i => i.CreatedAt)
                     .HasColumnName("created_at")

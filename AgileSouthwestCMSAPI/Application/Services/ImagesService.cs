@@ -47,27 +47,12 @@ public class ImagesService(
         {
             TenantId = tenantId,
             Url = s3Result.Url,
-            ContentType = s3Result.ContentType
+            OriginalFileName = s3Result.FileName,
+            ContentType = s3Result.ContentType,
+            FileSize = s3Result.FileSize
         };
         database.Images.Add(image);
         await database.SaveChangesAsync();
         return new ImageResult(image.Id);
-    }
-
-    private bool IsValidImageSignature(Stream stream, string extension)
-    {
-        stream.Position = 0;
-        using var reader = new BinaryReader(stream);
-        var header = reader.ReadBytes(8);
-        stream.Position = 0;
-
-        return extension switch
-        {
-            ".jpg" or ".jpeg" => header[0] == 0xFF && header[1] == 0xD8,
-            ".png" => header[0] == 0x89 && header[1] == 0x50 && header[2] == 0x4E && header[3] == 0x47,
-            ".gif" => header[0] == 0x47 && header[1] == 0x49 && header[2] == 0x46,
-            ".webp" => header[0] == 0x52 && header[1] == 0x49 && header[2] == 0x46 && header[3] == 0x46,
-            _ => false
-        };
     }
 }

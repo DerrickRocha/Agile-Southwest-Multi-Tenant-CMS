@@ -16,6 +16,8 @@ public class S3Service(IAmazonS3 s3, IOptions<S3Settings> settings): IS3Service
         {
             using var newMemoryStream = new MemoryStream();
             await file.CopyToAsync(newMemoryStream);
+            newMemoryStream.Position = 0;  // CRITICAL: Reset to beginning
+            
             var key = Guid.NewGuid() + Path.GetExtension(file.FileName);
             var uploadRequest = new TransferUtilityUploadRequest
             {
@@ -24,13 +26,13 @@ public class S3Service(IAmazonS3 s3, IOptions<S3Settings> settings): IS3Service
                 BucketName = settings.Value.BucketName,
                 ContentType = file.ContentType,
                 AutoCloseStream = true,
-                // Optional: Set file visibility
                 CannedACL = S3CannedACL.PublicRead
             };
 
             var fileTransferUtility = new TransferUtility(s3);
             await fileTransferUtility.UploadAsync(uploadRequest);
-            var imageUrl = $"https://{settings.Value.BucketName}.s3.amazonaws.com/{key}";
+            var region = s3.Config.RegionEndpoint?.SystemName ?? "us-east-1";
+            var imageUrl = $"https://{settings.Value.BucketName}.s3.{region}.amazonaws.com/{key}";
             return new S3ImageResult(imageUrl, file.FileName, file.Length, file.ContentType);
         }
         catch (Exception e)

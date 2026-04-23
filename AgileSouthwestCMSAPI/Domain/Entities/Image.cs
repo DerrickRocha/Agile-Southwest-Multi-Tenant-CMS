@@ -10,7 +10,7 @@ public class Image
     
     public string OriginalFileName { set; get; }
     
-    public int FileSize { get; set; }   
+    public long FileSize { get; set; }   
     
     public string ContentType { get; set; }
     
