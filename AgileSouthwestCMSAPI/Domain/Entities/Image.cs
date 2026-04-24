@@ -22,4 +22,5 @@ public class Image
     
     public virtual Tenant Tenant { get; set; }
     
+    public virtual ICollection<ProductImage> ProductImages { get; set; } = new List<ProductImage>();
 }
