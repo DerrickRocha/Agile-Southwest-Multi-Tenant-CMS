@@ -103,7 +103,7 @@ public class ProductsService(ITenantContext context, CmsDbContext database, bool
                                 ProductOptionId = poc.ProductOptionId,
                                 Name = poc.Name,
                                 PriceDelta = poc.PriceDeltaCents,
-                                SalePriceDelta = poc.SalePriceDeltaCents,
+                                SalePriceDelta = poc.SalePriceDeltaCents ?? 0,
                                 IsActive = poc.IsActive,
                                 CreatedAt = poc.CreatedAt,
                                 UpdatedAt = poc.UpdatedAt,
@@ -209,7 +209,7 @@ public class ProductsService(ITenantContext context, CmsDbContext database, bool
                             ProductOptionId = c.ProductOptionId,
                             Name = c.Name,
                             PriceDelta = c.PriceDeltaCents,
-                            SalePriceDelta = c.SalePriceDeltaCents,
+                            SalePriceDelta = c.SalePriceDeltaCents ?? 0,
                             IsActive = c.IsActive,
                             CreatedAt = c.CreatedAt,
                             UpdatedAt = c.UpdatedAt
