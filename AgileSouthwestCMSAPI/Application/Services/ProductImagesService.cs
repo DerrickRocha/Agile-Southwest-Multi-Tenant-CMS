@@ -147,9 +147,23 @@ public class ProductImagesService(
         ));
     }
 
-    public Task SetAsPrimary(int id)
+    public async Task SetAsPrimary(int id)
     {
-        throw new NotImplementedException();
+        var tenant = context.Tenant ?? throw new UnauthorizedAccessException("Tenant not resolved.");
+            
+        var productImage = await database.ProductImages
+                               .FirstOrDefaultAsync(pi => pi.Id == id && pi.TenantId == tenant.Id && pi.DeletedAt == null)
+                           ?? throw new InvalidOperationException("Product image association not found");
+
+        // Clear primary flag from all images of this product
+        await ClearPrimaryFlag(tenant.Id, productImage.ProductId);
+
+        // Set this as primary
+        productImage.IsPrimary = true;
+        productImage.UpdatedAt = DateTime.UtcNow;
+
+        await database.SaveChangesAsync();
+        
     }
 
     public Task UpdatePosition(int id, int newPosition)
