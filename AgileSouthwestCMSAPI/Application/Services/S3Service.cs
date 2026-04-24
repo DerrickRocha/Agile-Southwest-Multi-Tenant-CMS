@@ -1,4 +1,5 @@
 using AgileSouthwestCMSAPI.Application.DTOs.S3;
+using AgileSouthwestCMSAPI.Application.Exceptions;
 using AgileSouthwestCMSAPI.Application.Interfaces;
 using AgileSouthwestCMSAPI.Infrastructure.Configuration;
 using Amazon.S3;
@@ -36,8 +37,7 @@ public class S3Service(IAmazonS3 s3, IOptions<S3Settings> settings): IS3Service
         }
         catch (Exception e)
         {
-            Console.WriteLine(e);
-            throw;
+            throw new S3UploadException(e.Message);
         }
     }
 }

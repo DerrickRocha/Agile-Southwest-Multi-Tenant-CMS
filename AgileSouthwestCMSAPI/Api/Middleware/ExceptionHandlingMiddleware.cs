@@ -49,6 +49,11 @@ public class ExceptionHandlingMiddleware(RequestDelegate next)
         {
             await WriteProblem(context, StatusCodes.Status400BadRequest, "Validation error", exception.Message);
         }
+        catch (S3UploadException exception)
+        {
+            await WriteProblem(context, StatusCodes.Status400BadRequest, "Error uploading image to s3", exception.Message);
+
+        }
         catch(Exception e)
         {
             await WriteProblem(context, StatusCodes.Status500InternalServerError, "Internal Server Error", "An unexpected error occurred.");
