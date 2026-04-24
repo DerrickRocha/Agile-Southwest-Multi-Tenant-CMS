@@ -570,11 +570,11 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
                 entity.Property(i => i.OriginalFileName)
                     .HasColumnName("original_filename")
                     .HasMaxLength(255)
-                    .IsRequired();
+                    .IsRequired(false);
 
                 entity.Property(i => i.FileSize)
                     .HasColumnName("file_size")
-                    .IsRequired();
+                    .IsRequired(false);
 
                 entity.Property(i => i.ContentType)
                     .HasColumnName("content_type")

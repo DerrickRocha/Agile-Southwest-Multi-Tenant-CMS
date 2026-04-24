@@ -3,6 +3,7 @@ using AgileSouthwestCMSAPI.Application.DTOs.S3;
 using AgileSouthwestCMSAPI.Application.Interfaces;
 using AgileSouthwestCMSAPI.Domain.Entities;
 using AgileSouthwestCMSAPI.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore;
 
 namespace AgileSouthwestCMSAPI.Application.Services;
 
@@ -12,7 +13,7 @@ public class ImagesService(
     ITenantContext context
 ) : IImagesService
 {
-    public async Task<ImageResult> AddImage(IFormFile file)
+    public async Task<AddImageResult> AddImage(IFormFile file)
     {
         var tenant = context.Tenant ?? throw new UnauthorizedAccessException("Tenant not resolved.");
 
@@ -41,7 +42,17 @@ public class ImagesService(
         return imageResult;
     }
 
-    private async Task<ImageResult> AddImageToDatabase(S3ImageResult s3Result, int tenantId)
+    public async Task<GetImageResult> GetImage(int id)
+    {
+        var tenant = context.Tenant ?? throw new UnauthorizedAccessException("Tenant not resolved.");
+        var image = await database.Images
+                        .AsNoTracking()
+                        .FirstOrDefaultAsync(i => i.Id == id && i.TenantId == tenant.Id && i.DeletedAt == null) ??
+                    throw new InvalidOperationException("Image not found");
+        return new GetImageResult(image.Id, image.TenantId, image.Url, image.OriginalFileName, image.ContentType, image.FileSize);
+    }
+
+    private async Task<AddImageResult> AddImageToDatabase(S3ImageResult s3Result, int tenantId)
     {
         var image = new Image
         {
@@ -53,6 +64,6 @@ public class ImagesService(
         };
         database.Images.Add(image);
         await database.SaveChangesAsync();
-        return new ImageResult(image.Id);
+        return new AddImageResult(image.Id);
     }
 }

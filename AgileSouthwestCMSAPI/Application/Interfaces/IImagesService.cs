@@ -4,5 +4,7 @@ namespace AgileSouthwestCMSAPI.Application.Interfaces;
 
 public interface IImagesService
 {
-    public Task<ImageResult> AddImage(IFormFile file);
+    public Task<AddImageResult> AddImage(IFormFile file);
+
+    public Task<GetImageResult> GetImage(int id);
 }

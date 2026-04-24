@@ -1,3 +1,3 @@
 namespace AgileSouthwestCMSAPI.Application.DTOs.Images;
 
-public record ImageResult(int Id);
+public record AddImageResult(int Id);
