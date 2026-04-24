@@ -258,9 +258,22 @@ public class ProductImagesService(
         await database.SaveChangesAsync();
     }
 
-    public Task DetachImageFromProductByKeys(int productId, int imageId)
+    public async Task DetachImageFromProductByKeys(int productId, int imageId)
     {
-        throw new NotImplementedException();
+        var tenant = context.Tenant ?? throw new UnauthorizedAccessException("Tenant not resolved.");
+
+        var productImage = await database.ProductImages
+                               .FirstOrDefaultAsync(pi => pi.TenantId == tenant.Id
+                                                          && pi.ProductId == productId
+                                                          && pi.ImageId == imageId
+                                                          && pi.DeletedAt == null)
+                           ?? throw new InvalidOperationException(
+                               $"Product image association not found for product {productId} and image {imageId}");
+
+        productImage.DeletedAt = DateTime.UtcNow;
+        productImage.UpdatedAt = DateTime.UtcNow;
+
+        await database.SaveChangesAsync();
     }
 
     private async Task<int> GetNextPosition(int tenantId, int productId)
