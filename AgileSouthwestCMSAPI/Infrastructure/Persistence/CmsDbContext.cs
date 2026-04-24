@@ -325,12 +325,14 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
             entity.HasOne(pi => pi.Product)
                 .WithMany(p => p.ProductImages)
                 .HasForeignKey(pi => new { pi.TenantId, pi.ProductId })
+                .HasPrincipalKey(p => new { p.TenantId, p.Id })  // Important!
                 .OnDelete(DeleteBehavior.Restrict)
                 .HasConstraintName("fk_product_images_product");
 
             entity.HasOne(pi => pi.Image)
                 .WithMany(i => i.ProductImages) // Requires ICollection<ProductImage> on Image
                 .HasForeignKey(pi => pi.ImageId)
+                .HasPrincipalKey(i => i.Id)  // Specify principal key
                 .OnDelete(DeleteBehavior.Restrict)
                 .HasConstraintName("fk_product_images_image");
 

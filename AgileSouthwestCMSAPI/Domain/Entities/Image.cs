@@ -20,7 +20,7 @@ public class Image
     
     public DateTime? DeletedAt { get; set; }
     
-    public virtual Tenant Tenant { get; set; }
+    public Tenant Tenant { get; set; }
     
-    public virtual ICollection<ProductImage> ProductImages { get; set; } = new List<ProductImage>();
+    public ICollection<ProductImage> ProductImages { get; set; } = new List<ProductImage>();
 }

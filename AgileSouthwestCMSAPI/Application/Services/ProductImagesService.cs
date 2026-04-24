@@ -15,16 +15,16 @@ public class ProductImagesService(
     public async Task<AttachImageResult> AttachImageToProduct(AttachImageToProductRequest request)
     {
         var tenant = context.Tenant ?? throw new UnauthorizedAccessException("Tenant not resolved.");
-        
+
         var product = await database.Products
-                .FirstOrDefaultAsync(p =>
-                    p.Id == request.ProductId && p.TenantId == tenant.Id && p.DeletedAt == null)
-            ?? throw new InvalidOperationException($"Product {request.ProductId} not found");
+                          .FirstOrDefaultAsync(p =>
+                              p.Id == request.ProductId && p.TenantId == tenant.Id && p.DeletedAt == null)
+                      ?? throw new InvalidOperationException($"Product {request.ProductId} not found");
 
         var image = await database.Images
-                .FirstOrDefaultAsync(i =>
-                    i.Id == request.ImageId && i.TenantId == tenant.Id && i.DeletedAt == null)
-            ?? throw new InvalidOperationException($"Image {request.ImageId} not found");
+                        .FirstOrDefaultAsync(i =>
+                            i.Id == request.ImageId && i.TenantId == tenant.Id && i.DeletedAt == null)
+                    ?? throw new InvalidOperationException($"Image {request.ImageId} not found");
 
         var existing = await database.ProductImages
             .FirstOrDefaultAsync(pi => pi.TenantId == tenant.Id
@@ -59,9 +59,30 @@ public class ProductImagesService(
         return new AttachImageResult(productImage.Id);
     }
 
-    public Task<GetProductImageResult> GetProductImage(int id)
+    public async Task<GetProductImageResult> GetProductImage(int id)
     {
-        throw new NotImplementedException();
+        var tenant = context.Tenant ?? throw new UnauthorizedAccessException("Tenant not resolved.");
+
+        var productImage = await database.ProductImages
+                               .Include(productImage => productImage.Product)
+                               .Include(productImage => productImage.Image)
+                               .FirstOrDefaultAsync(pi =>
+                                   pi.Id == id && pi.TenantId == tenant.Id && pi.DeletedAt == null)
+                           ?? throw new InvalidOperationException("Product image association not found");
+
+        return new GetProductImageResult(
+            productImage.Id,
+            productImage.TenantId,
+            productImage.ProductId,
+            productImage.Product?.Name ?? string.Empty,
+            productImage.ImageId,
+            productImage.Image?.Url ?? string.Empty,
+            productImage.Image?.OriginalFileName,
+            productImage.IsPrimary,
+            productImage.Position,
+            productImage.CreatedAt,
+            productImage.UpdatedAt
+        );
     }
 
     public Task<IEnumerable<GetProductImageResult>> GetProductImagesByProductId(int productId)
@@ -98,24 +119,24 @@ public class ProductImagesService(
     {
         throw new NotImplementedException();
     }
-    
+
     private async Task<int> GetNextPosition(int tenantId, int productId)
     {
         var maxPosition = await database.ProductImages
-            .Where(pi => pi.TenantId == tenantId 
-                         && pi.ProductId == productId 
+            .Where(pi => pi.TenantId == tenantId
+                         && pi.ProductId == productId
                          && pi.DeletedAt == null)
             .MaxAsync(pi => (int?)pi.Position) ?? -1;
-            
+
         return maxPosition + 1;
     }
 
     private async Task ClearPrimaryFlag(int tenantId, int productId)
     {
         var primaryImages = await database.ProductImages
-            .Where(pi => pi.TenantId == tenantId 
-                         && pi.ProductId == productId 
-                         && pi.IsPrimary == true 
+            .Where(pi => pi.TenantId == tenantId
+                         && pi.ProductId == productId
+                         && pi.IsPrimary == true
                          && pi.DeletedAt == null)
             .ToListAsync();
 
