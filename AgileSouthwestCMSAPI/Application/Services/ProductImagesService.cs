@@ -85,9 +85,37 @@ public class ProductImagesService(
         );
     }
 
-    public Task<IEnumerable<GetProductImageResult>> GetProductImagesByProductId(int productId)
+    public async Task<IEnumerable<GetProductImageResult>> GetProductImagesByProductId(int productId)
     {
-        throw new NotImplementedException();
+        var tenant = context.Tenant ?? throw new UnauthorizedAccessException("Tenant not resolved.");
+
+        // Verify product belongs to tenant
+        var product = await database.Products
+                          .FirstOrDefaultAsync(p => p.Id == productId && p.TenantId == tenant.Id && p.DeletedAt == null)
+                      ?? throw new InvalidOperationException($"Product {productId} not found");
+
+        var productImages = await database.ProductImages
+            .AsNoTracking()
+            .Include(pi => pi.Image)
+            .Where(pi => pi.TenantId == tenant.Id
+                         && pi.ProductId == productId
+                         && pi.DeletedAt == null)
+            .OrderBy(pi => pi.Position)
+            .ToListAsync();
+
+        return productImages.Select(pi => new GetProductImageResult(
+            pi.Id,
+            pi.TenantId,
+            pi.ProductId,
+            product.Name,
+            pi.ImageId,
+            pi.Image?.Url ?? string.Empty,
+            pi.Image?.OriginalFileName,
+            pi.IsPrimary,
+            pi.Position,
+            pi.CreatedAt,
+            pi.UpdatedAt
+        ));
     }
 
     public Task<IEnumerable<GetProductImageResult>> GetProductImagesByImageId(int imageId)
