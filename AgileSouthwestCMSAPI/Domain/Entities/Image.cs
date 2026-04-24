@@ -19,4 +19,7 @@ public class Image
     public DateTime UpdatedAt { get; set; }
     
     public DateTime? DeletedAt { get; set; }
+    
+    public virtual Tenant Tenant { get; set; }
+    
 }

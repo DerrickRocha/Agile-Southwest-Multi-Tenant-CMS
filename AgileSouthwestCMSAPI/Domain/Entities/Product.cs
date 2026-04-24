@@ -36,6 +36,8 @@ public class Product
     public Tenant Tenant { get; set; } = null!;
     
     public ICollection<ProductOption> ProductOptions { get; set; } = new List<ProductOption>();
+
+    public ICollection<ProductImage> ProductImages { get; set; } = new List<ProductImage>();
     
     public ICollection<Inventory> Inventory { get; set; } = new List<Inventory>();
 

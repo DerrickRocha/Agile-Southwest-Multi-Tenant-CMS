@@ -20,7 +20,7 @@ public class ProductOptionChoice
     public int PriceDeltaCents { get; set; }
     
     [Column("sale_price_delta_cents")]
-    public int SalePriceDeltaCents { get; set; }
+    public int? SalePriceDeltaCents { get; set; }
     
     [Column("is_active")]
     public bool IsActive { get; set; }

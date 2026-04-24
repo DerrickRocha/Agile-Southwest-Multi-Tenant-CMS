@@ -273,6 +273,81 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
             entity.HasQueryFilter(c => c.DeletedAt == null);
         });
 
+        builder.Entity<ProductImage>(entity =>
+        {
+            entity.ToTable("product_images");
+            entity.HasKey(i => i.Id);
+            entity.Property(i => i.Id)
+                .HasColumnName("id")
+                .ValueGeneratedOnAdd();
+            entity.Property(i => i.TenantId)
+                .HasColumnName("tenant_id")
+                .IsRequired();
+            entity.Property(i => i.ProductId)
+                .HasColumnName("product_id")
+                .IsRequired();
+            entity.Property(i => i.ImageId)
+                .HasColumnName("image_id")
+                .IsRequired();
+            entity.Property(i => i.IsPrimary)
+                .HasColumnName("is_primary")
+                .HasDefaultValue(false)
+                .IsRequired();
+            entity.Property(i => i.CreatedAt)
+                .HasColumnName("created_at")
+                .HasColumnType("DATETIME(6)")
+                .HasDefaultValueSql("CURRENT_TIMESTAMP(6)")
+                .IsRequired();
+
+            entity.Property(i => i.UpdatedAt)
+                .HasColumnName("updated_at")
+                .HasColumnType("DATETIME(6)")
+                .HasDefaultValueSql("CURRENT_TIMESTAMP(6)")
+                .IsRequired();
+
+            entity.Property(i => i.DeletedAt)
+                .HasColumnName("deleted_at")
+                .HasColumnType("DATETIME(6)");
+
+            entity.HasOne(i => i.Product)
+                .WithMany(p => p.ProductImages)
+                .HasForeignKey(p => new { p.TenantId, p.ProductId });
+
+            // Foreign key to images
+            entity.HasOne<Image>()
+                .WithMany()
+                .HasForeignKey(p => p.ImageId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Unique Constraints
+            entity.HasIndex(p => new { p.TenantId, p.ProductId, p.ImageId })
+                .IsUnique()
+                .HasDatabaseName("uk_product_image");
+
+            entity.HasIndex(p => new { p.TenantId, p.ProductId, p.Position })
+                .IsUnique()
+                .HasDatabaseName("uk_position_per_product");
+
+            // Indexes (matching database)
+            entity.HasIndex(p => new { p.ProductId, p.TenantId })
+                .HasDatabaseName("image_product_idx");
+
+            entity.HasIndex(p => new { p.TenantId })
+                .HasDatabaseName("image_product_tenant_idx");
+
+            entity.HasIndex(p => new { p.ProductId, p.IsPrimary })
+                .HasDatabaseName("image_primary_idx");
+
+            entity.HasIndex(p => p.DeletedAt)
+                .HasDatabaseName("idx_deleted");
+
+            // Optional: Composite index for common queries
+            entity.HasIndex(p => new { p.TenantId, p.ProductId, p.Position, p.DeletedAt })
+                .HasDatabaseName("idx_product_active_images");
+            
+            entity.HasQueryFilter(p => p.DeletedAt == null);
+        });
+
         // =========================
         // cms_users
         // =========================
@@ -596,6 +671,23 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
                 entity.Property(i => i.DeletedAt)
                     .HasColumnName("deleted_at")
                     .HasColumnType("DATETIME(6)");
+                
+                entity.HasOne(i => i.Tenant)
+                    .WithMany(t => t.Images)
+                    .HasForeignKey(i => i.TenantId)
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .HasConstraintName("image_tenant_fk");
+
+                entity.HasIndex(i => i.TenantId)
+                    .HasDatabaseName("idx_tenant");
+
+                entity.HasIndex(i => i.DeletedAt)
+                    .HasDatabaseName("idx_deleted");
+
+                entity.HasIndex(i => new { i.TenantId, i.DeletedAt })
+                    .HasDatabaseName("idx_tenant_deleted");
+                
+                entity.HasQueryFilter(i => i.DeletedAt == null);
             }
             
         );

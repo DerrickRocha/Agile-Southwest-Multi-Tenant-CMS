@@ -34,6 +34,8 @@ public class Tenant
     public ICollection<Store> Stores { get; set; } = new List<Store>();
 
     public ICollection<Inventory> Inventory { get; set; } = new List<Inventory>();
+
+    public ICollection<Image> Images { get; set; } = new List<Image>();
 }
     
     
