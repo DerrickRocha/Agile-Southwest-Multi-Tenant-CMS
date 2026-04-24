@@ -10,18 +10,23 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
     public DbSet<Tenant> Tenants => Set<Tenant>();
     public DbSet<UserTenant> UserTenants => Set<UserTenant>();
 
+    public DbSet<Image> Images => Set<Image>();
     public DbSet<Product> Products => Set<Product>();
     public DbSet<ProductOption> ProductOptions => Set<ProductOption>();
     public DbSet<ProductOptionChoice> ProductOptionChoices => Set<ProductOptionChoice>();
 
+    public DbSet<ProductImage> ProductImages => Set<ProductImage>();
+
     public DbSet<Inventory> Inventory => Set<Inventory>();
 
     public DbSet<Store> Stores => Set<Store>();
+    
+    
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
-        
+
         builder.Entity<Tenant>(entity =>
         {
             entity.ToTable("tenants");
@@ -64,7 +69,7 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
 
             entity.Property(t => t.RowVersion)
                 .HasColumnName("row_version")
-                .IsRowVersion();  
+                .IsRowVersion();
 
             entity.HasIndex(t => t.SubDomain)
                 .HasDatabaseName("uq_tenants_subdomain")
@@ -125,11 +130,11 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
             entity.Property(p => p.DeletedAt)
                 .HasColumnName("deleted_at")
                 .HasColumnType("DATETIME(6)");
-            
+
             entity.Property(p => p.RowVersion)
                 .HasColumnName("row_version")
-                .IsRowVersion();  
-            
+                .IsRowVersion();
+
             // Indexes
             entity.HasIndex(p => p.TenantId)
                 .HasDatabaseName("product_tenant_idx");
@@ -151,10 +156,10 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
             entity.Property(o => o.Id)
                 .HasColumnName("id")
                 .ValueGeneratedOnAdd();
-            
+
             entity.Property(o => o.TenantId)
                 .HasColumnName("tenant_id")
-                    .IsRequired();
+                .IsRequired();
 
             entity.Property(p => p.ProductId)
                 .HasColumnName("product_id")
@@ -186,11 +191,11 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
             entity.Property(o => o.DeletedAt)
                 .HasColumnName("deleted_at")
                 .HasColumnType("DATETIME(6)");
-            
+
             entity.Property(o => o.RowVersion)
                 .HasColumnName("row_version")
-                .IsRowVersion();  
-            
+                .IsRowVersion();
+
             entity.HasIndex(o => new { o.ProductId, o.TenantId })
                 .HasDatabaseName("product_option_product_idx");
 
@@ -208,7 +213,7 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
             entity.Property(o => o.Id)
                 .HasColumnName("id")
                 .ValueGeneratedOnAdd();
-            
+
             entity.Property(c => c.TenantId)
                 .HasColumnName("tenant_id")
                 .IsRequired();
@@ -216,10 +221,10 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
             entity.Property(p => p.ProductOptionId)
                 .HasColumnName("option_id")
                 .IsRequired();
-            
+
             entity.HasOne(o => o.ProductOption)
                 .WithMany(p => p.ProductOptionChoices)
-                .HasForeignKey(c => new { c.ProductOptionId, c.TenantId})
+                .HasForeignKey(c => new { c.ProductOptionId, c.TenantId })
                 .HasPrincipalKey(po => new { po.Id, po.TenantId }) // Explicit principal key
                 .OnDelete(DeleteBehavior.Cascade);
 
@@ -254,10 +259,10 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
                 .HasColumnName("deleted_at")
                 .HasColumnType("DATETIME(6)")
                 .HasDefaultValueSql("CURRENT_TIMESTAMP(6)");
-            
+
             entity.Property(t => t.RowVersion)
                 .HasColumnName("row_version")
-                .IsRowVersion();  
+                .IsRowVersion();
 
             entity.HasIndex(c => new { c.ProductOptionId, c.TenantId })
                 .HasDatabaseName("product_option_choice_option_idx");
@@ -348,7 +353,7 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
                 .HasConversion<string>()
                 .HasMaxLength(50)
                 .IsRequired();
-            
+
             entity.Property(ut => ut.CreatedAt)
                 .HasColumnName("created_at")
                 .HasColumnType("DATETIME(6)")
@@ -362,10 +367,10 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
             entity.Property(ut => ut.DeletedAt)
                 .HasColumnName("deleted_at")
                 .HasColumnType("DATETIME(6)");
-            
+
             entity.Property(t => t.RowVersion)
                 .HasColumnName("row_version")
-                .IsRowVersion();  
+                .IsRowVersion();
 
             entity.HasOne(ut => ut.User)
                 .WithMany(u => u.UserTenants)
@@ -395,8 +400,8 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
             entity.Property(s => s.TenantId)
                 .HasColumnName("tenant_id")
                 .IsRequired();
-            
-            
+
+
             entity.HasOne(s => s.Tenant)
                 .WithMany(t => t.Stores)
                 .HasForeignKey(s => s.TenantId)
@@ -433,10 +438,10 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
             entity.Property(s => s.DeletedAt)
                 .HasColumnName("deleted_at")
                 .HasColumnType("DATETIME(6)");
-            
+
             entity.Property(t => t.RowVersion)
                 .HasColumnName("row_version")
-                .IsRowVersion();  
+                .IsRowVersion();
 
             entity.HasIndex(s => new { s.TenantId, s.SubDomain })
                 .IsUnique()
@@ -456,30 +461,30 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
                 entity.Property(i => i.Id)
                     .HasColumnName("id")
                     .ValueGeneratedOnAdd();
-                
+
                 entity.Property(i => i.TenantId)
                     .HasColumnName("tenant_id")
                     .IsRequired();
-                
+
                 entity.Property(i => i.StoreId)
                     .HasColumnName("store_id")
                     .IsRequired();
-    
+
                 entity.Property(i => i.ProductId)
                     .HasColumnName("product_id")
                     .IsRequired();
-    
+
                 entity.Property(i => i.Quantity)
                     .HasColumnName("quantity")
                     .IsRequired()
                     .HasDefaultValue(0);
-    
+
                 entity.Property(i => i.CreatedAt)
                     .HasColumnName("created_at")
                     .HasColumnType("DATETIME(6)")
                     .HasDefaultValueSql("CURRENT_TIMESTAMP(6)")
                     .IsRequired();
-    
+
                 entity.Property(i => i.UpdatedAt)
                     .HasColumnName("updated_at")
                     .HasColumnType("DATETIME(6)")
@@ -489,57 +494,110 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
                 entity.Property(i => i.DeletedAt)
                     .HasColumnName("deleted_at")
                     .HasColumnType("DATETIME(6)");
-                
+
                 entity.Property(i => i.RowVersion)
                     .HasColumnName("row_version")
-                    .IsRowVersion();  
-                
+                    .IsRowVersion();
+
                 entity.HasOne(i => i.Tenant)
                     .WithMany(t => t.Inventory)
                     .HasForeignKey(s => s.TenantId)
                     .OnDelete(DeleteBehavior.Restrict)
                     .HasConstraintName("inventory_tenant_id_fk");
-                
+
                 // Foreign key to Store (composite)
                 entity.HasOne(i => i.Store)
                     .WithMany(s => s.Inventory)
                     .HasForeignKey(i => new { i.StoreId, i.TenantId })
                     .OnDelete(DeleteBehavior.Restrict)
                     .HasConstraintName("inventory_store_tenant_id_fk");
-    
+
                 // Foreign key to Product (composite)
                 entity.HasOne(i => i.Product)
                     .WithMany(p => p.Inventory)
                     .HasForeignKey(i => new { i.ProductId, i.TenantId })
                     .OnDelete(DeleteBehavior.Restrict)
                     .HasConstraintName("inventory_product_tenant_id_fk");
-                
+
                 // Unique constraint
                 entity.HasIndex(i => new { i.TenantId, i.StoreId, i.ProductId })
                     .IsUnique()
                     .HasDatabaseName("inventory_tenant_store_product_uk");
-    
+
                 // Indexes
                 entity.HasIndex(i => i.TenantId)
                     .HasDatabaseName("inventory_tenant_id_idx");
-    
+
                 entity.HasIndex(i => new { i.TenantId, i.StoreId })
                     .HasDatabaseName("inventory_tenant_store_idx");
-    
+
                 entity.HasIndex(i => new { i.TenantId, i.ProductId })
                     .HasDatabaseName("inventory_tenant_product_idx");
-    
+
                 entity.HasIndex(i => new { i.TenantId, i.Quantity })
                     .HasDatabaseName("inventory_tenant_quantity_idx");
-    
+
                 entity.HasIndex(i => new { i.TenantId, i.DeletedAt })
                     .HasDatabaseName("inventory_tenant_deleted_idx");
-    
+
                 // Check constraint for quantity >= 0
                 entity.ToTable(t => t.HasCheckConstraint("CK_inventory_quantity", "quantity >= 0"));
 
                 entity.HasQueryFilter(i => i.DeletedAt == null);
             }
+        );
+
+        builder.Entity<Image>(entity =>
+            {
+                entity.ToTable("images");
+
+                entity.HasKey(i => i.Id);
+
+                entity.Property(i => i.Id)
+                    .HasColumnName("id")
+                    .IsRequired()
+                    .ValueGeneratedOnAdd();
+                
+                entity.Property(i => i.TenantId)
+                    .HasColumnName("tenant_id")
+                    .IsRequired();
+
+                entity.Property(i => i.Url)
+                    .HasColumnName("url")
+                    .HasMaxLength(2048)
+                    .IsRequired();
+
+                entity.Property(i => i.OriginalFileName)
+                    .HasColumnName("original_filename")
+                    .HasMaxLength(255)
+                    .IsRequired(false);
+
+                entity.Property(i => i.FileSize)
+                    .HasColumnName("file_size")
+                    .IsRequired(false);
+
+                entity.Property(i => i.ContentType)
+                    .HasColumnName("content_type")
+                    .HasMaxLength(100)
+                    .IsRequired(false);
+                
+                entity.Property(i => i.CreatedAt)
+                    .HasColumnName("created_at")
+                    .HasColumnType("DATETIME(6)")
+                    .HasDefaultValueSql("CURRENT_TIMESTAMP(6)")
+                    .IsRequired();
+
+                entity.Property(i => i.UpdatedAt)
+                    .HasColumnName("updated_at")
+                    .HasColumnType("DATETIME(6)")
+                    .HasDefaultValueSql("CURRENT_TIMESTAMP(6)")
+                    .IsRequired();
+
+                entity.Property(i => i.DeletedAt)
+                    .HasColumnName("deleted_at")
+                    .HasColumnType("DATETIME(6)");
+            }
+            
         );
     }
 
@@ -560,7 +618,7 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
     {
         var now = DateTime.UtcNow;
         var entries = ChangeTracker.Entries();
-    
+
         foreach (var entry in entries)
         {
             if (entry.State == EntityState.Added)
