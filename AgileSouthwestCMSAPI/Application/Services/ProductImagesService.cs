@@ -154,11 +154,9 @@ public class ProductImagesService(
         var productImage = await database.ProductImages
                                .FirstOrDefaultAsync(pi => pi.Id == id && pi.TenantId == tenant.Id && pi.DeletedAt == null)
                            ?? throw new InvalidOperationException("Product image association not found");
-
-        // Clear primary flag from all images of this product
+        
         await ClearPrimaryFlag(tenant.Id, productImage.ProductId);
 
-        // Set this as primary
         productImage.IsPrimary = true;
         productImage.UpdatedAt = DateTime.UtcNow;
 
@@ -166,14 +164,81 @@ public class ProductImagesService(
         
     }
 
-    public Task UpdatePosition(int id, int newPosition)
+    public async Task UpdatePosition(int id, int? newPosition)
     {
-        throw new NotImplementedException();
+        var tenant = context.Tenant ?? throw new UnauthorizedAccessException("Tenant not resolved.");
+            
+        if (newPosition is null or < 0)
+            throw new ValidationException("Position cannot be null or negative");
+
+        var productImage = await database.ProductImages
+                               .FirstOrDefaultAsync(pi => pi.Id == id && pi.TenantId == tenant.Id && pi.DeletedAt == null)
+                           ?? throw new InvalidOperationException("Product image association not found");
+
+        // Check if position is already taken
+        var existingAtPosition = await database.ProductImages
+            .FirstOrDefaultAsync(pi => pi.TenantId == tenant.Id 
+                                       && pi.ProductId == productImage.ProductId 
+                                       && pi.Position == newPosition 
+                                       && pi.DeletedAt == null
+                                       && pi.Id != id);
+
+        if (existingAtPosition != null)
+            throw new ValidationException($"Position {newPosition} is already taken");
+
+        productImage.Position = newPosition?? 0;
+        productImage.UpdatedAt = DateTime.UtcNow;
+
+        await database.SaveChangesAsync();
     }
 
-    public Task ReorderImages(ReorderImagesRequest request)
+    public async Task ReorderImages(ReorderImagesRequest request)
     {
-        throw new NotImplementedException();
+            var tenant = context.Tenant ?? throw new UnauthorizedAccessException("Tenant not resolved.");
+            
+            // Verify product belongs to tenant
+            var product = await database.Products
+                .FirstOrDefaultAsync(p => p.Id == request.ProductId && p.TenantId == tenant.Id && p.DeletedAt == null)
+                ?? throw new InvalidOperationException($"Product {request.ProductId} not found");
+
+            // Get all current associations for this product
+            var associations = await database.ProductImages
+                .Where(pi => pi.TenantId == tenant.Id 
+                    && pi.ProductId == request.ProductId 
+                    && pi.DeletedAt == null)
+                .ToListAsync();
+
+            // Validate all IDs exist
+            var associationIds = associations.Select(a => a.Id).ToHashSet();
+            var missingIds = request.ImageOrder.Except(associationIds).ToList();
+            if (missingIds.Any())
+                throw new ValidationException($"Invalid association IDs: {string.Join(", ", missingIds)}");
+
+            // Update positions
+            foreach (var association in associations)
+            {
+                var newPosition = Array.IndexOf(request.ImageOrder, association.Id);
+                if (newPosition >= 0 && association.Position != newPosition)
+                {
+                    association.Position = newPosition;
+                    association.UpdatedAt = DateTime.UtcNow;
+                }
+            }
+
+            // If a primary image is specified, ensure it's the only one
+            if (request.PrimaryImageId.HasValue)
+            {
+                if (!associationIds.Contains(request.PrimaryImageId.Value))
+                    throw new ValidationException($"Primary image ID {request.PrimaryImageId} not found in product images");
+
+                foreach (var association in associations)
+                {
+                    association.IsPrimary = (association.Id == request.PrimaryImageId.Value);
+                }
+            }
+
+            await database.SaveChangesAsync();
+            
     }
 
     public Task DetachImageFromProduct(int id)
