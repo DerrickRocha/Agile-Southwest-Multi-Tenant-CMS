@@ -118,9 +118,33 @@ public class ProductImagesService(
         ));
     }
 
-    public Task<IEnumerable<GetProductImageResult>> GetProductImagesByImageId(int imageId)
+    public async Task<IEnumerable<GetProductImageResult>> GetProductImagesByImageId(int imageId)
     {
-        throw new NotImplementedException();
+        var tenant = context.Tenant ?? throw new UnauthorizedAccessException("Tenant not resolved.");
+
+        var productImages = await database.ProductImages
+            .AsNoTracking()
+            .Include(pi => pi.Image)
+            .Include(pi => pi.Product)
+            .Where(pi => pi.TenantId == tenant.Id
+                         && pi.ImageId == imageId
+                         && pi.DeletedAt == null)
+            .OrderBy(pi => pi.Position)
+            .ToListAsync();
+
+        return productImages.Select(pi => new GetProductImageResult(
+            pi.Id,
+            pi.TenantId,
+            pi.ProductId,
+            pi.Product?.Name ?? string.Empty,
+            pi.ImageId,
+            pi.Image?.Url ?? string.Empty,
+            pi.Image?.OriginalFileName,
+            pi.IsPrimary,
+            pi.Position,
+            pi.CreatedAt,
+            pi.UpdatedAt
+        ));
     }
 
     public Task SetAsPrimary(int id)
