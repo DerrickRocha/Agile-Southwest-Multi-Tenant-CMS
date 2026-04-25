@@ -339,7 +339,7 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
             // Indexes
             entity.HasIndex(pi => new { pi.TenantId, pi.ProductId, pi.ImageId })
                 .IsUnique()
-                .HasDatabaseName("uk_product_image");
+                .HasDatabaseName("uk_active_product_image");
 
             entity.HasIndex(pi => new { pi.TenantId, pi.ProductId, pi.Position })
                 .IsUnique()

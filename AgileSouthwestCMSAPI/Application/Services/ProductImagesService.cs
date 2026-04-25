@@ -245,16 +245,13 @@ public class ProductImagesService(
     public async Task DetachImageFromProduct(int id)
     {
         var tenant = context.Tenant ?? throw new UnauthorizedAccessException("Tenant not resolved.");
-
+    
         var productImage = await database.ProductImages
-                               .FirstOrDefaultAsync(pi =>
-                                   pi.Id == id && pi.TenantId == tenant.Id && pi.DeletedAt == null)
+                               .FirstOrDefaultAsync(pi => pi.Id == id && pi.TenantId == tenant.Id && pi.DeletedAt == null)
                            ?? throw new InvalidOperationException("Product image association not found");
 
-        // Soft delete
-        productImage.DeletedAt = DateTime.UtcNow;
-        productImage.UpdatedAt = DateTime.UtcNow;
-
+        // Hard delete
+        database.ProductImages.Remove(productImage);
         await database.SaveChangesAsync();
     }
 
@@ -270,9 +267,7 @@ public class ProductImagesService(
                            ?? throw new InvalidOperationException(
                                $"Product image association not found for product {productId} and image {imageId}");
 
-        productImage.DeletedAt = DateTime.UtcNow;
-        productImage.UpdatedAt = DateTime.UtcNow;
-
+        database.ProductImages.Remove(productImage);
         await database.SaveChangesAsync();
     }
 
