@@ -12,9 +12,16 @@ public class ProductImage
     
     public bool IsPrimary { set; get; }
     
+    public int Position { set; get; }
+    
     public DateTime CreatedAt { get; set; }
     
     public DateTime UpdatedAt { get; set; }
     
     public DateTime? DeletedAt { get; set; }
+    
+    // Navigation properties
+    public virtual Tenant Tenant { get; set; }
+    public virtual Product Product { get; set; }
+    public virtual Image Image { get; set; }
 }

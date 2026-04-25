@@ -20,8 +20,7 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
     public DbSet<Inventory> Inventory => Set<Inventory>();
 
     public DbSet<Store> Stores => Set<Store>();
-    
-    
+
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -271,6 +270,94 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
                 .HasDatabaseName("product_option_choice_tenant_idx");
 
             entity.HasQueryFilter(c => c.DeletedAt == null);
+        });
+
+        builder.Entity<ProductImage>(entity =>
+        {
+            entity.ToTable("product_images");
+
+            entity.HasKey(pi => pi.Id);
+
+            entity.Property(pi => pi.Id)
+                .HasColumnName("id")
+                .ValueGeneratedOnAdd();
+
+            entity.Property(pi => pi.TenantId)
+                .HasColumnName("tenant_id")
+                .IsRequired();
+
+            entity.Property(pi => pi.ProductId)
+                .HasColumnName("product_id")
+                .IsRequired();
+
+            entity.Property(pi => pi.ImageId)
+                .HasColumnName("image_id")
+                .IsRequired();
+
+            entity.Property(pi => pi.Position)
+                .HasColumnName("position")
+                .HasDefaultValue(0)
+                .IsRequired();
+
+            entity.Property(pi => pi.IsPrimary)
+                .HasColumnName("is_primary")
+                .HasDefaultValue(false)
+                .IsRequired();
+
+            entity.Property(pi => pi.CreatedAt)
+                .HasColumnName("created_at")
+                .HasColumnType("DATETIME(6)")
+                .HasDefaultValueSql("CURRENT_TIMESTAMP(6)")
+                .IsRequired();
+
+            entity.Property(pi => pi.UpdatedAt)
+                .HasColumnName("updated_at")
+                .HasColumnType("DATETIME(6)")
+                .HasDefaultValueSql("CURRENT_TIMESTAMP(6)")
+                .IsRequired();
+
+            entity.Property(pi => pi.DeletedAt)
+                .HasColumnName("deleted_at")
+                .HasColumnType("DATETIME(6)")
+                .IsRequired(false);
+
+            // Relationships
+            entity.HasOne(pi => pi.Product)
+                .WithMany(p => p.ProductImages)
+                .HasForeignKey(pi => new { pi.TenantId, pi.ProductId })
+                .HasPrincipalKey(p => new { p.TenantId, p.Id })  // Important!
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("fk_product_images_product");
+
+            entity.HasOne(pi => pi.Image)
+                .WithMany(i => i.ProductImages) // Requires ICollection<ProductImage> on Image
+                .HasForeignKey(pi => pi.ImageId)
+                .HasPrincipalKey(i => i.Id)  // Specify principal key
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("fk_product_images_image");
+
+            // Indexes
+            entity.HasIndex(pi => new { pi.TenantId, pi.ProductId, pi.ImageId })
+                .IsUnique()
+                .HasDatabaseName("uk_active_product_image");
+
+            entity.HasIndex(pi => new { pi.TenantId, pi.ProductId, pi.Position })
+                .IsUnique()
+                .HasDatabaseName("uk_position_per_product");
+
+            entity.HasIndex(pi => new { pi.ProductId, pi.TenantId })
+                .HasDatabaseName("image_product_idx");
+
+            entity.HasIndex(pi => pi.TenantId)
+                .HasDatabaseName("image_product_tenant_idx");
+
+            entity.HasIndex(pi => new { pi.ProductId, pi.IsPrimary })
+                .HasDatabaseName("image_primary_idx");
+
+            entity.HasIndex(pi => pi.DeletedAt)
+                .HasDatabaseName("idx_deleted");
+
+            entity.HasQueryFilter(pi => pi.DeletedAt == null);
         });
 
         // =========================
@@ -557,7 +644,7 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
                     .HasColumnName("id")
                     .IsRequired()
                     .ValueGeneratedOnAdd();
-                
+
                 entity.Property(i => i.TenantId)
                     .HasColumnName("tenant_id")
                     .IsRequired();
@@ -580,7 +667,7 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
                     .HasColumnName("content_type")
                     .HasMaxLength(100)
                     .IsRequired(false);
-                
+
                 entity.Property(i => i.CreatedAt)
                     .HasColumnName("created_at")
                     .HasColumnType("DATETIME(6)")
@@ -596,8 +683,24 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
                 entity.Property(i => i.DeletedAt)
                     .HasColumnName("deleted_at")
                     .HasColumnType("DATETIME(6)");
+
+                entity.HasOne(i => i.Tenant)
+                    .WithMany(t => t.Images)
+                    .HasForeignKey(i => i.TenantId)
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .HasConstraintName("image_tenant_fk");
+
+                entity.HasIndex(i => i.TenantId)
+                    .HasDatabaseName("idx_tenant");
+
+                entity.HasIndex(i => i.DeletedAt)
+                    .HasDatabaseName("idx_deleted");
+
+                entity.HasIndex(i => new { i.TenantId, i.DeletedAt })
+                    .HasDatabaseName("idx_tenant_deleted");
+
+                entity.HasQueryFilter(i => i.DeletedAt == null);
             }
-            
         );
     }
 

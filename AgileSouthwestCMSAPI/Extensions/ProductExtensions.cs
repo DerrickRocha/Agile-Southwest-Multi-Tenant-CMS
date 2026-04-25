@@ -23,7 +23,7 @@ public static class ProductExtensions
                     ProductOptionId = choice.ProductOptionId,
                     Name = choice.Name,
                     PriceDelta = choice.PriceDeltaCents,
-                    SalePriceDelta = choice.SalePriceDeltaCents,
+                    SalePriceDelta = choice.SalePriceDeltaCents ?? 0,
                     IsActive = choice.IsActive,
                     CreatedAt = choice.CreatedAt,
                     UpdatedAt = choice.UpdatedAt

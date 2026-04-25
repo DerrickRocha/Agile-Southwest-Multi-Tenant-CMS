@@ -19,4 +19,8 @@ public class Image
     public DateTime UpdatedAt { get; set; }
     
     public DateTime? DeletedAt { get; set; }
+    
+    public Tenant Tenant { get; set; }
+    
+    public ICollection<ProductImage> ProductImages { get; set; } = new List<ProductImage>();
 }
