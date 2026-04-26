@@ -1,0 +1,33 @@
+namespace AgileSouthwestCMSAPI.Application.DTOs.Orders;
+
+public record GetOrderResult(
+    int Id,
+    int TenantId,
+    string OrderNumber,
+    int? CustomerId,
+    string CustomerEmail,
+    string CustomerFirstName,
+    string CustomerLastName,
+    string? CustomerPhone,
+    string Status,
+    string PaymentStatus,
+    string FulfillmentStatus,
+    int SubtotalCents,
+    int DiscountCents,
+    int TaxCents,
+    int ShippingCents,
+    int TotalCents,
+    string Currency,
+    AddressDto ShippingAddress,
+    AddressDto BillingAddress,
+    IEnumerable<OrderItemDto> Items,
+    string? PaymentMethod,
+    string? PaymentIntentId,
+    string? ShippingMethod,
+    string? TrackingNumber,
+    string? TrackingUrl,
+    string? CustomerNotes,
+    string? AdminNotes,
+    DateTime CreatedAt,
+    DateTime UpdatedAt
+);
