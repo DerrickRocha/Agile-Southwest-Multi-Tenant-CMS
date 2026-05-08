@@ -20,7 +20,13 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
     public DbSet<Inventory> Inventory => Set<Inventory>();
 
     public DbSet<Store> Stores => Set<Store>();
-
+    
+    public DbSet<Order> Orders => Set<Order>();
+    
+    public DbSet<OrderItem> OrderItems => Set<OrderItem>();
+    
+    public DbSet<Settings> Settings => Set<Settings>();
+    
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

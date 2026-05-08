@@ -19,6 +19,9 @@ public class Product
     [Column("base_price_cents")]
     public int BasePriceCents { get; set; }
     
+    [Column("tax_rate")]
+    public decimal TaxRate { get; set; }
+    
     [Column("is_active")]
     public bool IsActive { get; set; }
     
