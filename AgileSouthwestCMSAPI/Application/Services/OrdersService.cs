@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Security.Cryptography;
 using AgileSouthwestCMSAPI.Api.Requests.Orders;
 using AgileSouthwestCMSAPI.Application.DTOs.Orders;
 using AgileSouthwestCMSAPI.Application.Interfaces;
@@ -9,7 +10,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AgileSouthwestCMSAPI.Application.Services;
 
-public class OrdersService(ITenantContext context, CmsDbContext database) : IOrderService
+public class OrdersService(ITenantContext context, CmsDbContext database, IHttpContextAccessor httpContextAccessor) : IOrderService
 {
     public async Task<CreateOrderResult> CreateOrder(CreateOrderRequest request)
     {
@@ -20,6 +21,9 @@ public class OrdersService(ITenantContext context, CmsDbContext database) : IOrd
         if (request.ShippingAddress is null) throw new ValidationException("Shipping address cannot be null");
         if (request.Items.Count <= 0) throw new ValidationException("Item count must be positive");
 
+        var ipAddress = httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString();
+        var userAgent = httpContextAccessor.HttpContext?.Request.Headers.UserAgent.ToString();
+        
         var productIds = request.Items.Select(i => i.ProductId).Distinct();
         await using var transaction = await database.Database.BeginTransactionAsync();
         try
@@ -72,12 +76,14 @@ public class OrdersService(ITenantContext context, CmsDbContext database) : IOrd
                 TaxCents = taxTotalCents,
                 SubtotalCents = subTotalCents,
                 TotalCents = total,
+                ShippingCents = CalculateShippingCents(request.ShippingMethod, subTotalCents),
                 ShippingAddressLine1 = request.ShippingAddress.Line1,
                 ShippingAddressLine2 = request.ShippingAddress.Line2,
                 ShippingCity = request.ShippingAddress.City,
                 ShippingState = request.ShippingAddress.State,
                 ShippingPostalCode = request.ShippingAddress.PostalCode,
                 ShippingCountry = request.ShippingAddress.Country,
+                ShippingMethod = request.ShippingMethod,
                 BillingAddressLine1 = request.BillingAddress.Line1,
                 BillingAddressLine2 = request.BillingAddress.Line2,
                 BillingCity = request.BillingAddress.City,
@@ -85,6 +91,9 @@ public class OrdersService(ITenantContext context, CmsDbContext database) : IOrd
                 BillingPostalCode = request.BillingAddress.PostalCode,
                 BillingCountry = request.BillingAddress.Country,
                 OrderType = OrderType.Standard,
+                IpAddress = ipAddress,
+                UserAgent = userAgent,
+                CustomerNotes = request.CustomerNotes,
             };
             await database.Orders.AddAsync(order);
             await database.SaveChangesAsync();
@@ -98,9 +107,16 @@ public class OrdersService(ITenantContext context, CmsDbContext database) : IOrd
         }
     }
 
-    private string GenerateOrderNumber()
+    private int CalculateShippingCents(string? requestShippingMethod, int subTotalCents)
     {
         throw new NotImplementedException();
+    }
+
+    private string GenerateOrderNumber()
+    {
+        var timestamp = DateTime.UtcNow.ToString("yyyyMMddHHmmss");
+        var random = RandomNumberGenerator.GetInt32(0, 999999);
+        return $"ORD-{timestamp}-{random:D6}";
     }
     
     private static decimal CalculateTaxCents(int unitPriceCents, int quantity, decimal taxRatePercentage)
