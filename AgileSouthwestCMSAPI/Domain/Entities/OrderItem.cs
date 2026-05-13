@@ -15,6 +15,8 @@ public class OrderItem
     
     public decimal TaxRate { get; set; }
     
+    public int? WeightGrams { get; set; }  // Add this
+    
     // Product options snapshot
     public string? OptionDetails { get; set; } // JSON field
     

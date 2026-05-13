@@ -11,7 +11,7 @@ public record CreateOrderRequest(
     [Required] AddressRequest ShippingAddress,
     AddressRequest? BillingAddress,
     string? PaymentMethod,
-    string? ShippingMethod,
+    int? ShippingMethod,
     int? DiscountAmountCents,
     string? CustomerNotes
 );

@@ -69,7 +69,7 @@ public class Order
     public string? UserAgent { get; set; }
     
     // Shipping info
-    public string? ShippingMethod { get; set; }
+    public int? ShippingMethod { get; set; }
     public string? TrackingNumber { get; set; }
     public string? TrackingUrl { get; set; }
     

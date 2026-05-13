@@ -27,6 +27,8 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
     
     public DbSet<Settings> Settings => Set<Settings>();
     
+    public DbSet<ShippingMethod> ShippingMethods => Set<ShippingMethod>();
+    
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
