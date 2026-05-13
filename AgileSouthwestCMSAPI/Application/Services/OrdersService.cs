@@ -17,7 +17,6 @@ public class OrdersService(ITenantContext context, CmsDbContext database, IHttpC
         var tenant = context.Tenant
                      ?? throw new UnauthorizedAccessException("Tenant not resolved.");
         if (request.BillingAddress is null) throw new ValidationException("Billing address cannot be null");
-        if (request.PaymentMethod is null) throw new ValidationException("Payment method cannot be null");
         if (request.ShippingAddress is null) throw new ValidationException("Shipping address cannot be null");
         if (request.Items.Count <= 0) throw new ValidationException("Item count must be positive");
 

@@ -10,7 +10,6 @@ public record CreateOrderRequest(
     [Required] List<OrderRequestItem> Items,
     [Required] AddressRequest ShippingAddress,
     AddressRequest? BillingAddress,
-    string? PaymentMethod,
     int? ShippingMethodId,
     int? DiscountAmountCents,
     string? CustomerNotes
