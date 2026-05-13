@@ -69,7 +69,7 @@ public class Order
     public string? UserAgent { get; set; }
     
     // Shipping info
-    public int? ShippingMethod { get; set; }
+    public int? ShippingMethodId { get; set; }
     public string? TrackingNumber { get; set; }
     public string? TrackingUrl { get; set; }
     
@@ -87,4 +87,9 @@ public class Order
     public DateTime RowVersion { get; set; }
     
     public ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
+    
+    public Tenant Tenant { get; set; } = null!;
+    
+    public Customer? Customer { get; set; }
+    
 }

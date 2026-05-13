@@ -36,6 +36,10 @@ public class Tenant
     public ICollection<Inventory> Inventory { get; set; } = new List<Inventory>();
 
     public ICollection<Image> Images { get; set; } = new List<Image>();
+    
+    public ICollection<Order> Orders { get; set; } = new List<Order>();
+    
+    public ICollection<Customer> Customers { get; set; } = new List<Customer>();
 }
     
     
