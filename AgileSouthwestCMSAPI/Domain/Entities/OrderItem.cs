@@ -13,7 +13,7 @@ public class OrderItem
     public int TotalPriceCents { get; set; }
     public int DiscountCents { get; set; }
     
-    public decimal TaxRate { get; set; }
+    public int TaxCategoryId { get; set; }
     
     public int? WeightGrams { get; set; }  // Add this
     
@@ -27,4 +27,11 @@ public class OrderItem
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
     public DateTime? DeletedAt { get; set; }
+
+    public TaxCategory TaxCategory { get; set; } = null!;
+    public Tenant Tenant { get; set; } = null!;
+    public Order Order { get; set; } = null!;
+    public Product Product { get; set; } = null!;
+    
+    public ICollection<TaxCategory> TaxCategories { get; set; } = new List<TaxCategory>();
 }

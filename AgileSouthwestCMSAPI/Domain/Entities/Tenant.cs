@@ -40,6 +40,8 @@ public class Tenant
     public ICollection<Order> Orders { get; set; } = new List<Order>();
     
     public ICollection<Customer> Customers { get; set; } = new List<Customer>();
+    
+    public ICollection<TaxCategory> TaxCategories { get; set; } = new List<TaxCategory>();
 }
     
     

@@ -19,8 +19,8 @@ public class Product
     [Column("base_price_cents")]
     public int BasePriceCents { get; set; }
     
-    [Column("tax_rate")]
-    public decimal TaxRate { get; set; }
+    [Column("tax_category_id")]
+    public int TaxCategoryId { get; set; }
     
     [Column("is_active")]
     public bool IsActive { get; set; }
@@ -37,6 +37,8 @@ public class Product
     
     public DateTime RowVersion { get; set; }
     public Tenant Tenant { get; set; } = null!;
+    
+    public TaxCategory TaxCategory { get; set; } = null!;
     
     public ICollection<ProductOption> ProductOptions { get; set; } = new List<ProductOption>();
 
