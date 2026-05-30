@@ -10,6 +10,9 @@ public class Product
     [Column("tenant_id")]
     public int TenantId { get; set; }
     
+    [Column("tax_category_id")]
+    public int TaxCategoryId { get; set; }
+    
     [Column("name")]
     public string Name { get; set; }
     
@@ -19,11 +22,11 @@ public class Product
     [Column("base_price_cents")]
     public int BasePriceCents { get; set; }
     
-    [Column("tax_category_id")]
-    public int TaxCategoryId { get; set; }
-    
     [Column("is_active")]
     public bool IsActive { get; set; }
+    
+    [Column("is_enhanced_payment_required")]
+    public bool IsEnhancedPaymentRequired { get; set; }
     
     [Column("created_at")]
     public DateTime CreatedAt { get; set; }

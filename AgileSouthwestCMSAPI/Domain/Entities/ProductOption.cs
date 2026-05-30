@@ -16,14 +16,14 @@ public class ProductOption
     [Column("name")]
     public string Name { get; set; }
     
+    [Column("is_required")] 
+    public bool IsRequired { get; set; } = true;
+    
     [Column( "created_at" )]
     public DateTime CreatedAt { get; set; }
     
     [Column( "updated_at" )]
     public DateTime UpdatedAt { get; set; }
-
-    [Column("is_required")] 
-    public bool IsRequired { get; set; } = true;
     
     [Column("deleted_at")]
     public DateTime? DeletedAt { get; set; }

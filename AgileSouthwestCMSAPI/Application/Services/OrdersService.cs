@@ -43,9 +43,9 @@ public class OrdersService(ITenantContext context, CmsDbContext database, IHttpC
                     var unitPrice = FindUnitPriceCents(product, item.SelectedOptions);
                     var orderItem = new OrderItem
                     {
-                        ProductId = item.ProductId,
+                        Product = product,
                         Quantity = item.Quantity,
-                        TenantId = tenant.Id,
+                        Tenant = tenant,
                         ProductName = product.Name,
                         UnitPriceCents = unitPrice,
                         TotalPriceCents = unitPrice * item.Quantity,
@@ -60,44 +60,92 @@ public class OrdersService(ITenantContext context, CmsDbContext database, IHttpC
                     MidpointRounding.AwayFromZero
                 );
                 var total = subTotalCents + taxTotalCents;
-
+                var shippingCents = await CalculateShippingCents(request.ShippingMethodId, subTotalCents, orderItems, request.ShippingAddress);
                 // create order
                 var order = new Order
                 {
                     OrderNumber = GenerateOrderNumber(),
-                    TenantId = tenant.Id,
-                    OrderItems = orderItems,
+                    Tenant = tenant,
+                    CustomerEmail = request.CustomerEmail,
                     CustomerFirstName = request.CustomerFirstName,
                     CustomerLastName = request.CustomerLastName,
                     CustomerPhone = request.CustomerPhone,
-                    CustomerEmail = request.CustomerEmail,
+
+                    // Status tracking
                     Status = OrderStatus.Pending,
-                    PaymentStatus = PaymentStatus.Processing,
+                    PaymentStatus = PaymentStatus.Processing, // Or Unpaid if not processing yet
                     FulfillmentStatus = FulfillmentStatus.Unfulfilled,
-                    CreatedAt = DateTime.UtcNow,
-                    UpdatedAt = DateTime.UtcNow,
-                    TaxCents = taxTotalCents,
+
+                    // Amounts (in cents)
                     SubtotalCents = subTotalCents,
-                    TotalCents = total,
-                    ShippingCents = await CalculateShippingCents(request.ShippingMethodId, subTotalCents, orderItems,
-                        request.ShippingAddress),
+                    DiscountCents = 0, // No discount applied yet
+                    CouponCode = null, // No coupon by default
+                    CouponDiscountCents = 0,
+                    TaxCents = taxTotalCents,
+                    ShippingCents = shippingCents,
+                    TotalCents = total + shippingCents, // Don't forget to include shipping!
+                    RefundedAmountCents = 0,
+                    PaymentServiceFeeCents = 0,
+
+                    // Currency
+                    Currency = Currency.USD,
+
+                    // Shipping address
                     ShippingAddressLine1 = request.ShippingAddress.Line1,
                     ShippingAddressLine2 = request.ShippingAddress.Line2,
                     ShippingCity = request.ShippingAddress.City,
                     ShippingState = request.ShippingAddress.State,
                     ShippingPostalCode = request.ShippingAddress.PostalCode,
                     ShippingCountry = request.ShippingAddress.Country,
-                    ShippingMethodId = request.ShippingMethodId,
+
+                    // Billing address
                     BillingAddressLine1 = request.BillingAddress.Line1,
                     BillingAddressLine2 = request.BillingAddress.Line2,
                     BillingCity = request.BillingAddress.City,
                     BillingState = request.BillingAddress.State,
                     BillingPostalCode = request.BillingAddress.PostalCode,
                     BillingCountry = request.BillingAddress.Country,
+
+                    // Payment info (optional - will be updated after payment)
+                    PaymentProcessor = null, // Will be set during checkout
+                    ProcessorTransactionId = null,
+                    ProcessorResponseCode = null,
+                    PaymentIntentId = null,
+                    CheckoutSessionId = null,
+                    PaymentAuthorizedAt = null,
+                    PaymentCapturedAt = null,
+                    PaidAt = null,
+                    PaymentExpiresAt = null,
+                    PaymentMethodDetails = null,
+                    PaymentSettledAt = null,
+                    PaymentRiskScore = null,
+                    PaymentMetadata = null,
+
+                    // Order type
                     OrderType = OrderType.Standard,
+
+                    // Audit
                     IpAddress = ipAddress,
                     UserAgent = userAgent,
+
+                    // Shipping info
+                    ShippingMethodId = request.ShippingMethodId,
+                    ShippingMethod = null, // Legacy field - can be populated from shipping method name if needed
+                    TrackingNumber = null,
+                    TrackingUrl = null,
+
+                    // Notes
                     CustomerNotes = request.CustomerNotes,
+                    AdminNotes = null,
+
+                    // Timestamps
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow,
+                    DeletedAt = null,
+                    DeletedBy = null,
+
+                    // Navigation properties
+                    OrderItems = orderItems,
                 };
                 await database.Orders.AddAsync(order);
                 await database.SaveChangesAsync();
@@ -367,7 +415,8 @@ public class OrdersService(ITenantContext context, CmsDbContext database, IHttpC
 
     private decimal CalculateTaxCents(int unitPriceCents, int quantity, int taxCategoryId)
     {
-        var taxCategory = database.TaxCategories.FirstOrDefault(tc => tc.Id == taxCategoryId) ?? throw new InvalidOperationException($"Tax category {taxCategoryId} not found");
+        var taxCategory = database.TaxCategories.FirstOrDefault(tc => tc.Id == taxCategoryId) ??
+                          throw new InvalidOperationException($"Tax category {taxCategoryId} not found");
         var taxRatePercentage = taxCategory.TaxRate;
         return unitPriceCents * quantity * (taxRatePercentage / 100m);
     }

@@ -25,7 +25,7 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
     public DbSet<Order> Orders => Set<Order>();
 
     public DbSet<OrderItem> OrderItems => Set<OrderItem>();
-    
+
     public DbSet<ShippingMethod> ShippingMethods => Set<ShippingMethod>();
     public DbSet<TaxCategory> TaxCategories => Set<TaxCategory>();
 
@@ -721,7 +721,11 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
         builder.Entity<Order>(entity =>
         {
             entity.ToTable("orders");
-            entity.HasKey(o => o.Id);
+
+            // Composite primary key
+            entity.HasKey(o => new { o.Id, o.TenantId });
+
+            // Properties
             entity.Property(o => o.Id)
                 .HasColumnName("id")
                 .ValueGeneratedOnAdd()
@@ -732,7 +736,8 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
                 .IsRequired();
 
             entity.Property(o => o.CustomerId)
-                .HasColumnName("customer_id");
+                .HasColumnName("customer_id")
+                .IsRequired(false);
 
             entity.Property(o => o.OrderNumber)
                 .HasColumnName("order_number")
@@ -759,7 +764,7 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
                 .HasMaxLength(50)
                 .IsRequired(false);
 
-            // Status tracking
+            // Status tracking - all with string conversion for ENUMs
             entity.Property(o => o.Status)
                 .HasColumnName("status")
                 .HasConversion<string>()
@@ -774,7 +779,7 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
 
             entity.Property(o => o.FulfillmentStatus)
                 .HasColumnName("fulfillment_status")
-                .HasMaxLength(50)
+                .HasConversion<string>() // Add conversion for ENUM
                 .HasDefaultValue(FulfillmentStatus.Unfulfilled)
                 .IsRequired();
 
@@ -822,12 +827,11 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
                 .HasDefaultValue(0)
                 .IsRequired();
 
-            // Currency
+            // Currency - ENUM with string conversion
             entity.Property(o => o.Currency)
                 .HasColumnName("currency")
-                .HasMaxLength(3)
-                .HasDefaultValue("USD")
-                .IsRequired();
+                .HasConversion<string>()
+                .IsRequired(false); // NULL allowed based on your schema
 
             // Shipping address
             entity.Property(o => o.ShippingAddressLine1)
@@ -894,27 +898,23 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
             // Payment info
             entity.Property(o => o.PaymentProcessor)
                 .HasColumnName("payment_processor")
-                .HasMaxLength(50)
-                .IsRequired(false)
-                .HasComment("stripe, aeropay, paypal, etc.");
+                .HasConversion<string>() // Convert enum to string for ENUM column
+                .IsRequired(false);
 
             entity.Property(o => o.ProcessorTransactionId)
                 .HasColumnName("processor_transaction_id")
                 .HasMaxLength(255)
-                .IsRequired(false)
-                .HasComment("Gateways internal transaction reference");
+                .IsRequired(false);
 
             entity.Property(o => o.ProcessorResponseCode)
                 .HasColumnName("processor_response_code")
                 .HasMaxLength(50)
-                .IsRequired(false)
-                .HasComment("Gateway response code for debugging");
+                .IsRequired(false);
 
             entity.Property(o => o.PaymentIntentId)
                 .HasColumnName("payment_intent_id")
                 .HasMaxLength(255)
-                .IsRequired(false)
-                .HasComment("Gateways unique transaction ID");
+                .IsRequired(false);
 
             entity.Property(o => o.CheckoutSessionId)
                 .HasColumnName("checkout_session_id")
@@ -924,50 +924,43 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
             entity.Property(o => o.PaymentAuthorizedAt)
                 .HasColumnName("payment_authorized_at")
                 .HasColumnType("DATETIME(6)")
-                .IsRequired(false)
-                .HasComment("When gateway authorized the payment");
+                .IsRequired(false);
 
             entity.Property(o => o.PaymentCapturedAt)
                 .HasColumnName("payment_captured_at")
                 .HasColumnType("DATETIME(6)")
-                .IsRequired(false)
-                .HasComment("When funds were captured/settled");
+                .IsRequired(false);
 
             entity.Property(o => o.PaidAt)
                 .HasColumnName("paid_at")
                 .HasColumnType("DATETIME(6)")
-                .IsRequired(false)
-                .HasComment("When payment was confirmed (authorized for cards, settled for ACH)");
+                .IsRequired(false);
 
             entity.Property(o => o.PaymentExpiresAt)
                 .HasColumnName("payment_expires_at")
                 .HasColumnType("DATETIME(6)")
-                .IsRequired(false)
-                .HasComment("For ACH, when the auth expires");
+                .IsRequired(false);
 
             entity.Property(o => o.PaymentMethodDetails)
                 .HasColumnName("payment_method_details")
                 .HasColumnType("JSON")
-                .IsRequired(false)
-                .HasComment("Processor-specific metadata (card brand, bank name, etc.)");
+                .IsRequired(false);
 
             entity.Property(o => o.PaymentSettledAt)
                 .HasColumnName("payment_settled_at")
                 .HasColumnType("DATETIME(6)")
-                .IsRequired(false)
-                .HasComment("When ACH funds actually settled");
+                .IsRequired(false);
 
             entity.Property(o => o.PaymentRiskScore)
                 .HasColumnName("payment_risk_score")
-                .IsRequired(false)
-                .HasComment("Gateways fraud score (0-100)");
+                .IsRequired(false);
 
             entity.Property(o => o.PaymentMetadata)
                 .HasColumnName("payment_metadata")
                 .HasColumnType("JSON")
-                .IsRequired(false)
-                .HasComment("Additional processor data");
+                .IsRequired(false);
 
+            // Order type - ENUM with string conversion
             entity.Property(o => o.OrderType)
                 .HasColumnName("order_type")
                 .HasConversion<string>()
@@ -987,6 +980,10 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
 
             // Shipping info
             entity.Property(o => o.ShippingMethodId)
+                .HasColumnName("shipping_method_id")
+                .IsRequired(false);
+
+            entity.Property(o => o.ShippingMethod) // Legacy field - consider removing
                 .HasColumnName("shipping_method")
                 .HasMaxLength(100)
                 .IsRequired(false);
@@ -1055,6 +1052,12 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
                 .OnDelete(DeleteBehavior.SetNull)
                 .HasConstraintName("orders_customer_fk");
 
+            entity.HasOne(o => o.ShippingMethodNavigation)
+                .WithMany() // If ShippingMethod has Orders collection, change to .WithMany(sm => sm.Orders)
+                .HasForeignKey(o => o.ShippingMethodId)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("orders_shipping_method_fk");
+
             // Indexes
             entity.HasIndex(o => o.TenantId)
                 .HasDatabaseName("idx_tenant");
@@ -1114,10 +1117,8 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
         builder.Entity<OrderItem>(entity =>
         {
             entity.ToTable("order_items");
-            entity.HasKey(o => o.Id);
+            entity.HasKey(o => new { o.Id, o.TenantId }); // Composite key
 
-            entity.Property(o => o.TaxCategoryId)
-                .HasColumnName("tax_category_id");
             entity.Property(o => o.Id)
                 .HasColumnName("id")
                 .ValueGeneratedOnAdd()
@@ -1134,6 +1135,12 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
             entity.Property(o => o.ProductId)
                 .HasColumnName("product_id")
                 .IsRequired();
+
+            entity.Property(o => o.TaxCategoryId)
+                .HasColumnName("tax_category_id");
+
+            entity.Property(o => o.WeightGrams)
+                .HasColumnName("weight_grams");
 
             entity.Property(o => o.ProductName)
                 .HasColumnName("product_name")
@@ -1194,7 +1201,8 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
 
             entity.HasOne(o => o.Order)
                 .WithMany(o => o.OrderItems)
-                .HasForeignKey(o => o.OrderId)
+                .HasForeignKey(o => new { o.OrderId, o.TenantId }) // Both columns
+                .HasPrincipalKey(o => new { o.Id, o.TenantId }) // Explicitly specify principal key
                 .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("order_items_order_fk");
 
@@ -1222,6 +1230,9 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
 
             entity.HasIndex(o => o.DeletedAt)
                 .HasDatabaseName("idx_deleted");
+
+            entity.HasIndex(o => o.WeightGrams)
+                .HasDatabaseName("idx_order_items_weight");
         });
 
         builder.Entity<Customer>(entity =>
@@ -1331,6 +1342,11 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
                 entity.HasOne(c => c.Tenant)
                     .WithMany(t => t.TaxCategories)
                     .HasForeignKey(c => c.TenantId);
+
+                entity.HasMany(e => e.OrderItems)
+                    .WithOne(e => e.TaxCategory)
+                    .HasForeignKey(e => e.TaxCategoryId)
+                    .OnDelete(DeleteBehavior.Restrict);
             }
         );
     }

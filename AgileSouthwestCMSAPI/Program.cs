@@ -171,6 +171,7 @@ builder.Services.AddScoped<ITenantsService, TenantsService>();
 builder.Services.AddScoped<IProductsService, ProductsService>();
 builder.Services.AddScoped<IProductImagesService, ProductImagesService>();
 builder.Services.AddScoped<IOrderService, OrdersService>();
+builder.Services.AddScoped<ITaxCategoriesService, TaxCategoriesService>();
 builder.Services.AddScoped<IInventoryService, InventoryService>();
 
 builder.Services.AddScoped<IStoresService, StoresService>();

@@ -6,7 +6,7 @@ public class OrderItem
     public int TenantId { get; set; }
     public int OrderId { get; set; }
     public int ProductId { get; set; }
-    public string ProductName { get; set; }
+    public string? ProductName { get; set; }
     public string? ProductSku { get; set; }
     public int Quantity { get; set; }
     public int UnitPriceCents { get; set; }
@@ -33,5 +33,4 @@ public class OrderItem
     public Order Order { get; set; } = null!;
     public Product Product { get; set; } = null!;
     
-    public ICollection<TaxCategory> TaxCategories { get; set; } = new List<TaxCategory>();
 }
