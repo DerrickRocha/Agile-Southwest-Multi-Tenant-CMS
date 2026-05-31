@@ -169,6 +169,8 @@ builder.Services.AddScoped<ICmsUserContext, CmsUserContext>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ITenantsService, TenantsService>();
 builder.Services.AddScoped<IShippingZoneService, ShippingZoneService>();
+builder.Services.AddScoped<IShippingRateService, ShippingRateService>();
+builder.Services.AddScoped<IZonePostalCodeService, ZonePostalCodesService>();
 builder.Services.AddScoped<IProductsService, ProductsService>();
 builder.Services.AddScoped<IProductImagesService, ProductImagesService>();
 builder.Services.AddScoped<IOrderService, OrdersService>();
