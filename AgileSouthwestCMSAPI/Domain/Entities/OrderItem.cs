@@ -6,14 +6,14 @@ public class OrderItem
     public int TenantId { get; set; }
     public int OrderId { get; set; }
     public int ProductId { get; set; }
+    public int TaxCategoryId { get; set; }
+
     public string? ProductName { get; set; }
     public string? ProductSku { get; set; }
     public int Quantity { get; set; }
     public int UnitPriceCents { get; set; }
     public int TotalPriceCents { get; set; }
     public int DiscountCents { get; set; }
-    
-    public int TaxCategoryId { get; set; }
     
     public int? WeightGrams { get; set; }  // Add this
     
@@ -27,6 +27,7 @@ public class OrderItem
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
     public DateTime? DeletedAt { get; set; }
+    public DateTime RowVersion { get; set; }
 
     public TaxCategory TaxCategory { get; set; } = null!;
     public Tenant Tenant { get; set; } = null!;

@@ -4,5 +4,4 @@ public enum OrderType
 {
     Standard,
     Subscription,
-    PreOrder
 }

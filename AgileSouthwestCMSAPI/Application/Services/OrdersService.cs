@@ -88,7 +88,7 @@ public class OrdersService(ITenantContext context, CmsDbContext database, IHttpC
                     PaymentServiceFeeCents = 0,
 
                     // Currency
-                    Currency = Currency.USD,
+                    Currency = nameof(Currency.Usd),
 
                     // Shipping address
                     ShippingAddressLine1 = request.ShippingAddress.Line1,
@@ -106,21 +106,6 @@ public class OrdersService(ITenantContext context, CmsDbContext database, IHttpC
                     BillingPostalCode = request.BillingAddress.PostalCode,
                     BillingCountry = request.BillingAddress.Country,
 
-                    // Payment info (optional - will be updated after payment)
-                    PaymentProcessor = null, // Will be set during checkout
-                    ProcessorTransactionId = null,
-                    ProcessorResponseCode = null,
-                    PaymentIntentId = null,
-                    CheckoutSessionId = null,
-                    PaymentAuthorizedAt = null,
-                    PaymentCapturedAt = null,
-                    PaidAt = null,
-                    PaymentExpiresAt = null,
-                    PaymentMethodDetails = null,
-                    PaymentSettledAt = null,
-                    PaymentRiskScore = null,
-                    PaymentMetadata = null,
-
                     // Order type
                     OrderType = OrderType.Standard,
 
@@ -129,20 +114,11 @@ public class OrdersService(ITenantContext context, CmsDbContext database, IHttpC
                     UserAgent = userAgent,
 
                     // Shipping info
-                    ShippingMethodId = request.ShippingMethodId,
-                    ShippingMethod = null, // Legacy field - can be populated from shipping method name if needed
-                    TrackingNumber = null,
-                    TrackingUrl = null,
+                    ShippingZoneId = request.ShippingMethodId?? 0,
 
                     // Notes
                     CustomerNotes = request.CustomerNotes,
                     AdminNotes = null,
-
-                    // Timestamps
-                    CreatedAt = DateTime.UtcNow,
-                    UpdatedAt = DateTime.UtcNow,
-                    DeletedAt = null,
-                    DeletedBy = null,
 
                     // Navigation properties
                     OrderItems = orderItems,
@@ -161,249 +137,12 @@ public class OrdersService(ITenantContext context, CmsDbContext database, IHttpC
     }
 
     private async Task<int> CalculateShippingCents(
-        int? shippingMethodId,
+        int? shippingZoneId,
         int subtotalCents,
         List<OrderItem> orderItems,
         AddressRequest shippingAddress)
     {
-        // If no shipping method selected, assume free shipping or pickup
-        if (shippingMethodId == null) return 0;
-
-        // Fetch shipping method with all related data
-        var shippingMethod = await database.ShippingMethods
-            .Include(sm => sm.RateRules)
-            .FirstOrDefaultAsync(sm => sm.Id == shippingMethodId && sm.IsActive);
-
-        if (shippingMethod == null)
-            throw new InvalidOperationException($"Shipping method {shippingMethodId} not found or inactive");
-
-        // Check if shipping method is available for this address
-        if (!await IsShippingMethodAvailableForAddressAsync(shippingMethod, shippingAddress))
-            throw new ValidationException(
-                $"Shipping method {shippingMethod.Name} is not available for the selected address");
-
-        // Check restrictions
-        await ValidateShippingRestrictionsAsync(shippingMethod, orderItems, subtotalCents);
-
-        // Calculate shipping cost based on pricing strategy
-        var shippingCents = shippingMethod.PricingStrategy switch
-        {
-            PricingStrategy.Free => 0,
-            PricingStrategy.Flat => CalculateFlatRateCents(shippingMethod, subtotalCents),
-            PricingStrategy.Weight => await CalculateWeightBasedRateCentsAsync(shippingMethod, orderItems),
-            PricingStrategy.Price => CalculatePriceBasedRateCents(shippingMethod, subtotalCents),
-            PricingStrategy.Carrier =>
-                await CalculateCarrierRateCentsAsync(shippingMethod, orderItems, shippingAddress),
-            _ => throw new NotSupportedException($"Pricing strategy {shippingMethod.PricingStrategy} not supported")
-        };
-
-        // Apply any free shipping overrides
-        if (HasFreeShipping(shippingMethod, subtotalCents))
-            return 0;
-
-        return shippingCents;
-    }
-
-// Helper methods
-    private async Task<bool> IsShippingMethodAvailableForAddressAsync(
-        ShippingMethod shippingMethod,
-        AddressRequest address)
-    {
-        // If no zones configured, method is available everywhere
-        if (!shippingMethod.ShippingZones.Any())
-            return true;
-
-        // Check if address falls into any of the method's zones
-        foreach (var zone in shippingMethod.ShippingZones)
-        {
-            if (await IsAddressInZoneAsync(address, zone))
-                return true;
-        }
-
-        return false;
-    }
-
-    private async Task<bool> IsAddressInZoneAsync(AddressRequest address, ShippingZone zone)
-    {
-        foreach (var location in zone.Locations)
-        {
-            switch (location.Type)
-            {
-                case LocationType.Country:
-                    if (address.Country.Equals(location.Code, StringComparison.OrdinalIgnoreCase))
-                        return true;
-                    break;
-
-                case LocationType.StateProvince:
-                    if (address.State?.Equals(location.Code, StringComparison.OrdinalIgnoreCase) == true)
-                        return true;
-                    break;
-
-                case LocationType.PostalCode:
-                    if (address.PostalCode?.StartsWith(location.Code) == true)
-                        return true;
-                    break;
-
-                case LocationType.Continent:
-                    var continent = GetContinentFromCountry(address.Country);
-                    if (continent.Equals(location.Code, StringComparison.OrdinalIgnoreCase))
-                        return true;
-                    break;
-            }
-        }
-
-        return false;
-    }
-
-    private async Task ValidateShippingRestrictionsAsync(
-        ShippingMethod shippingMethod,
-        List<OrderItem> orderItems,
-        int subtotalCents)
-    {
-        foreach (var restriction in shippingMethod.Restrictions)
-        {
-            switch (restriction.Type)
-            {
-                case RestrictionType.MaxWeightGrams:
-                    var totalWeightGrams = orderItems.Sum(i => i.WeightGrams * i.Quantity);
-                    if (totalWeightGrams > int.Parse(restriction.Value))
-                        throw new ValidationException(restriction.Message ??
-                                                      $"Order weight exceeds maximum of {restriction.Value}g for {shippingMethod.Name}");
-                    break;
-
-                case RestrictionType.MaxQuantity:
-                    var totalQuantity = orderItems.Sum(i => i.Quantity);
-                    if (totalQuantity > int.Parse(restriction.Value))
-                        throw new ValidationException(restriction.Message ??
-                                                      $"Order quantity exceeds maximum of {restriction.Value} items for {shippingMethod.Name}");
-                    break;
-
-                case RestrictionType.MinOrderValue:
-                    if (subtotalCents < int.Parse(restriction.Value))
-                        throw new ValidationException(restriction.Message ??
-                                                      $"Order subtotal of ${subtotalCents / 100m:F2} is below minimum of ${int.Parse(restriction.Value) / 100m:F2} for {shippingMethod.Name}");
-                    break;
-
-                case RestrictionType.MaxOrderValue:
-                    if (subtotalCents > int.Parse(restriction.Value))
-                        throw new ValidationException(restriction.Message ??
-                                                      $"Order subtotal exceeds maximum for {shippingMethod.Name}");
-                    break;
-
-                case RestrictionType.ExcludeLocation:
-                    // Handled by zone availability check
-                    break;
-            }
-        }
-    }
-
-    private int CalculateFlatRateCents(ShippingMethod shippingMethod, int subtotalCents)
-    {
-        // Find applicable rate rule
-        var rule = shippingMethod.RateRules
-            .Where(r => r.ConditionType == RateConditionType.Subtotal)
-            .OrderBy(r => r.Priority)
-            .FirstOrDefault(r => subtotalCents >= (r.MinValue ?? 0) &&
-                                 (r.MaxValue == null || subtotalCents <= r.MaxValue));
-
-        if (rule == null)
-            rule = shippingMethod.RateRules.FirstOrDefault(r => r.ConditionType == RateConditionType.Subtotal);
-
-        var baseRate = rule?.BasePriceCents ?? 0;
-
-        // Apply free shipping threshold
-        if (rule?.FreeShippingThresholdCents != null &&
-            subtotalCents >= rule.FreeShippingThresholdCents)
-            return 0;
-
-        return (int)baseRate;
-    }
-
-    private async Task<int> CalculateWeightBasedRateCentsAsync(
-        ShippingMethod shippingMethod,
-        List<OrderItem> orderItems)
-    {
-        var totalWeightGrams = orderItems.Sum(i => (i.WeightGrams ?? 0) * i.Quantity);
-
-        // Find applicable weight rule
-        var rule = shippingMethod.RateRules
-            .Where(r => r.ConditionType == RateConditionType.Weight)
-            .OrderBy(r => r.Priority)
-            .FirstOrDefault(r => totalWeightGrams >= (r.MinValue ?? 0) &&
-                                 (r.MaxValue == null || totalWeightGrams <= r.MaxValue));
-
-        if (rule == null)
-            throw new InvalidOperationException($"No weight rule found for shipping method {shippingMethod.Name}");
-
-        var baseRate = rule.BasePriceCents;
-        var additionalWeight = totalWeightGrams - (rule.MinValue ?? 0);
-        var additionalCost = (additionalWeight / 100) * (rule.PricePerUnitCents ?? 0);
-
-        return (int)(baseRate + additionalCost);
-    }
-
-    private int CalculatePriceBasedRateCents(ShippingMethod shippingMethod, int subtotalCents)
-    {
-        var rule = shippingMethod.RateRules
-            .Where(r => r.ConditionType == RateConditionType.Price)
-            .OrderBy(r => r.Priority)
-            .FirstOrDefault(r => subtotalCents >= (r.MinValue ?? 0) &&
-                                 (r.MaxValue == null || subtotalCents <= r.MaxValue));
-
-        if (rule == null)
-            rule = shippingMethod.RateRules.FirstOrDefault(r => r.ConditionType == RateConditionType.Price);
-
-        var baseRate = rule?.BasePriceCents ?? 0;
-        var additionalAmount = subtotalCents - (rule?.MinValue ?? 0);
-        var additionalCost = (additionalAmount / 10000) * (rule?.PricePerUnitCents ?? 0); // Per $100
-
-        return (int)(baseRate + additionalCost);
-    }
-
-    private async Task<int> CalculateCarrierRateCentsAsync(
-        ShippingMethod shippingMethod,
-        List<OrderItem> orderItems,
-        AddressRequest shippingAddress)
-    {
-        if (string.IsNullOrEmpty(shippingMethod.CarrierName) ||
-            string.IsNullOrEmpty(shippingMethod.CarrierServiceCode))
-        {
-            throw new InvalidOperationException($"Carrier not configured for method {shippingMethod.Name}");
-        }
-
-        // Call your carrier service
-        /*var carrierService = new CarrierRateService(); // Inject via DI
-        var rate = await carrierService.GetRateAsync(new RateRequest
-        {
-            CarrierName = shippingMethod.CarrierName,
-            ServiceCode = shippingMethod.CarrierServiceCode,
-            OriginAddress = await GetWarehouseAddressAsync(),
-            DestinationAddress = shippingAddress,
-            Packages = MapOrderItemsToPackages(orderItems)
-        });
-
-        return rate.TotalCents;*/
-        return 0;
-    }
-
-    private bool HasFreeShipping(ShippingMethod shippingMethod, int subtotalCents)
-    {
-        // Check if any rate rule has free shipping threshold
-        return shippingMethod.RateRules
-            .Any(r => r.FreeShippingThresholdCents != null &&
-                      subtotalCents >= r.FreeShippingThresholdCents);
-    }
-
-    private string GetContinentFromCountry(string countryCode)
-    {
-        // Map country codes to continents
-        var northAmerica = new[] { "US", "CA", "MX" };
-        var europe = new[] { "GB", "DE", "FR", "IT", "ES", "NL", "BE" };
-        // ... add more mappings
-
-        if (northAmerica.Contains(countryCode)) return "NA";
-        if (europe.Contains(countryCode)) return "EU";
-        return "OTHER";
+       return 0;
     }
 
     private string GenerateOrderNumber()

@@ -17,6 +17,8 @@ public class ShippingZone
     
     public Tenant Tenant { get; set; } = null!;
 
-    public ICollection<ZonePostalCodes> ZonePostalCodes { get; set; }
-    public ICollection<ShippingRate> ShippingRates { get; set; }  // Many-to-many via junction
+    public ICollection<ZonePostalCode> ZonePostalCodes { get; set; }
+    public ICollection<ShippingRate> ShippingRates { get; set; }  
+    public ICollection<Order> Orders { get; set; }  // Many-to-many via junction
+
 }

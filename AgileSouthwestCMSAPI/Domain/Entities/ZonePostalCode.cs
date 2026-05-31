@@ -1,6 +1,6 @@
 namespace AgileSouthwestCMSAPI.Domain.Entities;
 
-public class ZonePostalCodes
+public class ZonePostalCode
 {
     public int Id { set; get; }
     public int TenantId { set; get; }

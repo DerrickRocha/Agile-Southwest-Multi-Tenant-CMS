@@ -168,6 +168,7 @@ builder.Services.AddScoped<ICmsUserContext, CmsUserContext>();
 // Application services
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ITenantsService, TenantsService>();
+builder.Services.AddScoped<IShippingZoneService, ShippingZoneService>();
 builder.Services.AddScoped<IProductsService, ProductsService>();
 builder.Services.AddScoped<IProductImagesService, ProductImagesService>();
 builder.Services.AddScoped<IOrderService, OrdersService>();

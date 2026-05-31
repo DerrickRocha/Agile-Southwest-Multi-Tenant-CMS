@@ -1,6 +1,6 @@
 namespace AgileSouthwestCMSAPI.Domain.Enums;
 
-public enum PaymentProcessor
+public enum GatewayName
 {
     Stripe,
     Aeropay

@@ -26,8 +26,11 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
 
     public DbSet<OrderItem> OrderItems => Set<OrderItem>();
 
-    public DbSet<ShippingMethod> ShippingMethods => Set<ShippingMethod>();
     public DbSet<TaxCategory> TaxCategories => Set<TaxCategory>();
+
+    public DbSet<ShippingZone> ShippingZones => Set<ShippingZone>();
+    public DbSet<ZonePostalCode> ZonePostalCodes => Set<ZonePostalCode>();
+    public DbSet<ShippingRate> ShippingRates => Set<ShippingRate>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -73,9 +76,12 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
                 .HasColumnName("deleted_at")
                 .HasColumnType("DATETIME(6)");
 
-            entity.Property(t => t.RowVersion)
+            entity.Property(c => c.RowVersion)
                 .HasColumnName("row_version")
-                .IsRowVersion();
+                .HasColumnType("TIMESTAMP")
+                .HasDefaultValueSql("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
+                .IsRequired()
+                .IsConcurrencyToken();
 
             entity.HasIndex(t => t.SubDomain)
                 .HasDatabaseName("uq_tenants_subdomain")
@@ -698,6 +704,13 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
                 entity.Property(i => i.DeletedAt)
                     .HasColumnName("deleted_at")
                     .HasColumnType("DATETIME(6)");
+                
+                entity.Property(c => c.RowVersion)
+                    .HasColumnName("row_version")
+                    .HasColumnType("TIMESTAMP")
+                    .HasDefaultValueSql("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
+                    .IsRequired()
+                    .IsConcurrencyToken();
 
                 entity.HasOne(i => i.Tenant)
                     .WithMany(t => t.Images)
@@ -722,8 +735,7 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
         {
             entity.ToTable("orders");
 
-            // Composite primary key
-            entity.HasKey(o => new { o.Id, o.TenantId });
+            entity.HasKey(o => o.Id);
 
             // Properties
             entity.Property(o => o.Id)
@@ -735,13 +747,17 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
                 .HasColumnName("tenant_id")
                 .IsRequired();
 
+            entity.Property(o => o.ShippingZoneId)
+                .HasColumnName("shipping_zone_id")
+                .IsRequired();
+
             entity.Property(o => o.CustomerId)
                 .HasColumnName("customer_id")
                 .IsRequired(false);
 
             entity.Property(o => o.OrderNumber)
                 .HasColumnName("order_number")
-                .HasMaxLength(50)
+                .HasMaxLength(255)
                 .IsRequired();
 
             entity.Property(o => o.CustomerEmail)
@@ -779,7 +795,7 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
 
             entity.Property(o => o.FulfillmentStatus)
                 .HasColumnName("fulfillment_status")
-                .HasConversion<string>() // Add conversion for ENUM
+                .HasConversion<string>()
                 .HasDefaultValue(FulfillmentStatus.Unfulfilled)
                 .IsRequired();
 
@@ -827,11 +843,10 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
                 .HasDefaultValue(0)
                 .IsRequired();
 
-            // Currency - ENUM with string conversion
             entity.Property(o => o.Currency)
                 .HasColumnName("currency")
-                .HasConversion<string>()
-                .IsRequired(false); // NULL allowed based on your schema
+                .HasMaxLength(20)
+                .IsRequired();
 
             // Shipping address
             entity.Property(o => o.ShippingAddressLine1)
@@ -895,72 +910,6 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
                 .HasMaxLength(100)
                 .IsRequired();
 
-            // Payment info
-            entity.Property(o => o.PaymentProcessor)
-                .HasColumnName("payment_processor")
-                .HasConversion<string>() // Convert enum to string for ENUM column
-                .IsRequired(false);
-
-            entity.Property(o => o.ProcessorTransactionId)
-                .HasColumnName("processor_transaction_id")
-                .HasMaxLength(255)
-                .IsRequired(false);
-
-            entity.Property(o => o.ProcessorResponseCode)
-                .HasColumnName("processor_response_code")
-                .HasMaxLength(50)
-                .IsRequired(false);
-
-            entity.Property(o => o.PaymentIntentId)
-                .HasColumnName("payment_intent_id")
-                .HasMaxLength(255)
-                .IsRequired(false);
-
-            entity.Property(o => o.CheckoutSessionId)
-                .HasColumnName("checkout_session_id")
-                .HasMaxLength(255)
-                .IsRequired(false);
-
-            entity.Property(o => o.PaymentAuthorizedAt)
-                .HasColumnName("payment_authorized_at")
-                .HasColumnType("DATETIME(6)")
-                .IsRequired(false);
-
-            entity.Property(o => o.PaymentCapturedAt)
-                .HasColumnName("payment_captured_at")
-                .HasColumnType("DATETIME(6)")
-                .IsRequired(false);
-
-            entity.Property(o => o.PaidAt)
-                .HasColumnName("paid_at")
-                .HasColumnType("DATETIME(6)")
-                .IsRequired(false);
-
-            entity.Property(o => o.PaymentExpiresAt)
-                .HasColumnName("payment_expires_at")
-                .HasColumnType("DATETIME(6)")
-                .IsRequired(false);
-
-            entity.Property(o => o.PaymentMethodDetails)
-                .HasColumnName("payment_method_details")
-                .HasColumnType("JSON")
-                .IsRequired(false);
-
-            entity.Property(o => o.PaymentSettledAt)
-                .HasColumnName("payment_settled_at")
-                .HasColumnType("DATETIME(6)")
-                .IsRequired(false);
-
-            entity.Property(o => o.PaymentRiskScore)
-                .HasColumnName("payment_risk_score")
-                .IsRequired(false);
-
-            entity.Property(o => o.PaymentMetadata)
-                .HasColumnName("payment_metadata")
-                .HasColumnType("JSON")
-                .IsRequired(false);
-
-            // Order type - ENUM with string conversion
             entity.Property(o => o.OrderType)
                 .HasColumnName("order_type")
                 .HasConversion<string>()
@@ -978,25 +927,6 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
                 .HasColumnType("TEXT")
                 .IsRequired(false);
 
-            // Shipping info
-            entity.Property(o => o.ShippingMethodId)
-                .HasColumnName("shipping_method_id")
-                .IsRequired(false);
-
-            entity.Property(o => o.ShippingMethod) // Legacy field - consider removing
-                .HasColumnName("shipping_method")
-                .HasMaxLength(100)
-                .IsRequired(false);
-
-            entity.Property(o => o.TrackingNumber)
-                .HasColumnName("tracking_number")
-                .HasMaxLength(255)
-                .IsRequired(false);
-
-            entity.Property(o => o.TrackingUrl)
-                .HasColumnName("tracking_url")
-                .HasMaxLength(500)
-                .IsRequired(false);
 
             // Notes
             entity.Property(o => o.CustomerNotes)
@@ -1012,30 +942,20 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
             // Timestamps
             entity.Property(o => o.CreatedAt)
                 .HasColumnName("created_at")
-                .HasColumnType("TIMESTAMP")
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
                 .IsRequired();
 
             entity.Property(o => o.UpdatedAt)
                 .HasColumnName("updated_at")
-                .HasColumnType("TIMESTAMP")
                 .HasDefaultValueSql("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
                 .IsRequired();
 
             entity.Property(o => o.DeletedAt)
                 .HasColumnName("deleted_at")
-                .HasColumnType("TIMESTAMP")
                 .IsRequired(false);
 
-            entity.Property(o => o.DeletedBy)
-                .HasColumnName("deleted_by")
-                .IsRequired(false);
-
-            // Concurrency
             entity.Property(o => o.RowVersion)
                 .HasColumnName("row_version")
-                .HasColumnType("TIMESTAMP")
-                .HasDefaultValueSql("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
                 .IsRequired()
                 .IsConcurrencyToken();
 
@@ -1052,11 +972,11 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
                 .OnDelete(DeleteBehavior.SetNull)
                 .HasConstraintName("orders_customer_fk");
 
-            entity.HasOne(o => o.ShippingMethodNavigation)
-                .WithMany() // If ShippingMethod has Orders collection, change to .WithMany(sm => sm.Orders)
-                .HasForeignKey(o => o.ShippingMethodId)
-                .OnDelete(DeleteBehavior.SetNull)
-                .HasConstraintName("orders_shipping_method_fk");
+            entity.HasOne(o => o.ShippingZone)
+                .WithMany(sz => sz.Orders)
+                .HasForeignKey(o => o.ShippingZoneId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("orders_shipping_zone_fk");
 
             // Indexes
             entity.HasIndex(o => o.TenantId)
@@ -1091,21 +1011,6 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
 
             entity.HasIndex(o => o.DeletedAt)
                 .HasDatabaseName("idx_deleted");
-
-            entity.HasIndex(o => o.CheckoutSessionId)
-                .HasDatabaseName("idx_orders_checkout_session");
-
-            entity.HasIndex(o => o.PaymentIntentId)
-                .HasDatabaseName("idx_orders_payment_intent");
-
-            entity.HasIndex(o => o.PaymentProcessor)
-                .HasDatabaseName("idx_orders_payment_processor");
-
-            entity.HasIndex(o => new { o.PaymentProcessor, o.PaymentStatus })
-                .HasDatabaseName("idx_orders_payment_status");
-
-            entity.HasIndex(o => o.PaidAt)
-                .HasDatabaseName("idx_orders_paid_at");
 
             entity.HasIndex(o => o.CreatedAt)
                 .HasDatabaseName("idx_orders_stale_pending");
@@ -1235,6 +1140,131 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
                 .HasDatabaseName("idx_order_items_weight");
         });
 
+        builder.Entity<PaymentTransactions>(entity =>
+        {
+            entity.ToTable("payment_transactions");
+
+            // Primary key
+            entity.HasKey(pt => pt.Id);
+
+            entity.Property(pt => pt.Id)
+                .HasColumnName("id")
+                .ValueGeneratedOnAdd()
+                .IsRequired();
+
+            entity.Property(pt => pt.TenantId)
+                .HasColumnName("tenant_id")
+                .IsRequired();
+
+            entity.Property(pt => pt.OrderId)
+                .HasColumnName("order_id")
+                .IsRequired();
+
+            entity.Property(pt => pt.AmountCents)
+                .HasColumnName("amount_cents")
+                .IsRequired();
+
+            entity.Property(pt => pt.TransactionType)
+                .HasColumnName("transaction_type")
+                .HasConversion<string>()
+                .HasDefaultValue(TransactionType.Authorize)
+                .IsRequired();
+
+            entity.Property(pt => pt.Currency)
+                .HasColumnName("currency")
+                .HasConversion<string>()
+                .HasDefaultValue(Currency.Usd)
+                .IsRequired();
+
+            entity.Property(pt => pt.GatewayName)
+                .HasColumnName("gateway_name")
+                .HasConversion<string>()
+                .HasDefaultValue(GatewayName.Stripe)
+                .IsRequired();
+
+            entity.Property(pt => pt.GatewayTransactionId)
+                .HasColumnName("gateway_transaction_id")
+                .HasMaxLength(255)
+                .IsRequired(false);
+
+            entity.Property(pt => pt.GatewayFeeCents)
+                .HasColumnName("gateway_fee_cents")
+                .IsRequired();
+
+            entity.Property(pt => pt.Status)
+                .HasColumnName("status")
+                .HasConversion<string>()
+                .HasDefaultValue(PaymentTransactionStatus.Pending)
+                .IsRequired();
+
+            entity.Property(pt => pt.ErrorCode)
+                .HasColumnName("error_code")
+                .HasMaxLength(100)
+                .IsRequired(false);
+
+            entity.Property(pt => pt.RawGatewayResponse)
+                .HasColumnName("raw_gateway_response")
+                .HasColumnType("JSON")
+                .IsRequired(false);
+
+            entity.Property(pt => pt.ErrorMessage)
+                .HasColumnName("error_message")
+                .HasColumnType("TEXT")
+                .IsRequired(false);
+
+            // Timestamps
+            entity.Property(pt => pt.CreatedAt)
+                .HasColumnName("created_at")
+                .HasColumnType("DATETIME(6)")
+                .HasDefaultValueSql("CURRENT_TIMESTAMP(6)")
+                .IsRequired();
+
+            entity.Property(pt => pt.UpdatedAt)
+                .HasColumnName("updated_at")
+                .HasColumnType("DATETIME(6)")
+                .HasDefaultValueSql("CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6)")
+                .IsRequired();
+
+            entity.Property(pt => pt.DeletedAt)
+                .HasColumnName("deleted_at")
+                .HasColumnType("DATETIME(6)")
+                .IsRequired(false);
+
+            // Concurrency
+            entity.Property(pt => pt.RowVersion)
+                .HasColumnName("row_version")
+                .HasColumnType("TIMESTAMP")
+                .HasDefaultValueSql("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
+                .IsRequired()
+                .IsConcurrencyToken();
+
+            // Relationships
+            entity.HasOne(pt => pt.Tenant)
+                .WithMany(t => t.PaymentTransactions)
+                .HasForeignKey(pt => pt.TenantId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("payment_transactions_tenant_fk");
+
+            entity.HasOne(pt => pt.Order)
+                .WithMany(o => o.PaymentTransactions)
+                .HasForeignKey(pt => pt.OrderId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("payment_transactions_order_fk");
+
+            // Indexes
+            entity.HasIndex(pt => pt.TenantId)
+                .HasDatabaseName("idx_tenant");
+
+            entity.HasIndex(pt => pt.OrderId)
+                .HasDatabaseName("idx_order_id");
+
+            entity.HasIndex(pt => pt.Status)
+                .HasDatabaseName("idx_status");
+
+            entity.HasIndex(pt => pt.CreatedAt)
+                .HasDatabaseName("idx_created_at");
+        });
+
         builder.Entity<Customer>(entity =>
         {
             entity.ToTable("customers");
@@ -1339,6 +1369,13 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
                     .HasColumnType("DATETIME(6)")
                     .IsRequired(false);
 
+                entity.Property(c => c.RowVersion)
+                    .HasColumnName("row_version")
+                    .HasColumnType("TIMESTAMP")
+                    .HasDefaultValueSql("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
+                    .IsRequired()
+                    .IsConcurrencyToken();
+
                 entity.HasOne(c => c.Tenant)
                     .WithMany(t => t.TaxCategories)
                     .HasForeignKey(c => c.TenantId);
@@ -1349,6 +1386,227 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
                     .OnDelete(DeleteBehavior.Restrict);
             }
         );
+
+        builder.Entity<ShippingZone>(entity =>
+            {
+                entity.ToTable("shipping_zones");
+                entity.HasKey(sz => sz.Id);
+                entity.Property(sz => sz.Id)
+                    .HasColumnName("id")
+                    .ValueGeneratedOnAdd()
+                    .IsRequired();
+                entity.Property(sz => sz.TenantId)
+                    .HasColumnName("tenant_id")
+                    .IsRequired();
+                entity.Property(sz => sz.Name)
+                    .HasMaxLength(100)
+                    .IsRequired();
+                entity.Property(sz => sz.IsLocalFleet)
+                    .HasColumnName("is_local_fleet")
+                    .HasDefaultValue(false)
+                    .IsRequired();
+                entity.Property(c => c.CreatedAt)
+                    .HasColumnName("created_at")
+                    .HasColumnType("DATETIME(6)")
+                    .HasDefaultValueSql("CURRENT_TIMESTAMP(6)")
+                    .IsRequired();
+
+                entity.Property(c => c.UpdatedAt)
+                    .HasColumnName("updated_at")
+                    .HasColumnType("DATETIME(6)")
+                    .HasDefaultValueSql("CURRENT_TIMESTAMP(6)")
+                    .IsRequired();
+
+                entity.Property(c => c.DeletedAt)
+                    .HasColumnName("deleted_at")
+                    .HasColumnType("DATETIME(6)")
+                    .IsRequired(false);
+
+                entity.Property(c => c.RowVersion)
+                    .HasColumnName("row_version")
+                    .HasColumnType("TIMESTAMP")
+                    .HasDefaultValueSql("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
+                    .IsRequired()
+                    .IsConcurrencyToken();
+
+                // Relationships
+                entity.HasOne(sz => sz.Tenant)
+                    .WithMany(t => t.ShippingZones)
+                    .HasForeignKey(sz => sz.TenantId)
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .HasConstraintName("zone_tenant_fk");
+
+                // Navigation collections
+                entity.HasMany(sz => sz.ZonePostalCodes)
+                    .WithOne(zpc => zpc.ShippingZone)
+                    .HasForeignKey(zpc => zpc.ShippingZoneId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasMany(sz => sz.ShippingRates)
+                    .WithOne(sr => sr.ShippingZone)
+                    .HasForeignKey(sr => sr.ShippingZoneId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            }
+        );
+
+        builder.Entity<ZonePostalCode>(entity =>
+        {
+            entity.ToTable("zone_postal_codes");
+
+            // Primary key
+            entity.HasKey(zpc => zpc.Id);
+
+            entity.Property(zpc => zpc.Id)
+                .HasColumnName("id")
+                .ValueGeneratedOnAdd()
+                .IsRequired();
+
+            entity.Property(zpc => zpc.TenantId)
+                .HasColumnName("tenant_id")
+                .IsRequired();
+
+            entity.Property(zpc => zpc.ShippingZoneId)
+                .HasColumnName("shipping_zone_id")
+                .IsRequired();
+
+            entity.Property(zpc => zpc.PostalCode)
+                .HasColumnName("postal_code")
+                .HasMaxLength(20)
+                .IsRequired();
+
+            // Timestamps
+            entity.Property(zpc => zpc.CreatedAt)
+                .HasColumnName("created_at")
+                .HasColumnType("DATETIME(6)")
+                .HasDefaultValueSql("CURRENT_TIMESTAMP(6)")
+                .IsRequired();
+
+            entity.Property(zpc => zpc.UpdatedAt)
+                .HasColumnName("updated_at")
+                .HasColumnType("DATETIME(6)")
+                .HasDefaultValueSql("CURRENT_TIMESTAMP(6)")
+                .IsRequired();
+
+            entity.Property(zpc => zpc.DeletedAt)
+                .HasColumnName("deleted_at")
+                .HasColumnType("DATETIME(6)")
+                .IsRequired(false);
+
+            // Concurrency
+            entity.Property(zpc => zpc.RowVersion)
+                .HasColumnName("row_version")
+                .HasColumnType("TIMESTAMP")
+                .HasDefaultValueSql("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
+                .IsRequired()
+                .IsConcurrencyToken();
+
+            // Relationships
+            entity.HasOne(zpc => zpc.Tenant)
+                .WithMany(t => t.ZonePostalCodes)
+                .HasForeignKey(zpc => zpc.TenantId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("zone_postal_code_tenant_fk");
+
+            entity.HasOne(zpc => zpc.ShippingZone)
+                .WithMany(sz => sz.ZonePostalCodes)
+                .HasForeignKey(zpc => zpc.ShippingZoneId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("zone_postal_code_shipping_zone_fk");
+
+            // Indexes
+            entity.HasIndex(zpc => zpc.ShippingZoneId)
+                .HasDatabaseName("idx_shipping_zone");
+
+            entity.HasIndex(zpc => new { zpc.TenantId, zpc.PostalCode })
+                .HasDatabaseName("idx_postal_code_lookup");
+        });
+
+        builder.Entity<ShippingRate>(entity =>
+        {
+            entity.ToTable("shipping_rates");
+
+            // Primary key
+            entity.HasKey(sr => sr.Id);
+
+            entity.Property(sr => sr.Id)
+                .HasColumnName("id")
+                .ValueGeneratedOnAdd()
+                .IsRequired();
+
+            entity.Property(sr => sr.TenantId)
+                .HasColumnName("tenant_id")
+                .IsRequired();
+
+            entity.Property(sr => sr.ShippingZoneId)
+                .HasColumnName("shipping_zone_id")
+                .IsRequired();
+
+            entity.Property(sr => sr.RateName)
+                .HasColumnName("rate_name")
+                .HasMaxLength(100)
+                .IsRequired(false);
+
+            entity.Property(sr => sr.MinWeight)
+                .HasColumnName("min_weight")
+                .HasPrecision(10, 2)
+                .HasDefaultValue(0.00m)
+                .IsRequired();
+
+            entity.Property(sr => sr.MaxWeight)
+                .HasColumnName("max_weight")
+                .HasPrecision(10, 2)
+                .IsRequired();
+
+            entity.Property(sr => sr.PriceCents)
+                .HasColumnName("priceCents")
+                .IsRequired();
+
+            // Timestamps
+            entity.Property(sr => sr.CreatedAt)
+                .HasColumnName("created_at")
+                .HasColumnType("DATETIME(6)")
+                .HasDefaultValueSql("CURRENT_TIMESTAMP(6)")
+                .IsRequired();
+
+            entity.Property(sr => sr.UpdatedAt)
+                .HasColumnName("updated_at")
+                .HasColumnType("DATETIME(6)")
+                .HasDefaultValueSql("CURRENT_TIMESTAMP(6)")
+                .IsRequired();
+
+            entity.Property(sr => sr.DeletedAt)
+                .HasColumnName("deleted_at")
+                .HasColumnType("DATETIME(6)")
+                .IsRequired(false);
+
+            // Concurrency
+            entity.Property(sr => sr.RowVersion)
+                .HasColumnName("row_version")
+                .HasColumnType("TIMESTAMP")
+                .HasDefaultValueSql("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
+                .IsRequired()
+                .IsConcurrencyToken();
+
+            // Relationships
+            entity.HasOne(sr => sr.Tenant)
+                .WithMany(t => t.ShippingRates)
+                .HasForeignKey(sr => sr.TenantId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("shipping_rate_tenant_fk");
+
+            entity.HasOne(sr => sr.ShippingZone)
+                .WithMany(sz => sz.ShippingRates)
+                .HasForeignKey(sr => sr.ShippingZoneId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("shipping_rate_shipping_zone_fk");
+
+            // Indexes
+            entity.HasIndex(sr => sr.ShippingZoneId)
+                .HasDatabaseName("idx_shipping_zone");
+
+            entity.HasIndex(sr => new { sr.TenantId, sr.ShippingZoneId, sr.MinWeight, sr.MaxWeight })
+                .HasDatabaseName("idx_rate_weight_range");
+        });
     }
 
     // Optional: keep UpdatedAt accurate at app level (since your SQL default doesn’t auto-update it).
