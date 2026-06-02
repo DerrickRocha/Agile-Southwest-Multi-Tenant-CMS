@@ -15,7 +15,7 @@ public class ProductsService(ITenantContext context, CmsDbContext database, bool
     {
         var tenant = context.Tenant
                      ?? throw new UnauthorizedAccessException("Tenant not resolved.");
-
+        
         ValidateProductRequest(request);
 
         var strategy = database.Database.CreateExecutionStrategy();
@@ -85,7 +85,7 @@ public class ProductsService(ITenantContext context, CmsDbContext database, bool
                 UpdatedAt = p.UpdatedAt,
 
                 ProductOptions = p.ProductOptions
-                    .Where(po => po.IsRequired && po.DeletedAt == null) 
+                    .Where(po => po.IsRequired && po.DeletedAt == null)
                     .Select(po => new ProductOptionResult
                     {
                         Id = po.Id,
@@ -134,26 +134,27 @@ public class ProductsService(ITenantContext context, CmsDbContext database, bool
                 {
                     await DeleteProductFromDb(id, tenant.Id);
                     await transaction.CommitAsync();
-                } catch
+                }
+                catch
                 {
                     await transaction.RollbackAsync();
                     throw;
                 }
-            });  
+            });
         }
     }
 
     private async Task DeleteProductFromDb(int id, int tenantId)
     {
         var product = await database.Products
-            .Include(p =>  p.ProductOptions)
+            .Include(p => p.ProductOptions)
             .ThenInclude(po => po.ProductOptionChoices)
             .FirstOrDefaultAsync(p => p.Id == id && p.TenantId == tenantId);
         if (product is null) throw new KeyNotFoundException("Product not found.");
         if (product.DeletedAt != null) throw new InvalidOperationException("Product already deleted.");
-        
+
         var now = DateTime.UtcNow;
-        
+
         product.DeletedAt = now;
 
         foreach (var option in product.ProductOptions)
@@ -164,6 +165,7 @@ public class ProductsService(ITenantContext context, CmsDbContext database, bool
                 choice.DeletedAt = now;
             }
         }
+
         await database.SaveChangesAsync();
     }
 
@@ -202,7 +204,7 @@ public class ProductsService(ITenantContext context, CmsDbContext database, bool
                     IsRequired = o.IsRequired,
                     CreatedAt = o.CreatedAt,
                     UpdatedAt = o.UpdatedAt,
-                    ProductOptionChoices = o.ProductOptionChoices.Select(c => 
+                    ProductOptionChoices = o.ProductOptionChoices.Select(c =>
                         new ProductOptionChoiceResult
                         {
                             Id = c.Id,
@@ -417,13 +419,16 @@ public class ProductsService(ITenantContext context, CmsDbContext database, bool
 
     private async Task<ProductResult> WriteProduct(ProductRequest request, int tenantId)
     {
+        var taxCategory =
+             await database.TaxCategories.FirstOrDefaultAsync(tc => tc.TenantId == tenantId && tc.Id == request.TaxCategoryId) ??
+            throw new InvalidOperationException("Tax category not found.");
         var product = new Product
         {
             TenantId = tenantId,
             Name = request.Name!,
             Description = request.Description!,
             BasePriceCents = request.BasePrice!.Value,
-            IsActive = request.IsActive!.Value,
+            IsActive = request.IsActive!.Value, TaxCategory = taxCategory,
             ProductOptions = MapToProductOptions(request.Options!)
         };
 

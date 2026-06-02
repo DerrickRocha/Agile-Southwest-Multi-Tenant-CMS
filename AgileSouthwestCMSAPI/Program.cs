@@ -40,6 +40,15 @@ if (!isTest) // Only add MySQL in non-test environments
     {
         options.UseMySQL(connectionString, sql => sql.EnableRetryOnFailure());
     });
+    
+    builder.WebHost.ConfigureKestrel(serverOptions =>
+    {
+        // This tells Kestrel to listen for requests on any IP address assigned to your Mac, on port 5100 [citation:3][citation:10]
+        serverOptions.ListenAnyIP(5100);
+    
+        // If you still have issues, you can explicitly bind to your specific IP:
+        // serverOptions.Listen(IPAddress.Parse("10.0.0.124"), 5100);
+    });
 }
 
 
@@ -57,7 +66,8 @@ builder.Services.AddCors(options =>
             policy
                 .WithOrigins(
                     "http://localhost:3000",
-                    "http://localhost:5173"
+                    "http://localhost:5173",
+                    "http://10.0.0.124:5100"
                 )
                 .AllowAnyHeader()
                 .AllowAnyMethod();
@@ -158,9 +168,13 @@ builder.Services.AddScoped<ICmsUserContext, CmsUserContext>();
 // Application services
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ITenantsService, TenantsService>();
+builder.Services.AddScoped<IShippingZoneService, ShippingZoneService>();
+builder.Services.AddScoped<IShippingRateService, ShippingRateService>();
+builder.Services.AddScoped<IZonePostalCodeService, ZonePostalCodesService>();
 builder.Services.AddScoped<IProductsService, ProductsService>();
 builder.Services.AddScoped<IProductImagesService, ProductImagesService>();
 builder.Services.AddScoped<IOrderService, OrdersService>();
+builder.Services.AddScoped<ITaxCategoriesService, TaxCategoriesService>();
 builder.Services.AddScoped<IInventoryService, InventoryService>();
 
 builder.Services.AddScoped<IStoresService, StoresService>();
