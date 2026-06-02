@@ -48,5 +48,6 @@ public class Product
     public ICollection<ProductImage> ProductImages { get; set; } = new List<ProductImage>();
     
     public ICollection<Inventory> Inventory { get; set; } = new List<Inventory>();
+    public ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
 
 }

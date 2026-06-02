@@ -12,7 +12,7 @@ public class ShippingRateService(ITenantContext tenantContext, CmsDbContext data
     public async Task<ShippingRateResult> AddShippingRate(AddShippingRateRequest request)
     {
         var tenant = tenantContext.Tenant ?? throw new UnauthorizedAccessException("Tenant not resolved");
-        var zone =
+        /*var zone =
             await database.ShippingZones.FirstOrDefaultAsync(z =>
                 z.Id == request.ShippingZoneId && z.TenantId == tenant.Id) ??
             throw new InvalidOperationException("Shipping zone not found");
@@ -37,22 +37,24 @@ public class ShippingRateService(ITenantContext tenantContext, CmsDbContext data
             rate.ShippingZoneId
             , rate.RateName,
             rate.MinWeight,
-            rate.MaxWeight,
+            rate.MaxWeight?? 0,
             rate.PriceCents,
             rate.CreatedAt,
             rate.UpdatedAt,
             rate.DeletedAt
-        );
+        );*/
+        return new ShippingRateResult(0, 0, 0, "", 0, 0, 0, DateTime.UtcNow, DateTime.UtcNow, null);
     }
 
     public async Task<ShippingRateResult> GetShippingRate(int id)
     {
-        var tenant = tenantContext.Tenant ?? throw new UnauthorizedAccessException("Tenant not resolved");
+        /*var tenant = tenantContext.Tenant ?? throw new UnauthorizedAccessException("Tenant not resolved");
         var rate = await database.ShippingRates
             .Where(shippingRate => shippingRate.TenantId == tenant.Id && shippingRate.Id == id).Select(shippingRate =>
                 new ShippingRateResult(shippingRate.Id, shippingRate.TenantId, shippingRate.ShippingZoneId,
-                    shippingRate.RateName, shippingRate.MinWeight, shippingRate.MaxWeight, shippingRate.PriceCents,
+                    shippingRate.RateName, shippingRate.MinWeight, shippingRate.MaxWeight?? 0, shippingRate.PriceCents,
                     shippingRate.CreatedAt, shippingRate.UpdatedAt, shippingRate.DeletedAt)).FirstOrDefaultAsync();
-        return rate ?? throw new InvalidOperationException("Shipping rate not found");
+        return rate ?? throw new InvalidOperationException("Shipping rate not found");*/
+        return new ShippingRateResult(0, 0, 0, "", 0, 0, 0, DateTime.UtcNow, DateTime.UtcNow, null);
     }
 }

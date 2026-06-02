@@ -28,10 +28,6 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
 
     public DbSet<TaxCategory> TaxCategories => Set<TaxCategory>();
 
-    public DbSet<ShippingZone> ShippingZones => Set<ShippingZone>();
-    public DbSet<ZonePostalCode> ZonePostalCodes => Set<ZonePostalCode>();
-    public DbSet<ShippingRate> ShippingRates => Set<ShippingRate>();
-
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
@@ -97,7 +93,7 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
         {
             entity.ToTable("products");
 
-            entity.HasKey(p => new { p.Id, p.TenantId });
+            entity.HasKey(p => p.Id);
 
             entity.Property(p => p.Id)
                 .HasColumnName("id")
@@ -171,7 +167,7 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
         builder.Entity<ProductOption>(entity =>
         {
             entity.ToTable("product_options");
-            entity.HasKey(p => new { p.Id, p.TenantId });
+            entity.HasKey(po => po.Id);
 
             entity.Property(o => o.Id)
                 .HasColumnName("id")
@@ -186,7 +182,7 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
                 .IsRequired();
             entity.HasOne(o => o.Product)
                 .WithMany(p => p.ProductOptions)
-                .HasForeignKey(o => new { o.ProductId, o.TenantId })
+                .HasForeignKey(o => o.ProductId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             entity.Property(o => o.Name)
@@ -228,7 +224,7 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
         builder.Entity<ProductOptionChoice>(entity =>
         {
             entity.ToTable("product_option_choices");
-            entity.HasKey(p => new { p.Id, p.TenantId });
+            entity.HasKey(p => p.Id);
 
             entity.Property(o => o.Id)
                 .HasColumnName("id")
@@ -244,8 +240,7 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
 
             entity.HasOne(o => o.ProductOption)
                 .WithMany(p => p.ProductOptionChoices)
-                .HasForeignKey(c => new { c.ProductOptionId, c.TenantId })
-                .HasPrincipalKey(po => new { po.Id, po.TenantId }) // Explicit principal key
+                .HasForeignKey(c => c.ProductOptionId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             entity.Property(o => o.Name)
@@ -345,15 +340,13 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
             // Relationships
             entity.HasOne(pi => pi.Product)
                 .WithMany(p => p.ProductImages)
-                .HasForeignKey(pi => new { pi.TenantId, pi.ProductId })
-                .HasPrincipalKey(p => new { p.TenantId, p.Id }) // Important!
+                .HasForeignKey(pi => pi.ProductId)
                 .OnDelete(DeleteBehavior.Restrict)
                 .HasConstraintName("fk_product_images_product");
 
             entity.HasOne(pi => pi.Image)
                 .WithMany(i => i.ProductImages) // Requires ICollection<ProductImage> on Image
                 .HasForeignKey(pi => pi.ImageId)
-                .HasPrincipalKey(i => i.Id) // Specify principal key
                 .OnDelete(DeleteBehavior.Restrict)
                 .HasConstraintName("fk_product_images_image");
 
@@ -500,7 +493,7 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
         {
             entity.ToTable("stores");
 
-            entity.HasKey(s => new { s.Id, s.TenantId });
+            entity.HasKey(s => s.Id);
             entity.Property(s => s.Id)
                 .HasColumnName("id")
                 .ValueGeneratedOnAdd();
@@ -564,7 +557,7 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
         builder.Entity<Inventory>(entity =>
             {
                 entity.ToTable("inventory");
-                entity.HasKey(i => new { i.Id, i.TenantId });
+                entity.HasKey(i => i.Id);
 
                 entity.Property(i => i.Id)
                     .HasColumnName("id")
@@ -613,17 +606,15 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
                     .OnDelete(DeleteBehavior.Restrict)
                     .HasConstraintName("inventory_tenant_id_fk");
 
-                // Foreign key to Store (composite)
                 entity.HasOne(i => i.Store)
                     .WithMany(s => s.Inventory)
-                    .HasForeignKey(i => new { i.StoreId, i.TenantId })
+                    .HasForeignKey(i => i.StoreId)
                     .OnDelete(DeleteBehavior.Restrict)
-                    .HasConstraintName("inventory_store_tenant_id_fk");
+                    .HasConstraintName("inventory_store_fk");
 
-                // Foreign key to Product (composite)
                 entity.HasOne(i => i.Product)
                     .WithMany(p => p.Inventory)
-                    .HasForeignKey(i => new { i.ProductId, i.TenantId })
+                    .HasForeignKey(i => i.ProductId)
                     .OnDelete(DeleteBehavior.Restrict)
                     .HasConstraintName("inventory_product_tenant_id_fk");
 
@@ -704,12 +695,11 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
                 entity.Property(i => i.DeletedAt)
                     .HasColumnName("deleted_at")
                     .HasColumnType("DATETIME(6)");
-                
+
                 entity.Property(c => c.RowVersion)
                     .HasColumnName("row_version")
                     .HasColumnType("TIMESTAMP")
                     .HasDefaultValueSql("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
-                    .IsRequired()
                     .IsConcurrencyToken();
 
                 entity.HasOne(i => i.Tenant)
@@ -735,20 +725,18 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
         {
             entity.ToTable("orders");
 
+            // Primary key - just Id, not composite
             entity.HasKey(o => o.Id);
 
-            // Properties
+            // Id is auto-generated
             entity.Property(o => o.Id)
                 .HasColumnName("id")
                 .ValueGeneratedOnAdd()
                 .IsRequired();
 
+            // TenantId is a regular foreign key property
             entity.Property(o => o.TenantId)
                 .HasColumnName("tenant_id")
-                .IsRequired();
-
-            entity.Property(o => o.ShippingZoneId)
-                .HasColumnName("shipping_zone_id")
                 .IsRequired();
 
             entity.Property(o => o.CustomerId)
@@ -780,7 +768,7 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
                 .HasMaxLength(50)
                 .IsRequired(false);
 
-            // Status tracking - all with string conversion for ENUMs
+            // Status tracking
             entity.Property(o => o.Status)
                 .HasColumnName("status")
                 .HasConversion<string>()
@@ -796,8 +784,7 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
             entity.Property(o => o.FulfillmentStatus)
                 .HasColumnName("fulfillment_status")
                 .HasConversion<string>()
-                .HasDefaultValue(FulfillmentStatus.Unfulfilled)
-                .IsRequired();
+                .IsRequired(false);
 
             // Amounts (in cents)
             entity.Property(o => o.SubtotalCents)
@@ -910,6 +897,7 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
                 .HasMaxLength(100)
                 .IsRequired();
 
+            // Order type
             entity.Property(o => o.OrderType)
                 .HasColumnName("order_type")
                 .HasConversion<string>()
@@ -927,7 +915,6 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
                 .HasColumnType("TEXT")
                 .IsRequired(false);
 
-
             // Notes
             entity.Property(o => o.CustomerNotes)
                 .HasColumnName("customer_notes")
@@ -942,20 +929,26 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
             // Timestamps
             entity.Property(o => o.CreatedAt)
                 .HasColumnName("created_at")
-                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("DATETIME(6)")
+                .HasDefaultValueSql("CURRENT_TIMESTAMP(6)")
                 .IsRequired();
 
             entity.Property(o => o.UpdatedAt)
                 .HasColumnName("updated_at")
-                .HasDefaultValueSql("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
+                .HasColumnType("DATETIME(6)")
+                .HasDefaultValueSql("CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6)")
                 .IsRequired();
 
             entity.Property(o => o.DeletedAt)
                 .HasColumnName("deleted_at")
+                .HasColumnType("DATETIME(6)")
                 .IsRequired(false);
 
+            // Concurrency
             entity.Property(o => o.RowVersion)
                 .HasColumnName("row_version")
+                .HasColumnType("TIMESTAMP")
+                .HasDefaultValueSql("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
                 .IsRequired()
                 .IsConcurrencyToken();
 
@@ -971,13 +964,7 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
                 .HasForeignKey(o => o.CustomerId)
                 .OnDelete(DeleteBehavior.SetNull)
                 .HasConstraintName("orders_customer_fk");
-
-            entity.HasOne(o => o.ShippingZone)
-                .WithMany(sz => sz.Orders)
-                .HasForeignKey(o => o.ShippingZoneId)
-                .OnDelete(DeleteBehavior.Cascade)
-                .HasConstraintName("orders_shipping_zone_fk");
-
+            
             // Indexes
             entity.HasIndex(o => o.TenantId)
                 .HasDatabaseName("idx_tenant");
@@ -1017,134 +1004,148 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
 
             entity.HasIndex(o => new { o.CustomerId, o.CreatedAt, o.Status })
                 .HasDatabaseName("idx_customer_orders");
+            
+            entity.HasIndex(o => new { o.TenantId, o.Id })
+                .HasDatabaseName("uk_tenant_order")
+                .IsUnique();
         });
 
         builder.Entity<OrderItem>(entity =>
         {
             entity.ToTable("order_items");
-            entity.HasKey(o => new { o.Id, o.TenantId }); // Composite key
+            entity.HasKey(oi => oi.Id);
 
-            entity.Property(o => o.Id)
+            entity.Property(oi => oi.Id)
                 .HasColumnName("id")
                 .ValueGeneratedOnAdd()
                 .IsRequired();
 
-            entity.Property(o => o.TenantId)
+            entity.Property(oi => oi.TenantId)
                 .HasColumnName("tenant_id")
                 .IsRequired();
 
-            entity.Property(o => o.OrderId)
+            entity.Property(oi => oi.OrderId)
                 .HasColumnName("order_id")
                 .IsRequired();
 
-            entity.Property(o => o.ProductId)
+            entity.Property(oi => oi.ProductId)
                 .HasColumnName("product_id")
                 .IsRequired();
 
-            entity.Property(o => o.TaxCategoryId)
-                .HasColumnName("tax_category_id");
+            entity.Property(oi => oi.TaxCategoryId)
+                .HasColumnName("tax_category_id")
+                .IsRequired(false);
 
-            entity.Property(o => o.WeightGrams)
-                .HasColumnName("weight_grams");
-
-            entity.Property(o => o.ProductName)
+            entity.Property(oi => oi.ProductName)
                 .HasColumnName("product_name")
                 .HasMaxLength(255)
                 .IsRequired();
 
-            entity.Property(o => o.ProductSku)
+            entity.Property(oi => oi.ProductSku)
                 .HasColumnName("product_sku")
-                .HasMaxLength(100);
+                .HasMaxLength(100)
+                .IsRequired(false);
 
-            entity.Property(o => o.Quantity)
+            entity.Property(oi => oi.Quantity)
                 .HasColumnName("quantity")
                 .IsRequired();
 
-            entity.Property(o => o.UnitPriceCents)
+            entity.Property(oi => oi.UnitPriceCents)
                 .HasColumnName("unit_price_cents")
                 .IsRequired();
 
-            entity.Property(o => o.TotalPriceCents)
+            entity.Property(oi => oi.TotalPriceCents)
                 .HasColumnName("total_price_cents")
                 .IsRequired();
 
-            entity.Property(o => o.DiscountCents)
+            entity.Property(oi => oi.DiscountCents)
                 .HasColumnName("discount_cents")
                 .HasDefaultValue(0)
                 .IsRequired();
 
-            entity.Property(o => o.OptionDetails)
+            entity.Property(oi => oi.WeightGrams)
+                .HasColumnName("weight_grams")
+                .IsRequired(false);
+
+            entity.Property(oi => oi.OptionDetails)
                 .HasColumnName("option_details")
-                .HasColumnType("json");
+                .HasColumnType("JSON")
+                .IsRequired(false);
 
-            entity.Property(o => o.ImageUrl)
+            entity.Property(oi => oi.ImageUrl)
                 .HasColumnName("image_url")
-                .HasMaxLength(500);
+                .HasMaxLength(500)
+                .IsRequired(false);
 
-            entity.Property(o => o.CreatedAt)
+            // Timestamps
+            entity.Property(oi => oi.CreatedAt)
                 .HasColumnName("created_at")
-                .HasColumnType("TIMESTAMP")
-                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("DATETIME(6)")
+                .HasDefaultValueSql("CURRENT_TIMESTAMP(6)")
                 .IsRequired();
 
-            entity.Property(o => o.UpdatedAt)
+            entity.Property(oi => oi.UpdatedAt)
                 .HasColumnName("updated_at")
+                .HasColumnType("DATETIME(6)")
+                .HasDefaultValueSql("CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6)")
+                .IsRequired();
+
+            entity.Property(oi => oi.DeletedAt)
+                .HasColumnName("deleted_at")
+                .HasColumnType("DATETIME(6)")
+                .IsRequired(false);
+
+            // Concurrency
+            entity.Property(oi => oi.RowVersion)
+                .HasColumnName("row_version")
                 .HasColumnType("TIMESTAMP")
                 .HasDefaultValueSql("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
-                .IsRequired();
+                .IsRequired()
+                .IsConcurrencyToken();
 
-            entity.Property(o => o.DeletedAt)
-                .HasColumnName("deleted_at")
-                .HasColumnType("TIMESTAMP");
-
-            // Foreign Key Constraints
-            entity.HasOne(o => o.Tenant)
-                .WithMany()
-                .HasForeignKey(o => o.TenantId)
+            // Relationships
+            entity.HasOne(oi => oi.Tenant)
+                .WithMany(t => t.OrderItems)
+                .HasForeignKey(oi => oi.TenantId)
                 .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("order_items_tenant_fk");
 
-            entity.HasOne(o => o.Order)
+            entity.HasOne(oi => oi.Order)
                 .WithMany(o => o.OrderItems)
-                .HasForeignKey(o => new { o.OrderId, o.TenantId }) // Both columns
-                .HasPrincipalKey(o => new { o.Id, o.TenantId }) // Explicitly specify principal key
+                .HasForeignKey(oi => oi.OrderId)
                 .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("order_items_order_fk");
 
-            entity.HasOne(o => o.Product)
-                .WithMany()
-                .HasForeignKey(o => new { o.ProductId, o.TenantId })
+            entity.HasOne(oi => oi.Product)
+                .WithMany(p => p.OrderItems)
+                .HasForeignKey(oi => oi.ProductId)
                 .OnDelete(DeleteBehavior.Restrict)
                 .HasConstraintName("order_items_product_fk");
 
-            entity.HasOne(o => o.TaxCategory)
+            entity.HasOne(oi => oi.TaxCategory)
                 .WithMany(tc => tc.OrderItems)
-                .HasForeignKey(o => o.TaxCategoryId)
-                .OnDelete(DeleteBehavior.Restrict)
+                .HasForeignKey(oi => oi.TaxCategoryId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("order_items_tax_category_fk");
 
             // Indexes
-            entity.HasIndex(o => o.TenantId)
+            entity.HasIndex(oi => oi.TenantId)
                 .HasDatabaseName("idx_tenant");
 
-            entity.HasIndex(o => o.OrderId)
+            entity.HasIndex(oi => oi.OrderId)
                 .HasDatabaseName("idx_order_id");
 
-            entity.HasIndex(o => o.ProductId)
+            entity.HasIndex(oi => oi.ProductId)
                 .HasDatabaseName("idx_product_id");
 
-            entity.HasIndex(o => o.DeletedAt)
+            entity.HasIndex(oi => oi.DeletedAt)
                 .HasDatabaseName("idx_deleted");
-
-            entity.HasIndex(o => o.WeightGrams)
-                .HasDatabaseName("idx_order_items_weight");
         });
 
         builder.Entity<PaymentTransactions>(entity =>
         {
             entity.ToTable("payment_transactions");
 
-            // Primary key
             entity.HasKey(pt => pt.Id);
 
             entity.Property(pt => pt.Id)
@@ -1189,7 +1190,7 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
 
             entity.Property(pt => pt.GatewayFeeCents)
                 .HasColumnName("gateway_fee_cents")
-                .IsRequired();
+                .IsRequired(false);
 
             entity.Property(pt => pt.Status)
                 .HasColumnName("status")
@@ -1302,10 +1303,7 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
 
             entity.Property(c => c.RowVersion)
                 .HasColumnName("row_version")
-                .HasColumnType("TIMESTAMP")
-                .HasDefaultValueSql("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
-                .IsRequired()
-                .IsConcurrencyToken();
+                .IsRowVersion();
 
             // Relationships
             entity.HasOne(c => c.Tenant)
@@ -1386,227 +1384,6 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
                     .OnDelete(DeleteBehavior.Restrict);
             }
         );
-
-        builder.Entity<ShippingZone>(entity =>
-            {
-                entity.ToTable("shipping_zones");
-                entity.HasKey(sz => sz.Id);
-                entity.Property(sz => sz.Id)
-                    .HasColumnName("id")
-                    .ValueGeneratedOnAdd()
-                    .IsRequired();
-                entity.Property(sz => sz.TenantId)
-                    .HasColumnName("tenant_id")
-                    .IsRequired();
-                entity.Property(sz => sz.Name)
-                    .HasMaxLength(100)
-                    .IsRequired();
-                entity.Property(sz => sz.IsLocalFleet)
-                    .HasColumnName("is_local_fleet")
-                    .HasDefaultValue(false)
-                    .IsRequired();
-                entity.Property(c => c.CreatedAt)
-                    .HasColumnName("created_at")
-                    .HasColumnType("DATETIME(6)")
-                    .HasDefaultValueSql("CURRENT_TIMESTAMP(6)")
-                    .IsRequired();
-
-                entity.Property(c => c.UpdatedAt)
-                    .HasColumnName("updated_at")
-                    .HasColumnType("DATETIME(6)")
-                    .HasDefaultValueSql("CURRENT_TIMESTAMP(6)")
-                    .IsRequired();
-
-                entity.Property(c => c.DeletedAt)
-                    .HasColumnName("deleted_at")
-                    .HasColumnType("DATETIME(6)")
-                    .IsRequired(false);
-
-                entity.Property(c => c.RowVersion)
-                    .HasColumnName("row_version")
-                    .HasColumnType("TIMESTAMP")
-                    .HasDefaultValueSql("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
-                    .IsRequired()
-                    .IsConcurrencyToken();
-
-                // Relationships
-                entity.HasOne(sz => sz.Tenant)
-                    .WithMany(t => t.ShippingZones)
-                    .HasForeignKey(sz => sz.TenantId)
-                    .OnDelete(DeleteBehavior.Cascade)
-                    .HasConstraintName("zone_tenant_fk");
-
-                // Navigation collections
-                entity.HasMany(sz => sz.ZonePostalCodes)
-                    .WithOne(zpc => zpc.ShippingZone)
-                    .HasForeignKey(zpc => zpc.ShippingZoneId)
-                    .OnDelete(DeleteBehavior.Cascade);
-
-                entity.HasMany(sz => sz.ShippingRates)
-                    .WithOne(sr => sr.ShippingZone)
-                    .HasForeignKey(sr => sr.ShippingZoneId)
-                    .OnDelete(DeleteBehavior.Cascade);
-            }
-        );
-
-        builder.Entity<ZonePostalCode>(entity =>
-        {
-            entity.ToTable("zone_postal_codes");
-
-            // Primary key
-            entity.HasKey(zpc => zpc.Id);
-
-            entity.Property(zpc => zpc.Id)
-                .HasColumnName("id")
-                .ValueGeneratedOnAdd()
-                .IsRequired();
-
-            entity.Property(zpc => zpc.TenantId)
-                .HasColumnName("tenant_id")
-                .IsRequired();
-
-            entity.Property(zpc => zpc.ShippingZoneId)
-                .HasColumnName("shipping_zone_id")
-                .IsRequired();
-
-            entity.Property(zpc => zpc.PostalCode)
-                .HasColumnName("postal_code")
-                .HasMaxLength(20)
-                .IsRequired();
-
-            // Timestamps
-            entity.Property(zpc => zpc.CreatedAt)
-                .HasColumnName("created_at")
-                .HasColumnType("DATETIME(6)")
-                .HasDefaultValueSql("CURRENT_TIMESTAMP(6)")
-                .IsRequired();
-
-            entity.Property(zpc => zpc.UpdatedAt)
-                .HasColumnName("updated_at")
-                .HasColumnType("DATETIME(6)")
-                .HasDefaultValueSql("CURRENT_TIMESTAMP(6)")
-                .IsRequired();
-
-            entity.Property(zpc => zpc.DeletedAt)
-                .HasColumnName("deleted_at")
-                .HasColumnType("DATETIME(6)")
-                .IsRequired(false);
-
-            // Concurrency
-            entity.Property(zpc => zpc.RowVersion)
-                .HasColumnName("row_version")
-                .HasColumnType("TIMESTAMP")
-                .HasDefaultValueSql("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
-                .IsRequired()
-                .IsConcurrencyToken();
-
-            // Relationships
-            entity.HasOne(zpc => zpc.Tenant)
-                .WithMany(t => t.ZonePostalCodes)
-                .HasForeignKey(zpc => zpc.TenantId)
-                .OnDelete(DeleteBehavior.Cascade)
-                .HasConstraintName("zone_postal_code_tenant_fk");
-
-            entity.HasOne(zpc => zpc.ShippingZone)
-                .WithMany(sz => sz.ZonePostalCodes)
-                .HasForeignKey(zpc => zpc.ShippingZoneId)
-                .OnDelete(DeleteBehavior.Cascade)
-                .HasConstraintName("zone_postal_code_shipping_zone_fk");
-
-            // Indexes
-            entity.HasIndex(zpc => zpc.ShippingZoneId)
-                .HasDatabaseName("idx_shipping_zone");
-
-            entity.HasIndex(zpc => new { zpc.TenantId, zpc.PostalCode })
-                .HasDatabaseName("idx_postal_code_lookup");
-        });
-
-        builder.Entity<ShippingRate>(entity =>
-        {
-            entity.ToTable("shipping_rates");
-
-            // Primary key
-            entity.HasKey(sr => sr.Id);
-
-            entity.Property(sr => sr.Id)
-                .HasColumnName("id")
-                .ValueGeneratedOnAdd()
-                .IsRequired();
-
-            entity.Property(sr => sr.TenantId)
-                .HasColumnName("tenant_id")
-                .IsRequired();
-
-            entity.Property(sr => sr.ShippingZoneId)
-                .HasColumnName("shipping_zone_id")
-                .IsRequired();
-
-            entity.Property(sr => sr.RateName)
-                .HasColumnName("rate_name")
-                .HasMaxLength(100)
-                .IsRequired(false);
-
-            entity.Property(sr => sr.MinWeight)
-                .HasColumnName("min_weight")
-                .HasPrecision(10, 2)
-                .HasDefaultValue(0.00m)
-                .IsRequired();
-
-            entity.Property(sr => sr.MaxWeight)
-                .HasColumnName("max_weight")
-                .HasPrecision(10, 2)
-                .IsRequired();
-
-            entity.Property(sr => sr.PriceCents)
-                .HasColumnName("priceCents")
-                .IsRequired();
-
-            // Timestamps
-            entity.Property(sr => sr.CreatedAt)
-                .HasColumnName("created_at")
-                .HasColumnType("DATETIME(6)")
-                .HasDefaultValueSql("CURRENT_TIMESTAMP(6)")
-                .IsRequired();
-
-            entity.Property(sr => sr.UpdatedAt)
-                .HasColumnName("updated_at")
-                .HasColumnType("DATETIME(6)")
-                .HasDefaultValueSql("CURRENT_TIMESTAMP(6)")
-                .IsRequired();
-
-            entity.Property(sr => sr.DeletedAt)
-                .HasColumnName("deleted_at")
-                .HasColumnType("DATETIME(6)")
-                .IsRequired(false);
-
-            // Concurrency
-            entity.Property(sr => sr.RowVersion)
-                .HasColumnName("row_version")
-                .HasColumnType("TIMESTAMP")
-                .HasDefaultValueSql("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
-                .IsRequired()
-                .IsConcurrencyToken();
-
-            // Relationships
-            entity.HasOne(sr => sr.Tenant)
-                .WithMany(t => t.ShippingRates)
-                .HasForeignKey(sr => sr.TenantId)
-                .OnDelete(DeleteBehavior.Cascade)
-                .HasConstraintName("shipping_rate_tenant_fk");
-
-            entity.HasOne(sr => sr.ShippingZone)
-                .WithMany(sz => sz.ShippingRates)
-                .HasForeignKey(sr => sr.ShippingZoneId)
-                .OnDelete(DeleteBehavior.Cascade)
-                .HasConstraintName("shipping_rate_shipping_zone_fk");
-
-            // Indexes
-            entity.HasIndex(sr => sr.ShippingZoneId)
-                .HasDatabaseName("idx_shipping_zone");
-
-            entity.HasIndex(sr => new { sr.TenantId, sr.ShippingZoneId, sr.MinWeight, sr.MaxWeight })
-                .HasDatabaseName("idx_rate_weight_range");
-        });
     }
 
     // Optional: keep UpdatedAt accurate at app level (since your SQL default doesn’t auto-update it).

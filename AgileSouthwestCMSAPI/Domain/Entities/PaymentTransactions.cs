@@ -4,24 +4,25 @@ namespace AgileSouthwestCMSAPI.Domain.Entities;
 
 public class PaymentTransactions
 {
-    public int Id { set; get; }
-    public int TenantId { set; get; }   
-    public int OrderId { set; get; }    
-    public int AmountCents { set; get; }
-    public TransactionType TransactionType { set; get; }
-    public Currency Currency { set; get; }
-    public GatewayName GatewayName { set; get; }
-    public string GatewayTransactionId { get; set; }
-    public int GatewayFeeCents { get; set; }
-    public PaymentTransactionStatus Status { set; get; }
-    public string ErrorCode { get; set; }
-    public string RawGatewayResponse { set; get; }
-    public string? ErrorMessage { set; get; }
-    public DateTime CreatedAt { set; get; }
-    public DateTime UpdatedAt { set; get; }
-    public DateTime? DeletedAt { set; get; }
-    public DateTime RowVersion { set; get; }   
+    public int Id { get; set; }
+    public int TenantId { get; set; }
+    public int OrderId { get; set; }
+    public int AmountCents { get; set; }
+    public TransactionType TransactionType { get; set; }
+    public Currency Currency { get; set; }
+    public GatewayName GatewayName { get; set; }
+    public string? GatewayTransactionId { get; set; }
+    public int? GatewayFeeCents { get; set; }
+    public PaymentTransactionStatus Status { get; set; }
+    public string? ErrorCode { get; set; }
+    public string? RawGatewayResponse { get; set; }
+    public string? ErrorMessage { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
+    public DateTime? DeletedAt { get; set; }
+    public DateTime RowVersion { get; set; }
     
-    public Tenant Tenant { set; get; }
-    public Order Order { set; get; }   
+    // Navigation properties
+    public Tenant Tenant { get; set; }
+    public Order Order { get; set; }   
 }

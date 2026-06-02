@@ -11,7 +11,7 @@ public class ZonePostalCodesService(ITenantContext tenantContext, CmsDbContext d
 {
     public async Task<ZonePostalCodeResult> AddZonePostalCode(AddZonePostalCodeRequest request)
     {
-        var tenant = tenantContext.Tenant ?? throw new UnauthorizedAccessException("Tenant not resolved");
+        /*var tenant = tenantContext.Tenant ?? throw new UnauthorizedAccessException("Tenant not resolved");
         var zone =
             await database.ShippingZones.FirstOrDefaultAsync(z =>
                 z.Id == request.ShippingZoneId && z.TenantId == tenant.Id) ??
@@ -22,19 +22,22 @@ public class ZonePostalCodesService(ITenantContext tenantContext, CmsDbContext d
             ShippingZone = zone,
             PostalCode = request.PostalCode
         };
-
+        database.ZonePostalCodes.Add(code);
+        await database.SaveChangesAsync();
         return new ZonePostalCodeResult(code.Id, code.ShippingZoneId, code.PostalCode, code.CreatedAt, code.UpdatedAt,
-            code.DeletedAt, code.RowVersion);
+            code.DeletedAt, code.RowVersion);*/
+        return new ZonePostalCodeResult(0, 0, "", DateTime.UtcNow, DateTime.UtcNow, null, new DateTime());
     }
 
     public async Task<ZonePostalCodeResult> GetZonePostalCode(int id)
     {
-        var tenant = tenantContext.Tenant ?? throw new UnauthorizedAccessException("Tenant not resolved");
+       /* var tenant = tenantContext.Tenant ?? throw new UnauthorizedAccessException("Tenant not resolved");
         var code = await database.ZonePostalCodes.Where(z => z.Id == id && z.TenantId == tenant.Id).Select(z =>
                        new ZonePostalCodeResult(z.Id, z.ShippingZoneId, z.PostalCode, z.CreatedAt, z.UpdatedAt,
                            z.DeletedAt,
                            z.RowVersion)).FirstOrDefaultAsync() ??
                    throw new InvalidOperationException("Zone postal code not found");
-        return code;
+        return code;*/
+       return new ZonePostalCodeResult(0, 0, "", DateTime.UtcNow, DateTime.UtcNow, null, new DateTime());
     }
 }

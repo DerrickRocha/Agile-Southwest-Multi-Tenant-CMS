@@ -6,7 +6,7 @@ public class OrderItem
     public int TenantId { get; set; }
     public int OrderId { get; set; }
     public int ProductId { get; set; }
-    public int TaxCategoryId { get; set; }
+    public int? TaxCategoryId { get; set; }
 
     public string? ProductName { get; set; }
     public string? ProductSku { get; set; }
@@ -29,7 +29,7 @@ public class OrderItem
     public DateTime? DeletedAt { get; set; }
     public DateTime RowVersion { get; set; }
 
-    public TaxCategory TaxCategory { get; set; } = null!;
+    public TaxCategory? TaxCategory { get; set; } = null!;
     public Tenant Tenant { get; set; } = null!;
     public Order Order { get; set; } = null!;
     public Product Product { get; set; } = null!;

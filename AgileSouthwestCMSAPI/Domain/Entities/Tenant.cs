@@ -43,12 +43,9 @@ public class Tenant
     
     public ICollection<TaxCategory> TaxCategories { get; set; } = new List<TaxCategory>();
     
-    public ICollection<ShippingZone> ShippingZones { get; set; } = new List<ShippingZone>();
-    
-    public ICollection<ZonePostalCode> ZonePostalCodes { get; set; } = new List<ZonePostalCode>();
-    public ICollection<ShippingRate> ShippingRates { get; set; } = new List<ShippingRate>();
-    
     public ICollection<PaymentTransactions> PaymentTransactions { get; set; } = new List<PaymentTransactions>();
+    
+    public ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
 }
     
     

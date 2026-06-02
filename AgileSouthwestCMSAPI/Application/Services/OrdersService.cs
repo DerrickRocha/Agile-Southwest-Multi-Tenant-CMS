@@ -56,11 +56,12 @@ public class OrdersService(ITenantContext context, CmsDbContext database, IHttpC
 
                 var subTotalCents = orderItems.Sum(i => i.UnitPriceCents * i.Quantity);
                 var taxTotalCents = (int)Math.Round(
-                    orderItems.Sum(i => CalculateTaxCents(i.UnitPriceCents, i.Quantity, i.TaxCategoryId)),
+                    orderItems.Sum(i => CalculateTaxCents(i.UnitPriceCents, i.Quantity, i.TaxCategoryId??-1)),
                     MidpointRounding.AwayFromZero
                 );
                 var total = subTotalCents + taxTotalCents;
-                var shippingCents = await CalculateShippingCents(request.ShippingMethodId, subTotalCents, orderItems, request.ShippingAddress);
+                /*var shippingCents = await CalculateShippingCents(request.ShippingRateId, subTotalCents, orderItems,
+                    request.ShippingAddress);*/
                 // create order
                 var order = new Order
                 {
@@ -82,8 +83,8 @@ public class OrdersService(ITenantContext context, CmsDbContext database, IHttpC
                     CouponCode = null, // No coupon by default
                     CouponDiscountCents = 0,
                     TaxCents = taxTotalCents,
-                    ShippingCents = shippingCents,
-                    TotalCents = total + shippingCents, // Don't forget to include shipping!
+                    ShippingCents = 0,
+                    TotalCents = total + 0, // Don't forget to include shipping!
                     RefundedAmountCents = 0,
                     PaymentServiceFeeCents = 0,
 
@@ -114,7 +115,6 @@ public class OrdersService(ITenantContext context, CmsDbContext database, IHttpC
                     UserAgent = userAgent,
 
                     // Shipping info
-                    ShippingZoneId = request.ShippingMethodId?? 0,
 
                     // Notes
                     CustomerNotes = request.CustomerNotes,
@@ -136,14 +136,27 @@ public class OrdersService(ITenantContext context, CmsDbContext database, IHttpC
         });
     }
 
-    private async Task<int> CalculateShippingCents(
-        int? shippingZoneId,
+  /*  private async Task<int> CalculateShippingCents(
+        int? shippingRateId,
         int subtotalCents,
         List<OrderItem> orderItems,
         AddressRequest shippingAddress)
     {
-       return 0;
-    }
+        if (shippingRateId == null) return 0;
+
+        var shippingRate = await database.ShippingRates.FirstOrDefaultAsync(sr => sr.Id == shippingRateId);
+        if (shippingRate == null) throw new InvalidOperationException($"Shipping rate {shippingRate} not found");
+
+        if (shippingRate.MinWeight == 0 && shippingRate.MaxWeight == 0) return shippingRate.PriceCents;
+
+        var weights = orderItems.Select(i => (i.WeightGrams * i.Quantity));
+        var totalWeight = weights.Sum();
+        if (totalWeight < shippingRate.MinWeight || totalWeight > shippingRate.MaxWeight)
+            throw new InvalidOperationException(
+                $"Order weight {totalWeight} is not within the allowed range of {shippingRate.MinWeight} to {shippingRate.MaxWeight} grams");
+
+        return shippingRate.PriceCents;
+    }*/
 
     private string GenerateOrderNumber()
     {
