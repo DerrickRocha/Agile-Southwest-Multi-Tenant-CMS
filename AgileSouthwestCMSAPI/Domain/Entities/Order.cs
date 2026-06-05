@@ -7,7 +7,7 @@ public class Order
    public int Id { get; set; }
     public int TenantId { get; set; }
     
-
+    public int ShippingRateId { get; set; }
     public int? CustomerId { get; set; }
     public string OrderNumber { get; set; }
     public string CustomerEmail { get; set; }
@@ -52,6 +52,8 @@ public class Order
     // Navigation properties
     public Tenant Tenant { get; set; }
     public Customer? Customer { get; set; }
+    
+    public ShippingRate ShippingRate { get; set; }
     public ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
     
     public ICollection<PaymentTransactions> PaymentTransactions { get; set; } = new List<PaymentTransactions>();

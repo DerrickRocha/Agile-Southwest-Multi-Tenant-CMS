@@ -5,5 +5,6 @@ public record AddShippingRateRequest(
     string RateName,
     decimal MinWeight,
     decimal MaxWeight,
-    int? PriceCents
+    int? PriceCents,
+    string? PostalCode
 );

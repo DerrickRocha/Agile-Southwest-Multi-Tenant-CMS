@@ -56,17 +56,18 @@ public class OrdersService(ITenantContext context, CmsDbContext database, IHttpC
 
                 var subTotalCents = orderItems.Sum(i => i.UnitPriceCents * i.Quantity);
                 var taxTotalCents = (int)Math.Round(
-                    orderItems.Sum(i => CalculateTaxCents(i.UnitPriceCents, i.Quantity, i.TaxCategoryId??-1)),
+                    orderItems.Sum(i => CalculateTaxCents(i.UnitPriceCents, i.Quantity, i.TaxCategoryId ?? -1)),
                     MidpointRounding.AwayFromZero
                 );
                 var total = subTotalCents + taxTotalCents;
-                /*var shippingCents = await CalculateShippingCents(request.ShippingRateId, subTotalCents, orderItems,
-                    request.ShippingAddress);*/
+                var shippingCents = await CalculateShippingCents(request.ShippingRateId, subTotalCents, orderItems,
+                    request.ShippingAddress);
                 // create order
                 var order = new Order
                 {
                     OrderNumber = GenerateOrderNumber(),
                     Tenant = tenant,
+                    ShippingRateId = request.ShippingRateId ?? -1,
                     CustomerEmail = request.CustomerEmail,
                     CustomerFirstName = request.CustomerFirstName,
                     CustomerLastName = request.CustomerLastName,
@@ -83,8 +84,8 @@ public class OrdersService(ITenantContext context, CmsDbContext database, IHttpC
                     CouponCode = null, // No coupon by default
                     CouponDiscountCents = 0,
                     TaxCents = taxTotalCents,
-                    ShippingCents = 0,
-                    TotalCents = total + 0, // Don't forget to include shipping!
+                    ShippingCents = shippingCents,
+                    TotalCents = total + shippingCents, // Don't forget to include shipping!
                     RefundedAmountCents = 0,
                     PaymentServiceFeeCents = 0,
 
@@ -126,7 +127,48 @@ public class OrdersService(ITenantContext context, CmsDbContext database, IHttpC
                 await database.Orders.AddAsync(order);
                 await database.SaveChangesAsync();
                 await transaction.CommitAsync();
-                return new CreateOrderResult(order.Id, order.OrderNumber, order.TotalCents);
+                return new CreateOrderResult(
+                    Id:order.Id,
+                    OrderNumber:order.OrderNumber,
+                    CustomerEmail: order.CustomerEmail,
+                    CustomerFirstName:order.CustomerFirstName,
+                    CustomerLastName:order.CustomerLastName,
+                    CustomerPhone:order.CustomerPhone?? "",
+                    Status:order.Status.ToString(),
+                    PaymentStatus:order.PaymentStatus.ToString(),
+                    FulfillmentStatus:order.FulfillmentStatus.ToString()?? "",
+                    SubtotalCents:order.SubtotalCents,
+                    DiscountCents:order.DiscountCents,
+                    TaxCents:order.TaxCents,
+                    ShippingCents:order.ShippingCents,
+                    TotalCents:order.TotalCents,
+                    CouponCode:order.CouponCode?? "",
+                    CouponDiscountCents:order.CouponDiscountCents,
+                    RefundedAmountCents:order.RefundedAmountCents,
+                    PaymentServiceFeeCents:order.PaymentServiceFeeCents,
+                    Currency:order.Currency,
+                    ShippingAddressLine1:order.ShippingAddressLine1,
+                    ShippingAddressLine2:order.ShippingAddressLine2 ?? "",
+                    ShippingCity:order.ShippingCity,
+                    ShippingState:order.ShippingState ?? "",
+                    ShippingPostalCode:order.ShippingPostalCode,
+                    ShippingCountry:order.ShippingCountry,
+                    BillingAddressLine1:order.BillingAddressLine1,
+                    BillingAddressLine2:order.BillingAddressLine2 ?? "",
+                    BillingCity:order.BillingCity,
+                    BillingState:order.BillingState ?? "",
+                    BillingPostalCode:order.BillingPostalCode,
+                    BillingCountry:order.BillingCountry,
+                    OrderType:order.OrderType.ToString(),
+                    IpAddress:order.IpAddress?? "",
+                    UserAgent:order.UserAgent?? "",
+                    CustomerNotes:order.CustomerNotes?? "",
+                    AdminNotes:order.AdminNotes?? "",
+                    CreatedAt:order.CreatedAt,
+                    UpdatedAt:order.UpdatedAt,
+                    DeletedAt:order.DeletedAt,
+                    RowVersion:order.RowVersion
+                );
             }
             catch
             {
@@ -136,7 +178,7 @@ public class OrdersService(ITenantContext context, CmsDbContext database, IHttpC
         });
     }
 
-  /*  private async Task<int> CalculateShippingCents(
+    private async Task<int> CalculateShippingCents(
         int? shippingRateId,
         int subtotalCents,
         List<OrderItem> orderItems,
@@ -147,16 +189,16 @@ public class OrdersService(ITenantContext context, CmsDbContext database, IHttpC
         var shippingRate = await database.ShippingRates.FirstOrDefaultAsync(sr => sr.Id == shippingRateId);
         if (shippingRate == null) throw new InvalidOperationException($"Shipping rate {shippingRate} not found");
 
-        if (shippingRate.MinWeight == 0 && shippingRate.MaxWeight == 0) return shippingRate.PriceCents;
+        if (shippingRate.MinWeightGrams == 0 && shippingRate.MaxWeightGrams == 0) return shippingRate.PriceCents;
 
         var weights = orderItems.Select(i => (i.WeightGrams * i.Quantity));
         var totalWeight = weights.Sum();
-        if (totalWeight < shippingRate.MinWeight || totalWeight > shippingRate.MaxWeight)
+        if (totalWeight < shippingRate.MinWeightGrams || totalWeight > shippingRate.MaxWeightGrams)
             throw new InvalidOperationException(
-                $"Order weight {totalWeight} is not within the allowed range of {shippingRate.MinWeight} to {shippingRate.MaxWeight} grams");
+                $"Order weight {totalWeight} is not within the allowed range of {shippingRate.MinWeightGrams} to {shippingRate.MaxWeightGrams} grams");
 
         return shippingRate.PriceCents;
-    }*/
+    }
 
     private string GenerateOrderNumber()
     {

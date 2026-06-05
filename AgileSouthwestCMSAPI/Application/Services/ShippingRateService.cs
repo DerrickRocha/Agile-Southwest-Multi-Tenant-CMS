@@ -12,10 +12,6 @@ public class ShippingRateService(ITenantContext tenantContext, CmsDbContext data
     public async Task<ShippingRateResult> AddShippingRate(AddShippingRateRequest request)
     {
         var tenant = tenantContext.Tenant ?? throw new UnauthorizedAccessException("Tenant not resolved");
-        /*var zone =
-            await database.ShippingZones.FirstOrDefaultAsync(z =>
-                z.Id == request.ShippingZoneId && z.TenantId == tenant.Id) ??
-            throw new InvalidOperationException("Shipping zone not found");
         if (request.PriceCents == null)
         {
             throw new ArgumentException("Price cannot be null");
@@ -23,38 +19,35 @@ public class ShippingRateService(ITenantContext tenantContext, CmsDbContext data
         var rate = new ShippingRate
         {
             Tenant = tenant,
-            ShippingZone = zone,
             RateName = request.RateName,
-            MinWeight = request.MinWeight,
-            MaxWeight = request.MaxWeight,
+            MinWeightGrams = request.MinWeight,
+            MaxWeightGrams = request.MaxWeight,
             PriceCents = request.PriceCents ?? 0,
+            PostalCode = request.PostalCode ?? throw new ArgumentException("Postal code cannot be null")
         };
         database.ShippingRates.Add(rate);
         await database.SaveChangesAsync();
         return new ShippingRateResult(
             rate.Id,
             rate.TenantId,
-            rate.ShippingZoneId
-            , rate.RateName,
-            rate.MinWeight,
-            rate.MaxWeight?? 0,
+            rate.RateName,
+            rate.MinWeightGrams,
+            rate.MaxWeightGrams??0,
             rate.PriceCents,
             rate.CreatedAt,
             rate.UpdatedAt,
             rate.DeletedAt
-        );*/
-        return new ShippingRateResult(0, 0, 0, "", 0, 0, 0, DateTime.UtcNow, DateTime.UtcNow, null);
+        );
     }
 
     public async Task<ShippingRateResult> GetShippingRate(int id)
     {
-        /*var tenant = tenantContext.Tenant ?? throw new UnauthorizedAccessException("Tenant not resolved");
+        var tenant = tenantContext.Tenant ?? throw new UnauthorizedAccessException("Tenant not resolved");
         var rate = await database.ShippingRates
             .Where(shippingRate => shippingRate.TenantId == tenant.Id && shippingRate.Id == id).Select(shippingRate =>
-                new ShippingRateResult(shippingRate.Id, shippingRate.TenantId, shippingRate.ShippingZoneId,
-                    shippingRate.RateName, shippingRate.MinWeight, shippingRate.MaxWeight?? 0, shippingRate.PriceCents,
+                new ShippingRateResult(shippingRate.Id, shippingRate.TenantId,
+                    shippingRate.RateName, shippingRate.MinWeightGrams, shippingRate.MaxWeightGrams?? 0, shippingRate.PriceCents,
                     shippingRate.CreatedAt, shippingRate.UpdatedAt, shippingRate.DeletedAt)).FirstOrDefaultAsync();
-        return rate ?? throw new InvalidOperationException("Shipping rate not found");*/
-        return new ShippingRateResult(0, 0, 0, "", 0, 0, 0, DateTime.UtcNow, DateTime.UtcNow, null);
+        return rate ?? throw new InvalidOperationException("Shipping rate not found");
     }
 }

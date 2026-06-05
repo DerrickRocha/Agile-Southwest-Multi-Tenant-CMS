@@ -46,6 +46,7 @@ public class Tenant
     public ICollection<PaymentTransactions> PaymentTransactions { get; set; } = new List<PaymentTransactions>();
     
     public ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
+    public ICollection<ShippingRate> ShippingRates { get; set; } = new List<ShippingRate>();
 }
     
     

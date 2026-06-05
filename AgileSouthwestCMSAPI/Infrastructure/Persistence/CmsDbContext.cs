@@ -21,6 +21,8 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
     public DbSet<Inventory> Inventory => Set<Inventory>();
 
     public DbSet<Store> Stores => Set<Store>();
+    
+    public DbSet<ShippingRate> ShippingRates => Set<ShippingRate>();
 
     public DbSet<Order> Orders => Set<Order>();
 
@@ -646,6 +648,56 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
             }
         );
 
+        builder.Entity<ShippingRate>(entity =>
+        {
+            entity.ToTable("shipping_rates");
+            entity.HasKey(s => s.Id);
+            entity.Property(s => s.Id)
+                .HasColumnName("id")
+                .ValueGeneratedOnAdd();
+            
+            entity.Property(s => s.TenantId)
+                .HasColumnName("tenant_id")
+                .IsRequired();
+            entity.Property(s => s.RateName)
+                .HasColumnName("rate_name")
+                .IsRequired()
+                .HasMaxLength(100);
+            entity.Property(s => s.PostalCode)
+                .HasColumnName("postal_code")
+                .IsRequired()
+                .HasMaxLength(20);
+            entity.Property(s => s.MinWeightGrams)
+                .HasColumnName("min_weight_grams")
+                .IsRequired();
+            entity.Property(s => s.MaxWeightGrams)
+                .HasColumnName("max_weight_grams")
+                .IsRequired(false);
+            entity.Property(s => s.PriceCents)
+                .HasColumnName("price_cents")
+                .IsRequired();
+            entity.Property(s => s.CreatedAt)
+                .HasColumnName("created_at")
+                .HasColumnType("DATETIME(6)")
+                .HasDefaultValueSql("CURRENT_TIMESTAMP(6)");
+            entity.Property(s => s.UpdatedAt)
+                .HasColumnName("updated_at")
+                .HasColumnType("DATETIME(6)")
+                .HasDefaultValueSql("CURRENT_TIMESTAMP(6)");
+            entity.Property(s => s.DeletedAt)
+                .HasColumnName("deleted_at")
+                .HasColumnType("DATETIME(6)");
+            entity.Property(s => s.RowVersion)
+                .HasColumnName("row_version")
+                .IsRowVersion();
+            
+            entity.HasOne(s => s.Tenant)
+                .WithMany(t => t.ShippingRates)
+                .HasForeignKey(s => s.TenantId)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("shipping_rate_tenant_fk");
+        });
+
         builder.Entity<Image>(entity =>
             {
                 entity.ToTable("images");
@@ -737,6 +789,10 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
             // TenantId is a regular foreign key property
             entity.Property(o => o.TenantId)
                 .HasColumnName("tenant_id")
+                .IsRequired();
+
+            entity.Property(o => o.ShippingRateId)
+                .HasColumnName("shipping_rate_id")
                 .IsRequired();
 
             entity.Property(o => o.CustomerId)
@@ -958,6 +1014,12 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
                 .HasForeignKey(o => o.TenantId)
                 .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("orders_tenant_fk");
+            
+            entity.HasOne(o => o.ShippingRate)
+                .WithMany(sr => sr.Orders)
+                .HasForeignKey(o => o.ShippingRateId)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("orders_shipping_rate_fk");
 
             entity.HasOne(o => o.Customer)
                 .WithMany(c => c.Orders)
