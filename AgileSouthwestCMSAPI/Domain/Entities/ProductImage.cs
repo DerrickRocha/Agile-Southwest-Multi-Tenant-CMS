@@ -20,6 +20,8 @@ public class ProductImage
     
     public DateTime? DeletedAt { get; set; }
     
+    public DateTime RowVersion { get; set; }
+    
     // Navigation properties
     public virtual Tenant Tenant { get; set; }
     public virtual Product Product { get; set; }
