@@ -128,46 +128,46 @@ public class OrdersService(ITenantContext context, CmsDbContext database, IHttpC
                 await database.SaveChangesAsync();
                 await transaction.CommitAsync();
                 return new CreateOrderResult(
-                    Id:order.Id,
-                    OrderNumber:order.OrderNumber,
+                    Id: order.Id,
+                    OrderNumber: order.OrderNumber,
                     CustomerEmail: order.CustomerEmail,
-                    CustomerFirstName:order.CustomerFirstName,
-                    CustomerLastName:order.CustomerLastName,
-                    CustomerPhone:order.CustomerPhone?? "",
-                    Status:order.Status.ToString(),
-                    PaymentStatus:order.PaymentStatus.ToString(),
-                    FulfillmentStatus:order.FulfillmentStatus.ToString()?? "",
-                    SubtotalCents:order.SubtotalCents,
-                    DiscountCents:order.DiscountCents,
-                    TaxCents:order.TaxCents,
-                    ShippingCents:order.ShippingCents,
-                    TotalCents:order.TotalCents,
-                    CouponCode:order.CouponCode?? "",
-                    CouponDiscountCents:order.CouponDiscountCents,
-                    RefundedAmountCents:order.RefundedAmountCents,
-                    PaymentServiceFeeCents:order.PaymentServiceFeeCents,
-                    Currency:order.Currency,
-                    ShippingAddressLine1:order.ShippingAddressLine1,
-                    ShippingAddressLine2:order.ShippingAddressLine2 ?? "",
-                    ShippingCity:order.ShippingCity,
-                    ShippingState:order.ShippingState ?? "",
-                    ShippingPostalCode:order.ShippingPostalCode,
-                    ShippingCountry:order.ShippingCountry,
-                    BillingAddressLine1:order.BillingAddressLine1,
-                    BillingAddressLine2:order.BillingAddressLine2 ?? "",
-                    BillingCity:order.BillingCity,
-                    BillingState:order.BillingState ?? "",
-                    BillingPostalCode:order.BillingPostalCode,
-                    BillingCountry:order.BillingCountry,
-                    OrderType:order.OrderType.ToString(),
-                    IpAddress:order.IpAddress?? "",
-                    UserAgent:order.UserAgent?? "",
-                    CustomerNotes:order.CustomerNotes?? "",
-                    AdminNotes:order.AdminNotes?? "",
-                    CreatedAt:order.CreatedAt,
-                    UpdatedAt:order.UpdatedAt,
-                    DeletedAt:order.DeletedAt,
-                    RowVersion:order.RowVersion
+                    CustomerFirstName: order.CustomerFirstName,
+                    CustomerLastName: order.CustomerLastName,
+                    CustomerPhone: order.CustomerPhone ?? "",
+                    Status: order.Status.ToString(),
+                    PaymentStatus: order.PaymentStatus.ToString(),
+                    FulfillmentStatus: order.FulfillmentStatus.ToString() ?? "",
+                    SubtotalCents: order.SubtotalCents,
+                    DiscountCents: order.DiscountCents,
+                    TaxCents: order.TaxCents,
+                    ShippingCents: order.ShippingCents,
+                    TotalCents: order.TotalCents,
+                    CouponCode: order.CouponCode ?? "",
+                    CouponDiscountCents: order.CouponDiscountCents,
+                    RefundedAmountCents: order.RefundedAmountCents,
+                    PaymentServiceFeeCents: order.PaymentServiceFeeCents,
+                    Currency: order.Currency,
+                    ShippingAddressLine1: order.ShippingAddressLine1,
+                    ShippingAddressLine2: order.ShippingAddressLine2 ?? "",
+                    ShippingCity: order.ShippingCity,
+                    ShippingState: order.ShippingState ?? "",
+                    ShippingPostalCode: order.ShippingPostalCode,
+                    ShippingCountry: order.ShippingCountry,
+                    BillingAddressLine1: order.BillingAddressLine1,
+                    BillingAddressLine2: order.BillingAddressLine2 ?? "",
+                    BillingCity: order.BillingCity,
+                    BillingState: order.BillingState ?? "",
+                    BillingPostalCode: order.BillingPostalCode,
+                    BillingCountry: order.BillingCountry,
+                    OrderType: order.OrderType.ToString(),
+                    IpAddress: order.IpAddress ?? "",
+                    UserAgent: order.UserAgent ?? "",
+                    CustomerNotes: order.CustomerNotes ?? "",
+                    AdminNotes: order.AdminNotes ?? "",
+                    CreatedAt: order.CreatedAt,
+                    UpdatedAt: order.UpdatedAt,
+                    DeletedAt: order.DeletedAt,
+                    RowVersion: order.RowVersion
                 );
             }
             catch
@@ -235,19 +235,189 @@ public class OrdersService(ITenantContext context, CmsDbContext database, IHttpC
         return unitPrice;
     }
 
-    public Task<GetOrderResult> GetOrder(int id)
+    public async Task<GetOrderResult> GetOrder(int id)
     {
-        throw new NotImplementedException();
+        var tenant = context.Tenant
+                     ?? throw new UnauthorizedAccessException("Tenant not resolved.");
+
+        var order = await database.Orders
+            .Include(o => o.OrderItems)
+            .FirstOrDefaultAsync(o => o.Id == id && o.TenantId == tenant.Id);
+
+        if (order == null)
+            throw new InvalidOperationException($"Order with id {id} not found");
+
+        return MapToGetOrderResult(order);
     }
 
-    public Task<IEnumerable<GetOrderResult>> GetOrders(OrderQueryParameters parameters)
+    private GetOrderResult MapToGetOrderResult(Order order)
     {
-        throw new NotImplementedException();
+        return new GetOrderResult(
+            Id: order.Id,
+            TenantId: order.TenantId,
+            ShippingRateId: order.ShippingRateId,
+            OrderNumber: order.OrderNumber,
+            CustomerId: order.CustomerId,
+            CustomerEmail: order.CustomerEmail,
+            CustomerFirstName: order.CustomerFirstName,
+            CustomerLastName: order.CustomerLastName,
+            CustomerPhone: order.CustomerPhone,
+            Status: order.Status.ToString(),
+            PaymentStatus: order.PaymentStatus.ToString(),
+            FulfillmentStatus: order.FulfillmentStatus.ToString() ?? "",
+            SubtotalCents: order.SubtotalCents,
+            DiscountCents: order.DiscountCents,
+            TaxCents: order.TaxCents,
+            ShippingCents: order.ShippingCents,
+            TotalCents: order.TotalCents,
+            Currency: order.Currency,
+            ShippingAddressLine1: order.ShippingAddressLine1,
+            ShippingAddressLine2: order.ShippingAddressLine2 ?? "",
+            ShippingCity: order.ShippingCity,
+            ShippingState: order.ShippingState ?? "",
+            ShippingPostalCode: order.ShippingPostalCode,
+            ShippingCountry: order.ShippingCountry,
+            BillingAddressLine1: order.BillingAddressLine1,
+            BillingAddressLine2: order.BillingAddressLine2 ?? "",
+            BillingCity: order.BillingCity,
+            BillingState: order.BillingState ?? "",
+            BillingPostalCode: order.BillingPostalCode,
+            BillingCountry: order.BillingCountry,
+            Items: order.OrderItems.Select(oi => new OrderItemDto(
+                Id: oi.Id,
+                ProductId: oi.ProductId,
+                ProductName: oi.ProductName ?? "",
+                ProductSku: oi.ProductSku,
+                Quantity: oi.Quantity,
+                UnitPriceCents: oi.UnitPriceCents,
+                TotalPriceCents: oi.TotalPriceCents,
+                OptionDetails: oi.OptionDetails ?? ""
+            )),
+            CustomerNotes: order.CustomerNotes,
+            AdminNotes: order.AdminNotes,
+            CreatedAt: order.CreatedAt,
+            UpdatedAt: order.UpdatedAt,
+            DeletedAt: order.DeletedAt,
+            RowVersion: order.RowVersion
+        );
     }
 
-    public Task<UpdateOrderResult> UpdateOrderStatus(int id, UpdateOrderStatusRequest request)
+    public async Task<IEnumerable<GetOrderResult>> GetOrders(OrderQueryParameters parameters)
     {
-        throw new NotImplementedException();
+        var tenant = context.Tenant
+                     ?? throw new UnauthorizedAccessException("Tenant not resolved.");
+
+        var query = database.Orders
+            .Include(o => o.OrderItems)
+            .ThenInclude(oi => oi.Product)
+            .Where(o => o.TenantId == tenant.Id);
+
+        // Apply filters
+        if (!string.IsNullOrEmpty(parameters.OrderNumber))
+            query = query.Where(o => o.OrderNumber.Contains(parameters.OrderNumber));
+
+        if (parameters.CustomerId.HasValue)
+            query = query.Where(o => o.CustomerId == parameters.CustomerId);
+
+        if (!string.IsNullOrEmpty(parameters.CustomerEmail))
+            query = query.Where(o => o.CustomerEmail.Contains(parameters.CustomerEmail));
+
+        if (!string.IsNullOrEmpty(parameters.Status))
+            query = query.Where(o => o.Status.ToString() == parameters.Status);
+
+        if (!string.IsNullOrEmpty(parameters.PaymentStatus))
+            query = query.Where(o => o.PaymentStatus.ToString() == parameters.PaymentStatus);
+
+        if (!string.IsNullOrEmpty(parameters.FulfillmentStatus))
+            query = query.Where(o => o.FulfillmentStatus.ToString() == parameters.FulfillmentStatus);
+
+        if (parameters.FromDate.HasValue)
+            query = query.Where(o => o.CreatedAt >= parameters.FromDate);
+
+        if (parameters.ToDate.HasValue)
+            query = query.Where(o => o.CreatedAt <= parameters.ToDate);
+
+        if (parameters.MinTotalCents.HasValue)
+            query = query.Where(o => o.TotalCents >= parameters.MinTotalCents);
+
+        if (parameters.MaxTotalCents.HasValue)
+            query = query.Where(o => o.TotalCents <= parameters.MaxTotalCents);
+
+        // Apply sorting
+        query = parameters.SortBy?.ToLower() switch
+        {
+            "ordernumber" => parameters.SortDescending
+                ? query.OrderByDescending(o => o.OrderNumber)
+                : query.OrderBy(o => o.OrderNumber),
+            "total" => parameters.SortDescending
+                ? query.OrderByDescending(o => o.TotalCents)
+                : query.OrderBy(o => o.TotalCents),
+            "status" => parameters.SortDescending
+                ? query.OrderByDescending(o => o.Status)
+                : query.OrderBy(o => o.Status),
+            _ => parameters.SortDescending
+                ? query.OrderByDescending(o => o.CreatedAt)
+                : query.OrderBy(o => o.CreatedAt)
+        };
+
+        query = query.Skip((parameters.PageNumber - 1) * parameters.PageSize)
+            .Take(parameters.PageSize);
+
+        var orders = await query.ToListAsync();
+        return orders.Select(MapToGetOrderResult);
+    }
+
+    public async Task<UpdateOrderResult> UpdateOrderStatus(int id, UpdateOrderStatusRequest request)
+    {
+        var tenant = context.Tenant
+                     ?? throw new UnauthorizedAccessException("Tenant not resolved.");
+
+        var order = await database.Orders
+            .FirstOrDefaultAsync(o => o.Id == id && o.TenantId == tenant.Id);
+
+        if (order == null)
+            throw new KeyNotFoundException($"Order with id {id} not found");
+
+        // Track old status for history
+        var oldStatus = order.Status;
+        var oldPaymentStatus = order.PaymentStatus;
+        var oldFulfillmentStatus = order.FulfillmentStatus;
+
+        // Update statuses
+        if (!string.IsNullOrEmpty(request.Status))
+            order.Status = Enum.Parse<OrderStatus>(request.Status);
+
+        if (!string.IsNullOrEmpty(request.PaymentStatus))
+            order.PaymentStatus = Enum.Parse<PaymentStatus>(request.PaymentStatus);
+
+        if (!string.IsNullOrEmpty(request.FulfillmentStatus))
+            order.FulfillmentStatus = Enum.Parse<FulfillmentStatus>(request.FulfillmentStatus);
+
+        // Add status history entry
+        var statusHistory = new OrderStatusHistory
+        {
+            Order = order,
+            OldStatus = oldStatus.ToString(),
+            NewStatus = order.Status.ToString(),
+            OldPaymentStatus = oldPaymentStatus.ToString(),
+            NewPaymentStatus = order.PaymentStatus.ToString(),
+            OldFulfillmentStatus = oldFulfillmentStatus.ToString() ?? "",
+            NewFulfillmentStatus = order.FulfillmentStatus.ToString() ?? "",
+            ChangedBy = context.User?.Id ?? -1,
+            Reason = request.Reason,
+        };
+
+        await database.OrderStatusHistories.AddAsync(statusHistory);
+        await database.SaveChangesAsync();
+
+        return new UpdateOrderResult(
+            Id: order.Id,
+            OrderNumber: order.OrderNumber,
+            Status: order.Status.ToString(),
+            PaymentStatus: order.PaymentStatus.ToString(),
+            FulfillmentStatus: order.FulfillmentStatus.ToString(),
+            UpdatedAt: order.UpdatedAt
+        );
     }
 
     public Task CancelOrder(int id, string reason)

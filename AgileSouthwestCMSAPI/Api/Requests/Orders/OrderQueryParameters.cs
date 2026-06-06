@@ -7,6 +7,7 @@ public class OrderQueryParameters
     public string? CustomerEmail { get; set; }
     public string? Status { get; set; }
     public string? PaymentStatus { get; set; }
+    public string? FulfillmentStatus { get; set; }
     public DateTime? FromDate { get; set; }
     public DateTime? ToDate { get; set; }
     public int? MinTotalCents { get; set; }

@@ -8,5 +8,5 @@ public record OrderItemDto(
     int Quantity,
     int UnitPriceCents,
     int TotalPriceCents,
-    Dictionary<string, string>? OptionDetails
+    string OptionDetails
 );

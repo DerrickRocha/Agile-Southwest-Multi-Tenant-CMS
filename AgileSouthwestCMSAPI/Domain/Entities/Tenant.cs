@@ -47,6 +47,8 @@ public class Tenant
     
     public ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
     public ICollection<ShippingRate> ShippingRates { get; set; } = new List<ShippingRate>();
+    
+    public ICollection<OrderStatusHistory> OrderStatusHistories { get; set; } = new List<OrderStatusHistory>();
 }
     
     

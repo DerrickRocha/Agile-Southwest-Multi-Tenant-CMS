@@ -29,6 +29,8 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
     public DbSet<OrderItem> OrderItems => Set<OrderItem>();
 
     public DbSet<TaxCategory> TaxCategories => Set<TaxCategory>();
+    
+    public DbSet<OrderStatusHistory> OrderStatusHistories => Set<OrderStatusHistory>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -1445,7 +1447,92 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
                     .HasForeignKey(e => e.TaxCategoryId)
                     .OnDelete(DeleteBehavior.Restrict);
             }
+            
         );
+
+        builder.Entity<OrderStatusHistory>(entity =>
+        {
+            entity.ToTable("order_status_history");
+            entity.HasKey(o => o.Id);
+            entity.Property(o => o.Id)
+                .HasColumnName("id")
+                .ValueGeneratedOnAdd()
+                .IsRequired();
+            entity.Property(o => o.TenantId)
+                .HasColumnName("tenant_id")
+                .IsRequired();
+            entity.Property(o => o.OrderId)
+                .HasColumnName("order_id")
+                .IsRequired();
+            entity.Property(o => o.ChangedBy)
+                .HasColumnName("changed_by_id")
+                .IsRequired();
+            entity.Property(o => o.NewStatus)
+                .HasColumnName("new_status")
+                .IsRequired();
+            entity.Property(o => o.OldStatus)
+                .HasColumnName("old_status")
+                .IsRequired();
+            entity.Property(o => o.NewPaymentStatus)
+                .HasColumnName("new_payment_status")
+                .IsRequired(false);
+            entity.Property(o => o.OldPaymentStatus)
+                .HasColumnName("old_payment_status")
+                .IsRequired(false);
+            entity.Property(o => o.NewFulfillmentStatus)
+                .HasColumnName("new_fulfillment_status")
+                .IsRequired(false);
+            entity.Property(o => o.OldFulfillmentStatus)
+                .HasColumnName("old_fulfillment_status")
+                .IsRequired();
+            entity.Property(o => o.Reason)
+                .HasColumnName("reason")
+                .HasMaxLength(255);
+            
+            entity.Property(o => o.CreatedAt)
+                .HasColumnName("created_at")
+                .HasColumnType("DATETIME(6)")
+                .HasDefaultValueSql("CURRENT_TIMESTAMP(6)")
+                .IsRequired();
+            entity.Property(o => o.UpdatedAt)
+                .HasColumnName("updated_at")
+                .HasColumnType("DATETIME(6)")
+                .HasDefaultValueSql("CURRENT_TIMESTAMP(6)")
+                .IsRequired();
+            
+            entity.Property(o => o.DeletedAt)
+                .HasColumnName("deleted_at")
+                .HasColumnType("DATETIME(6)")
+                .IsRequired(false);
+            entity.Property(o => o.RowVersion)
+                .HasColumnName("row_version")
+                .HasColumnType("TIMESTAMP")
+                .HasDefaultValueSql("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
+                .IsRequired()
+                .IsConcurrencyToken();
+            entity.HasOne(o => o.Tenant)
+                .WithMany(t => t.OrderStatusHistories)
+                .HasForeignKey(o => o.TenantId)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("order_status_history_tenant_id_fk");
+            entity.HasOne(o => o.Order)
+                .WithMany(o => o.OrderStatusHistory)
+                .HasForeignKey(o => o.OrderId)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("order_status_history_order_fk");
+            entity.HasOne(o => o.ChangedByUser)
+                .WithMany(o => o.OrderStatusHistory)
+                .HasForeignKey(o => o.ChangedBy)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("orders_status_history_changed_by_id_fk");
+            entity.HasIndex(o => o.TenantId)
+                .HasDatabaseName("idx_tenant_id");
+            entity.HasIndex(o => o.OrderId)
+                .HasDatabaseName("idx_order_id");
+            entity.HasIndex(o => o.ChangedBy)
+                .HasDatabaseName("idx_changed_by_id");
+        });
+
     }
 
     // Optional: keep UpdatedAt accurate at app level (since your SQL default doesn’t auto-update it).

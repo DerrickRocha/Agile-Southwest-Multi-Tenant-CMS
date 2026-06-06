@@ -57,5 +57,7 @@ public class Order
     public ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
     
     public ICollection<PaymentTransactions> PaymentTransactions { get; set; } = new List<PaymentTransactions>();
+    
+    public ICollection<OrderStatusHistory> OrderStatusHistory { get; set; } = new List<OrderStatusHistory>();
 
 }

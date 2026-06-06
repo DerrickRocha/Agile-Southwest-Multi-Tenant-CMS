@@ -32,4 +32,5 @@ public class CmsUser
     
     // Navigation
     public ICollection<UserTenant> UserTenants { get; set; } = new List<UserTenant>();
+    public ICollection<OrderStatusHistory> OrderStatusHistory { get; set; } = new List<OrderStatusHistory>();
 }
