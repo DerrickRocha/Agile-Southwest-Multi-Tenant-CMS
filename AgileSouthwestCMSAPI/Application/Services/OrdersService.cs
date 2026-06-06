@@ -396,7 +396,9 @@ public class OrdersService(ITenantContext context, CmsDbContext database, IHttpC
         // Add status history entry
         var statusHistory = new OrderStatusHistory
         {
+            Tenant = tenant,
             Order = order,
+            ChangedByUser = context.User,
             OldStatus = oldStatus.ToString(),
             NewStatus = order.Status.ToString(),
             OldPaymentStatus = oldPaymentStatus.ToString(),
@@ -404,7 +406,7 @@ public class OrdersService(ITenantContext context, CmsDbContext database, IHttpC
             OldFulfillmentStatus = oldFulfillmentStatus.ToString() ?? "",
             NewFulfillmentStatus = order.FulfillmentStatus.ToString() ?? "",
             ChangedBy = context.User?.Id ?? -1,
-            Reason = request.Reason,
+            Reason = request.Reason ?? "",
         };
 
         await database.OrderStatusHistories.AddAsync(statusHistory);
