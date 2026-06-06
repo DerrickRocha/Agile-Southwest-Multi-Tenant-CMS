@@ -422,9 +422,54 @@ public class OrdersService(ITenantContext context, CmsDbContext database, IHttpC
         );
     }
 
-    public Task CancelOrder(int id, string reason)
+    public async Task CancelOrder(int id, string reason)
     {
-        throw new NotImplementedException();
+        var tenant = context.Tenant
+                     ?? throw new UnauthorizedAccessException("Tenant not resolved.");
+    
+        var order = await database.Orders
+            .FirstOrDefaultAsync(o => o.Id == id && o.TenantId == tenant.Id);
+    
+        if (order == null)
+            throw new KeyNotFoundException($"Order with id {id} not found");
+    
+        if (order.Status == OrderStatus.Cancelled)
+            throw new InvalidOperationException("Order is already cancelled");
+    
+        if (order.Status == OrderStatus.Completed)
+            throw new InvalidOperationException("Cannot cancel a completed order");
+    
+        // Track old status for history
+        var oldStatus = order.Status;
+        var oldPaymentStatus = order.PaymentStatus;
+        var oldFulfillmentStatus = order.FulfillmentStatus;
+    
+        // Update order
+        order.Status = OrderStatus.Cancelled;
+        order.PaymentStatus = PaymentStatus.Refunded;
+        order.FulfillmentStatus = FulfillmentStatus.Unfulfilled;
+        order.AdminNotes = string.IsNullOrEmpty(order.AdminNotes) 
+            ? $"Cancelled: {reason}" 
+            : $"{order.AdminNotes}\nCancelled: {reason}";
+    
+        // Add cancellation to history
+        var statusHistory = new OrderStatusHistory
+        {
+            Tenant = tenant,
+            Order = order,
+            ChangedByUser = context.User,
+            OldStatus = oldStatus.ToString(),
+            NewStatus = nameof(OrderStatus.Cancelled),
+            OldPaymentStatus = oldPaymentStatus.ToString(),
+            NewPaymentStatus = nameof(PaymentStatus.Refunded),
+            OldFulfillmentStatus = oldFulfillmentStatus?.ToString()?? "",
+            NewFulfillmentStatus = nameof(FulfillmentStatus.Unfulfilled),
+            Reason = reason,
+            CreatedAt = DateTime.UtcNow
+        };
+    
+        await database.OrderStatusHistories.AddAsync(statusHistory);
+        await database.SaveChangesAsync();
     }
 
     public Task<RefundResult> ProcessRefund(int id, RefundRequest request)
@@ -432,8 +477,34 @@ public class OrdersService(ITenantContext context, CmsDbContext database, IHttpC
         throw new NotImplementedException();
     }
 
-    public Task<IEnumerable<OrderStatusHistoryResult>> GetOrderHistory(int id)
+    public async Task<IEnumerable<OrderStatusHistoryResult>> GetOrderHistory(int id)
     {
-        throw new NotImplementedException();
+        var tenant = context.Tenant
+                     ?? throw new UnauthorizedAccessException("Tenant not resolved.");
+    
+        var order = await database.Orders
+            .FirstOrDefaultAsync(o => o.Id == id && o.TenantId == tenant.Id);
+    
+        if (order == null)
+            throw new KeyNotFoundException($"Order with id {id} not found");
+    
+        var history = await database.OrderStatusHistories
+            .Where(h => h.OrderId == id)
+            .OrderByDescending(h => h.CreatedAt)
+            .ToListAsync();
+    
+        return history.Select(h => new OrderStatusHistoryResult(
+            Id: h.Id,
+            OrderId: h.OrderId,
+            OldStatus: h.OldStatus,
+            NewStatus: h.NewStatus,
+            OldPaymentStatus: h.OldPaymentStatus,
+            NewPaymentStatus: h.NewPaymentStatus,
+            OldFulfillmentStatus: h.OldFulfillmentStatus,
+            NewFulfillmentStatus: h.NewFulfillmentStatus,
+            ChangedBy: h.ChangedBy,
+            Reason: h.Reason,
+            CreatedAt: h.CreatedAt
+        ));
     }
 }
