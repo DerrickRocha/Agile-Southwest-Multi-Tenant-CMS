@@ -263,6 +263,9 @@ public class ProductsServiceTests
         tenantContext.SetupGet(x => x.Tenant).Returns(tenant);
 
         var service = new ProductsService(tenantContext.Object, db, true);
+        
+        db.TaxCategories.Add(new TaxCategory { Id = 1, TenantId = 1, Name = "Tax Category", TaxRate = 0});
+        await db.SaveChangesAsync();
 
         var request = new ProductRequest
         {
@@ -270,6 +273,7 @@ public class ProductsServiceTests
             Description = "Fresh coffee",
             BasePrice = 1000,
             IsActive = true,
+            TaxCategoryId = 1,
             Options =
             [
                 new ProductOptionRequest
