@@ -20,6 +20,8 @@ public class Image
     
     public DateTime? DeletedAt { get; set; }
     
+    public DateTime RowVersion { get; set; }    
+    
     public Tenant Tenant { get; set; }
     
     public ICollection<ProductImage> ProductImages { get; set; } = new List<ProductImage>();

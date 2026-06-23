@@ -21,6 +21,15 @@ public class TenantController(ITenantsService service): ControllerBase
         return Ok(result);
     }
 
+    [HttpGet("all")]
+    [Authorize(Roles = "Admin")]
+    [SkipTenantResolution]
+    public async Task<IActionResult> GetAllTenants()
+    {
+        var result = await service.GetAllTenantsForAdmin();
+        return Ok(result);
+    }
+
     [HttpPost]
     [Authorize(Roles="Admin")]
     [SkipTenantResolution]

@@ -8,6 +8,7 @@ public class ProductRequest
     public int? BasePrice { set; get;}
     
     public bool? IsActive { set; get; }
+    public int TaxCategoryId { set; get; }
 
     public ProductOptionRequest[] Options { set; get; }
 }

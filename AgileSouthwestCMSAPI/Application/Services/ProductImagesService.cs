@@ -52,7 +52,7 @@ public class ProductImagesService(
         {
             await ClearPrimaryFlag(tenant.Id, request.ProductId);
         }
-
+        
         database.ProductImages.Add(productImage);
         await database.SaveChangesAsync();
 

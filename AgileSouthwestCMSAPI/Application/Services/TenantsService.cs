@@ -1,3 +1,4 @@
+using AgileSouthwestCMSAPI.Application.DTOs.Products;
 using AgileSouthwestCMSAPI.Application.DTOs.Tenants;
 using AgileSouthwestCMSAPI.Application.Exceptions;
 using AgileSouthwestCMSAPI.Application.Interfaces;
@@ -9,7 +10,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AgileSouthwestCMSAPI.Application.Services;
 
-public class TenantsService(CmsDbContext database, ITenantContext context, ICmsUserContext userContext) : ITenantsService
+public class TenantsService(CmsDbContext database, ITenantContext context, ICmsUserContext userContext)
+    : ITenantsService
 {
     public async Task<AddTenantResult> AddTenant(AddTenantRequest request)
     {
@@ -35,7 +37,7 @@ public class TenantsService(CmsDbContext database, ITenantContext context, ICmsU
             Role = UserTenantRole.Admin
         };
         database.UserTenants.Add(userTenant);
-        
+
         try
         {
             await database.SaveChangesAsync();
@@ -44,6 +46,7 @@ public class TenantsService(CmsDbContext database, ITenantContext context, ICmsU
         {
             throw new InvalidOperationException("Subdomain or custom domain already in use.");
         }
+
         return new AddTenantResult
         {
             TenantId = tenant.Id,
@@ -58,7 +61,7 @@ public class TenantsService(CmsDbContext database, ITenantContext context, ICmsU
     {
         var tenant = context.Tenant
                      ?? throw new UnauthorizedAccessException("Tenant not resolved.");
-        
+
         return Task.FromResult(new GetTenantResult
         {
             TenantId = tenant.Id,
@@ -69,11 +72,35 @@ public class TenantsService(CmsDbContext database, ITenantContext context, ICmsU
         });
     }
 
+    public async Task<GetTenantResult[]> GetAllTenantsForAdmin()
+    {
+        var user = await database.CmsUsers
+                       .SingleOrDefaultAsync(u => u.CognitoUserId == userContext.UserId)
+                   ?? throw new UnauthorizedAccessException("User not found.");
+        var data = database
+            .UserTenants
+            .AsNoTracking()
+            .Where(ut => ut.User.Id == user.Id)
+            .Select(ut =>
+                new GetTenantResult
+                {
+                    TenantId = ut.TenantId,
+                    Name = ut.Tenant.Name,
+                    CustomDomain = ut.Tenant.CustomDomain ?? "",
+                    SubDomain = ut.Tenant.SubDomain,
+                    RowVersion = ut.Tenant.RowVersion
+                }
+            )
+            .ToArray();
+        
+        return data;
+    }
+
     public async Task<UpdateTenantResult> UpdateTenant(UpdateTenantRequest request)
     {
         var tenant = context.Tenant
                      ?? throw new UnauthorizedAccessException("Tenant not resolved.");
-        
+
         if (context.Membership?.Role != UserTenantRole.Admin)
             throw new UnauthorizedAccessException("Admin role required.");
 
