@@ -68,6 +68,7 @@ public class TenantsService(CmsDbContext database, ITenantContext context, ICmsU
             Name = tenant.Name,
             CustomDomain = tenant.CustomDomain ?? "",
             SubDomain = tenant.SubDomain,
+            UpdatedAt = tenant.UpdatedAt,
             RowVersion = tenant.RowVersion
         });
     }
@@ -88,6 +89,7 @@ public class TenantsService(CmsDbContext database, ITenantContext context, ICmsU
                     Name = ut.Tenant.Name,
                     CustomDomain = ut.Tenant.CustomDomain ?? "",
                     SubDomain = ut.Tenant.SubDomain,
+                    UpdatedAt = ut.Tenant.UpdatedAt,
                     RowVersion = ut.Tenant.RowVersion
                 }
             )

@@ -12,4 +12,6 @@ public class GetTenantResult
 
     public string CustomDomain { set; get; } = "";
     
+    public DateTime UpdatedAt { set; get; }
+    
     public DateTime? RowVersion { get; set; }}
