@@ -53,7 +53,9 @@ public class TenantsService(CmsDbContext database, ITenantContext context, ICmsU
             Name = tenant.Name,
             CustomDomain = tenant.CustomDomain ?? "",
             SubDomain = tenant.SubDomain,
-            RowVersion = tenant.RowVersion
+            RowVersion = tenant.RowVersion,
+            CreatedAt = tenant.CreatedAt,
+            UpdatedAt = tenant.UpdatedAt
         };
     }
 
@@ -68,6 +70,7 @@ public class TenantsService(CmsDbContext database, ITenantContext context, ICmsU
             Name = tenant.Name,
             CustomDomain = tenant.CustomDomain ?? "",
             SubDomain = tenant.SubDomain,
+            CreatedAt = tenant.CreatedAt,
             UpdatedAt = tenant.UpdatedAt,
             RowVersion = tenant.RowVersion
         });
@@ -89,6 +92,7 @@ public class TenantsService(CmsDbContext database, ITenantContext context, ICmsU
                     Name = ut.Tenant.Name,
                     CustomDomain = ut.Tenant.CustomDomain ?? "",
                     SubDomain = ut.Tenant.SubDomain,
+                    CreatedAt = ut.Tenant.CreatedAt,
                     UpdatedAt = ut.Tenant.UpdatedAt,
                     RowVersion = ut.Tenant.RowVersion
                 }
@@ -154,6 +158,8 @@ public class TenantsService(CmsDbContext database, ITenantContext context, ICmsU
             SubDomain = tenant.SubDomain,
             CustomDomain = tenant.CustomDomain ?? "",
             Name = tenant.Name,
+            CreatedAt = tenant.CreatedAt,
+            UpdatedAt = tenant.UpdatedAt,
             RowVersion = tenant.RowVersion
         };
     }

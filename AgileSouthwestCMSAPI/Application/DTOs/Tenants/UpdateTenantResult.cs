@@ -7,4 +7,8 @@ public class UpdateTenantResult
     public string CustomDomain { get; set; }
     public string Name { get; set; }
     
+    public DateTime CreatedAt { get; set; }
+    
+    public DateTime UpdatedAt { get; set; }
+    
     public DateTime? RowVersion { get; set; }}
