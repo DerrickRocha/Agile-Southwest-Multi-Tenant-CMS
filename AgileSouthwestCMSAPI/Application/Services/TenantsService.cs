@@ -104,13 +104,13 @@ public class TenantsService(CmsDbContext database, ITenantContext context, ICmsU
 
     public async Task<UpdateTenantResult> UpdateTenant(UpdateTenantRequest request)
     {
-       /* if (context.Membership?.Role != UserTenantRole.Admin)
+        if (context.Membership?.Role != UserTenantRole.Admin)
             throw new UnauthorizedAccessException("Admin role required.");
 
         var normalizedSubdomain = request.SubDomain.Trim().ToLowerInvariant();
         var normalizedCustomDomain = request.CustomDomain?.Trim().ToLowerInvariant();
 
-        if (!string.Equals(tenant.SubDomain, normalizedSubdomain, StringComparison.OrdinalIgnoreCase))
+        if (!string.Equals(request.SubDomain, normalizedSubdomain, StringComparison.OrdinalIgnoreCase))
         {
             var exists = await database.Tenants
                 .AnyAsync(t => t.SubDomain == normalizedSubdomain && t.Id != request.Id);
@@ -119,17 +119,23 @@ public class TenantsService(CmsDbContext database, ITenantContext context, ICmsU
                 throw new InvalidOperationException("Subdomain already in use.");
         }
 
-        if (!string.Equals(tenant.CustomDomain, normalizedCustomDomain, StringComparison.OrdinalIgnoreCase))
+        if (!string.Equals(request.CustomDomain, normalizedCustomDomain, StringComparison.OrdinalIgnoreCase))
         {
             if (!string.IsNullOrWhiteSpace(normalizedCustomDomain))
             {
                 var exists = await database.Tenants
-                    .AnyAsync(t => t.CustomDomain == normalizedCustomDomain && t.Id != tenant.Id);
+                    .AnyAsync(t => t.CustomDomain == normalizedCustomDomain && t.Id != request.Id);
 
                 if (exists)
                     throw new InvalidOperationException("Custom domain already in use.");
             }
         }
+
+        if (string.IsNullOrWhiteSpace(request.Name))
+        {
+            throw new ArgumentException("Tenant name cannot be empty.", nameof(request));
+        }
+        var tenant = await database.Tenants.FirstOrDefaultAsync(t => t.Id == request.Id)?? throw new KeyNotFoundException("Tenant not found.");
 
         tenant.Name = request.Name;
         tenant.SubDomain = normalizedSubdomain;
@@ -158,8 +164,7 @@ public class TenantsService(CmsDbContext database, ITenantContext context, ICmsU
             CreatedAt = tenant.CreatedAt,
             UpdatedAt = tenant.UpdatedAt,
             RowVersion = tenant.RowVersion
-        };*/
-       throw new NotImplementedException();
+        };
     }
 
     public Task<GetTenantSubscriptionResult> GetTenantSubscription(GetTenantSubscriptionRequest request)
