@@ -142,6 +142,7 @@ public class TenantsServiceTests
 
         var request = new UpdateTenantRequest
         {
+            Id = 1,
             Name = "New",
             SubDomain = "new",
             RowVersion = tenant.RowVersion
@@ -301,6 +302,7 @@ public class TenantsServiceTests
 
         var request = new UpdateTenantRequest
         {
+            Id = 1,
             Name = "TenantA",
             SubDomain = "b",
             RowVersion = tenantA.RowVersion
@@ -341,6 +343,7 @@ public class TenantsServiceTests
 
         var request = new UpdateTenantRequest
         {
+            Id = 1,
             Name = "Updated",
             SubDomain = "updated",
             RowVersion = anotherDate

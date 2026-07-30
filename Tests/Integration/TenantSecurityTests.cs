@@ -42,7 +42,7 @@ public class TenantSecurityTests(ApiFactory factory) : IClassFixture<ApiFactory>
 
         await db.SaveChangesAsync();
 
-        _client.DefaultRequestHeaders.Add("X-Tenant-Id", "1");
+        _client.DefaultRequestHeaders.Add("X-Tenant-Id", "2");
         _client.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue("Test");
 

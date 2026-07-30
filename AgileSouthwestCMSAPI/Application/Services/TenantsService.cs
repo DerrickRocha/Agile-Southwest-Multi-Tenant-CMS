@@ -109,28 +109,23 @@ public class TenantsService(CmsDbContext database, ITenantContext context, ICmsU
 
         var normalizedSubdomain = request.SubDomain.Trim().ToLowerInvariant();
         var normalizedCustomDomain = request.CustomDomain?.Trim().ToLowerInvariant();
+        if (string.IsNullOrWhiteSpace(normalizedSubdomain)) throw new ArgumentException("Subdomain cannot be empty.", nameof(request));
 
-        if (!string.Equals(request.SubDomain, normalizedSubdomain, StringComparison.OrdinalIgnoreCase))
-        {
-            var exists = await database.Tenants
+         var subdomainExists = await database.Tenants
                 .AnyAsync(t => t.SubDomain == normalizedSubdomain && t.Id != request.Id);
+         if (subdomainExists)
+             throw new InvalidOperationException("Subdomain already in use.");
 
-            if (exists)
-                throw new InvalidOperationException("Subdomain already in use.");
-        }
+         if (!string.IsNullOrWhiteSpace(normalizedCustomDomain))
+         {
+             var exists = await database.Tenants
+                 .AnyAsync(t => t.CustomDomain == normalizedCustomDomain && t.Id != request.Id);
 
-        if (!string.Equals(request.CustomDomain, normalizedCustomDomain, StringComparison.OrdinalIgnoreCase))
-        {
-            if (!string.IsNullOrWhiteSpace(normalizedCustomDomain))
-            {
-                var exists = await database.Tenants
-                    .AnyAsync(t => t.CustomDomain == normalizedCustomDomain && t.Id != request.Id);
-
-                if (exists)
-                    throw new InvalidOperationException("Custom domain already in use.");
-            }
-        }
-
+             if (exists)
+                 throw new InvalidOperationException("Custom domain already in use.");
+         }
+         
+        
         if (string.IsNullOrWhiteSpace(request.Name))
         {
             throw new ArgumentException("Tenant name cannot be empty.", nameof(request));
@@ -140,6 +135,7 @@ public class TenantsService(CmsDbContext database, ITenantContext context, ICmsU
         tenant.Name = request.Name;
         tenant.SubDomain = normalizedSubdomain;
         tenant.CustomDomain = normalizedCustomDomain;
+        tenant.RowVersion = request.RowVersion;
 
         database.Entry(tenant)
             .Property(t => t.RowVersion)
