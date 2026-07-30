@@ -104,10 +104,7 @@ public class TenantsService(CmsDbContext database, ITenantContext context, ICmsU
 
     public async Task<UpdateTenantResult> UpdateTenant(UpdateTenantRequest request)
     {
-        var tenant = context.Tenant
-                     ?? throw new UnauthorizedAccessException("Tenant not resolved.");
-
-        if (context.Membership?.Role != UserTenantRole.Admin)
+       /* if (context.Membership?.Role != UserTenantRole.Admin)
             throw new UnauthorizedAccessException("Admin role required.");
 
         var normalizedSubdomain = request.SubDomain.Trim().ToLowerInvariant();
@@ -116,7 +113,7 @@ public class TenantsService(CmsDbContext database, ITenantContext context, ICmsU
         if (!string.Equals(tenant.SubDomain, normalizedSubdomain, StringComparison.OrdinalIgnoreCase))
         {
             var exists = await database.Tenants
-                .AnyAsync(t => t.SubDomain == normalizedSubdomain && t.Id != tenant.Id);
+                .AnyAsync(t => t.SubDomain == normalizedSubdomain && t.Id != request.Id);
 
             if (exists)
                 throw new InvalidOperationException("Subdomain already in use.");
@@ -161,7 +158,8 @@ public class TenantsService(CmsDbContext database, ITenantContext context, ICmsU
             CreatedAt = tenant.CreatedAt,
             UpdatedAt = tenant.UpdatedAt,
             RowVersion = tenant.RowVersion
-        };
+        };*/
+       throw new NotImplementedException();
     }
 
     public Task<GetTenantSubscriptionResult> GetTenantSubscription(GetTenantSubscriptionRequest request)
