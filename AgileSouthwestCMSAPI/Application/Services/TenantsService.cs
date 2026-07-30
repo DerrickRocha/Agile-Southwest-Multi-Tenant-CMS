@@ -81,7 +81,7 @@ public class TenantsService(CmsDbContext database, ITenantContext context, ICmsU
         var user = await database.CmsUsers
                        .SingleOrDefaultAsync(u => u.CognitoUserId == userContext.UserId)
                    ?? throw new UnauthorizedAccessException("User not found.");
-        var data = database
+        return await database
             .UserTenants
             .AsNoTracking()
             .Where(ut => ut.User.Id == user.Id)
@@ -97,15 +97,18 @@ public class TenantsService(CmsDbContext database, ITenantContext context, ICmsU
                     RowVersion = ut.Tenant.RowVersion
                 }
             )
-            .ToArray();
-        
-        return data;
+            .ToArrayAsync();
     }
 
     public async Task<UpdateTenantResult> UpdateTenant(UpdateTenantRequest request)
     {
         if (context.Membership?.Role != UserTenantRole.Admin)
             throw new UnauthorizedAccessException("Admin role required.");
+        
+        if (string.IsNullOrWhiteSpace(request.Name))
+        {
+            throw new ArgumentException("Tenant name cannot be empty.", nameof(request));
+        }
 
         var normalizedSubdomain = request.SubDomain.Trim().ToLowerInvariant();
         var normalizedCustomDomain = request.CustomDomain?.Trim().ToLowerInvariant();
@@ -125,11 +128,6 @@ public class TenantsService(CmsDbContext database, ITenantContext context, ICmsU
                  throw new InvalidOperationException("Custom domain already in use.");
          }
          
-        
-        if (string.IsNullOrWhiteSpace(request.Name))
-        {
-            throw new ArgumentException("Tenant name cannot be empty.", nameof(request));
-        }
         var tenant = await database.Tenants.FirstOrDefaultAsync(t => t.Id == request.Id)?? throw new KeyNotFoundException("Tenant not found.");
 
         tenant.Name = request.Name;
