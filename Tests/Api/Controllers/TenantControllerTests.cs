@@ -79,7 +79,6 @@ public class TenantControllerTests
         {
             Name = "Updated",
             SubDomain = "updated",
-            RowVersion = fixedDate
         };
 
         var result = new UpdateTenantResult

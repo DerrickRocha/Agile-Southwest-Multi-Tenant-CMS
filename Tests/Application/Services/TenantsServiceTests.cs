@@ -142,10 +142,8 @@ public class TenantsServiceTests
 
         var request = new UpdateTenantRequest
         {
-            Id = 1,
             Name = "New",
             SubDomain = "new",
-            RowVersion = tenant.RowVersion
         };
 
         var result = await service.UpdateTenant(request);
@@ -215,7 +213,6 @@ public class TenantsServiceTests
         {
             Name = "Hacked",
             SubDomain = "hacked",
-            RowVersion = fixedDate
         };
 
         await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
@@ -256,7 +253,6 @@ public class TenantsServiceTests
         {
             Name = "NewName",
             SubDomain = "new",
-            RowVersion = tenant.RowVersion
         };
 
         await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
@@ -302,10 +298,8 @@ public class TenantsServiceTests
 
         var request = new UpdateTenantRequest
         {
-            Id = 1,
             Name = "TenantA",
             SubDomain = "b",
-            RowVersion = tenantA.RowVersion
         };
 
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
@@ -339,14 +333,11 @@ public class TenantsServiceTests
         var userContext = new Mock<ICmsUserContext>();
 
         var service = new TenantsService(db, tenantContext.Object, userContext.Object);
-        var anotherDate = new DateTime(2023, 1, 15, 10, 30, 0, DateTimeKind.Utc);
 
         var request = new UpdateTenantRequest
         {
-            Id = 1,
             Name = "Updated",
             SubDomain = "updated",
-            RowVersion = anotherDate
         };
         await Assert.ThrowsAsync<ConcurrencyException>(() =>
             service.UpdateTenant(request));
