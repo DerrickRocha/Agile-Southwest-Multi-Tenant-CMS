@@ -80,16 +80,12 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
                 .HasColumnName("row_version")
                 .HasColumnType("TIMESTAMP")
                 .HasDefaultValueSql("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
+                .ValueGeneratedOnAddOrUpdate()   // add this
                 .IsRequired()
                 .IsConcurrencyToken();
 
             entity.HasIndex(t => t.SubDomain)
                 .HasDatabaseName("uq_tenants_subdomain")
-                .IsUnique();
-
-            // MySQL unique indexes allow multiple NULL values, so no filter needed.
-            entity.HasIndex(t => t.CustomDomain)
-                .HasDatabaseName("uq_tenants_custom_domain")
                 .IsUnique();
         });
 
