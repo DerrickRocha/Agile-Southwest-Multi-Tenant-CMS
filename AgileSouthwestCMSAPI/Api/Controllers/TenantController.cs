@@ -40,6 +40,7 @@ public class TenantController(ITenantsService service): ControllerBase
     }
 
     [HttpPut]
+    [Authorize(Roles="Admin")]
     public async Task<IActionResult> UpdateTenant([FromBody] UpdateTenantRequest request)
     {
         var result = await service.UpdateTenant(request);

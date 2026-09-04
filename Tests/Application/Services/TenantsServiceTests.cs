@@ -144,7 +144,6 @@ public class TenantsServiceTests
         {
             Name = "New",
             SubDomain = "new",
-            RowVersion = tenant.RowVersion
         };
 
         var result = await service.UpdateTenant(request);
@@ -214,7 +213,6 @@ public class TenantsServiceTests
         {
             Name = "Hacked",
             SubDomain = "hacked",
-            RowVersion = fixedDate
         };
 
         await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
@@ -255,7 +253,6 @@ public class TenantsServiceTests
         {
             Name = "NewName",
             SubDomain = "new",
-            RowVersion = tenant.RowVersion
         };
 
         await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
@@ -303,49 +300,9 @@ public class TenantsServiceTests
         {
             Name = "TenantA",
             SubDomain = "b",
-            RowVersion = tenantA.RowVersion
         };
 
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            service.UpdateTenant(request));
-    }
-    
-    [Fact]
-    public async Task UpdateTenant_ShouldThrow_WhenRowVersionMismatch()
-    {
-        var db = CreateDb();
-        var fixedDate = new DateTime(2024, 1, 15, 10, 30, 0, DateTimeKind.Utc);
-
-        var tenant = new Tenant
-        {
-            Id = 1,
-            Name = "Tenant",
-            SubDomain = "tenant",
-            RowVersion = fixedDate
-        };
-
-        db.Tenants.Add(tenant);
-        await db.SaveChangesAsync();
-
-        var tenantContext = new Mock<ITenantContext>();
-        tenantContext.Setup(t => t.Tenant).Returns(tenant);
-        tenantContext.Setup(t => t.Membership).Returns(new UserTenant
-        {
-            Role = UserTenantRole.Admin
-        });
-
-        var userContext = new Mock<ICmsUserContext>();
-
-        var service = new TenantsService(db, tenantContext.Object, userContext.Object);
-        var anotherDate = new DateTime(2023, 1, 15, 10, 30, 0, DateTimeKind.Utc);
-
-        var request = new UpdateTenantRequest
-        {
-            Name = "Updated",
-            SubDomain = "updated",
-            RowVersion = anotherDate
-        };
-        await Assert.ThrowsAsync<ConcurrencyException>(() =>
             service.UpdateTenant(request));
     }
     
