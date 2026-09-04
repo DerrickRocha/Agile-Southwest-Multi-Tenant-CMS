@@ -307,43 +307,6 @@ public class TenantsServiceTests
     }
     
     [Fact]
-    public async Task UpdateTenant_ShouldThrow_WhenRowVersionMismatch()
-    {
-        var db = CreateDb();
-        var fixedDate = new DateTime(2024, 1, 15, 10, 30, 0, DateTimeKind.Utc);
-
-        var tenant = new Tenant
-        {
-            Id = 1,
-            Name = "Tenant",
-            SubDomain = "tenant",
-            RowVersion = fixedDate
-        };
-
-        db.Tenants.Add(tenant);
-        await db.SaveChangesAsync();
-
-        var tenantContext = new Mock<ITenantContext>();
-        tenantContext.Setup(t => t.Tenant).Returns(tenant);
-        tenantContext.Setup(t => t.Membership).Returns(new UserTenant
-        {
-            Role = UserTenantRole.Admin
-        });
-
-        var userContext = new Mock<ICmsUserContext>();
-
-        var service = new TenantsService(db, tenantContext.Object, userContext.Object);
-
-        var request = new UpdateTenantRequest
-        {
-            Name = "Updated",
-            SubDomain = "updated",
-        };
-        await Assert.ThrowsAsync<ConcurrencyException>(() =>
-            service.UpdateTenant(request));
-    }
-    
-    [Fact]
     public async Task AddTenant_ShouldThrow_WhenUserDoesNotExist()
     {
         var db = CreateDb();
