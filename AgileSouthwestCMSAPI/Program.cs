@@ -3,6 +3,7 @@ using AgileSouthwestCMSAPI.Api.Middleware;
 using AgileSouthwestCMSAPI.Application.DTOs.Tenants;
 using AgileSouthwestCMSAPI.Application.Interfaces;
 using AgileSouthwestCMSAPI.Application.Services;
+using AgileSouthwestCMSAPI.Domain.Mail;
 using AgileSouthwestCMSAPI.Domain.ValueObjects;
 using AgileSouthwestCMSAPI.Infrastructure.Configuration;
 using AgileSouthwestCMSAPI.Infrastructure.Persistence;
@@ -160,6 +161,9 @@ builder.Services.AddSingleton<IAmazonS3>(sp =>
     return new AmazonS3Client(region);
 });
 builder.Services.AddSingleton<IS3Service, S3Service>();
+
+builder.Services.Configure<EmailOptions>(builder.Configuration.GetSection("Email"));
+builder.Services.AddScoped<IEmailSender, MailkitEmailSender>();
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ITenantContext, TenantContext>();

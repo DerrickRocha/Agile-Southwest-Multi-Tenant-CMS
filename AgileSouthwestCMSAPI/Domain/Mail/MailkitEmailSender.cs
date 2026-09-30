@@ -18,6 +18,7 @@ public class MailkitEmailSender(IOptions<EmailOptions> options): IEmailSender
         msg.Body = new BodyBuilder { HtmlBody = message.HtmlBody, TextBody = message.TextBody }.ToMessageBody();
 
         using var client = new SmtpClient();
+        client.CheckCertificateRevocation = false; // must be set before ConnectAsync
         await client.ConnectAsync(_options.Host, _options.Port, SecureSocketOptions.StartTls, ct);
         await client.AuthenticateAsync(_options.User, _options.Password, ct);
         await client.SendAsync(msg, ct);
