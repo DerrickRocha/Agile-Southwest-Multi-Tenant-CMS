@@ -163,6 +163,7 @@ builder.Services.AddSingleton<IAmazonS3>(sp =>
 builder.Services.AddSingleton<IS3Service, S3Service>();
 
 builder.Services.Configure<EmailOptions>(builder.Configuration.GetSection("Email"));
+builder.Services.Configure<ContactOptions>(builder.Configuration.GetSection("Contact"));
 builder.Services.AddScoped<IEmailSender, MailkitEmailSender>();
 
 builder.Services.AddHttpContextAccessor();

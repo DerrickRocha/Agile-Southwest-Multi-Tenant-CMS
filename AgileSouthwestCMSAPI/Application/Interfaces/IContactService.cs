@@ -4,5 +4,5 @@ namespace AgileSouthwestCMSAPI.Application.Interfaces;
 
 public interface IContactService
 {
-    public Task SubmitContactForm(SubmitContactFormRequest request);
+    public Task SubmitContactForm(SubmitContactFormRequest request, CancellationToken ct = default);
 }
