@@ -183,6 +183,8 @@ builder.Services.AddScoped<IStoresService, StoresService>();
 
 builder.Services.AddScoped<IImagesService, ImagesService>();
 
+builder.Services.AddScoped<IContactService, ContactService>();
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddOpenApi();
 
