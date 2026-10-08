@@ -16,8 +16,6 @@ public class ContactController(IEmailSender emailSender): ControllerBase
     [HttpPost]
     public async Task<IActionResult> SubmitContactForm(SubmitContactFormRequest request)
     {
-        var message = new EmailMessage("derrickrocha4@gmail.com", "Contact Form Submission", request.Message);
-        await EmailSender.SendAsync(message);
         return Ok();
     }
     
