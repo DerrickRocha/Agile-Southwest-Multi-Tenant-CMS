@@ -1,5 +1,6 @@
 using System.Net;
 using AgileSouthwestCMSAPI.Api.Requests.Contact;
+using AgileSouthwestCMSAPI.Application.Exceptions;
 using AgileSouthwestCMSAPI.Application.Interfaces;
 using AgileSouthwestCMSAPI.Domain.Mail;
 
@@ -9,17 +10,50 @@ public class ContactService(IEmailSender sender) : IContactService
 {
     public async Task SubmitContactForm(SubmitContactFormRequest request)
     {
-        var email = new EmailMessage(
-          To: "smilingmoonfarmtech@gmail.com",
-          Subject: request.Subject,
-            HtmlBody: BuildHtmlBody(
-              request.FirstName,
-              request.LastName,
-              request.Email,
-              request.Message
-              ),
-            ReplyTo: request.Email);
-        await sender.SendAsync(email);
+        if (string.IsNullOrEmpty(request.Message))
+        {
+            throw new ContactServiceError("Message must not be empty.");
+        }
+
+        if (string.IsNullOrEmpty(request.Subject))
+        {
+            throw new ContactServiceError("Subject must not be empty.");
+        }
+
+        if (string.IsNullOrEmpty(request.Email))
+        {
+            throw new ContactServiceError("Email must not be empty.");       
+        }
+
+        if (string.IsNullOrEmpty(request.FirstName))
+        {
+            throw new ContactServiceError("First name must not be empty.");       
+        }
+
+        if (string.IsNullOrEmpty(request.LastName))
+        {
+            throw new ContactServiceError("Last name must not be empty.");      
+        }
+
+        try
+        {
+            var email = new EmailMessage(
+                To: "smilingmoonfarmtech@gmail.com",
+                Subject: request.Subject,
+                HtmlBody: BuildHtmlBody(
+                    request.FirstName,
+                    request.LastName,
+                    request.Email,
+                    request.Message
+                ),
+                ReplyTo: request.Email);
+            await sender.SendAsync(email);
+        }
+        catch (Exception e)
+        {
+            throw new ContactServiceError("Could not send email. Please try again later.");
+        }
+        
     }
 
     private string BuildHtmlBody(string firstName, string lastName, string email, string message)
