@@ -61,8 +61,6 @@ public class ExceptionHandlingMiddleware(RequestDelegate next)
         }
         catch (OperationCanceledException error) when (context.RequestAborted.IsCancellationRequested)
         {
-            // Client disconnected. Nobody is listening, so don't write a body.
-           
             await WriteProblem(context, StatusCodes.Status499ClientClosedRequest, "ContactServiceError", error.Message);
 
         }

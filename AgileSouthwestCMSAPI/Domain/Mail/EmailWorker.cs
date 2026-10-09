@@ -24,7 +24,6 @@ public class EmailWorker(
             catch (Exception ex)
             {
                 logger.LogError(ex, "Failed to send queued email");
-                // retry with backoff here if you want
             }
         }
     }

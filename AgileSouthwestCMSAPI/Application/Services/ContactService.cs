@@ -63,7 +63,7 @@ public class ContactService(
             !mailbox.Address.Contains('@'))
             throw new ContactValidationException("Email address is not valid.");
 
-        return mailbox.Address; // address only, drops any "Display Name <...>" part
+        return mailbox.Address;
     }
 
     private static string Require(string? value, string field, int maxLength)
