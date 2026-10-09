@@ -163,7 +163,10 @@ builder.Services.AddSingleton<IAmazonS3>(sp =>
 builder.Services.AddSingleton<IS3Service, S3Service>();
 
 builder.Services.Configure<EmailOptions>(builder.Configuration.GetSection("Email"));
+builder.Services.Configure<ContactOptions>(builder.Configuration.GetSection("Contact"));
 builder.Services.AddScoped<IEmailSender, MailkitEmailSender>();
+builder.Services.AddSingleton<IEmailQueue, EmailQueue>();
+builder.Services.AddHostedService<EmailWorker>();
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ITenantContext, TenantContext>();
@@ -182,6 +185,8 @@ builder.Services.AddScoped<IInventoryService, InventoryService>();
 builder.Services.AddScoped<IStoresService, StoresService>();
 
 builder.Services.AddScoped<IImagesService, ImagesService>();
+
+builder.Services.AddScoped<IContactService, ContactService>();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddOpenApi();

@@ -51,7 +51,17 @@ public class ExceptionHandlingMiddleware(RequestDelegate next)
         }
         catch (S3UploadException exception)
         {
-            await WriteProblem(context, StatusCodes.Status400BadRequest, "Error uploading image to s3", exception.Message);
+            await WriteProblem(context, StatusCodes.Status400BadRequest, "Error uploading image to s3",
+                exception.Message);
+
+        }
+        catch (ContactServiceError error)
+        {
+            await WriteProblem(context, StatusCodes.Status400BadRequest, "ContactServiceError", error.Message);
+        }
+        catch (OperationCanceledException error) when (context.RequestAborted.IsCancellationRequested)
+        {
+            await WriteProblem(context, StatusCodes.Status499ClientClosedRequest, "ContactServiceError", error.Message);
 
         }
         catch(Exception e)

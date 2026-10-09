@@ -1,6 +1,6 @@
 using AgileSouthwestCMSAPI.Api.Middleware;
 using AgileSouthwestCMSAPI.Api.Requests.Contact;
-using AgileSouthwestCMSAPI.Domain.Mail;
+using AgileSouthwestCMSAPI.Application.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AgileSouthwestCMSAPI.Api.Controllers;
@@ -9,13 +9,12 @@ namespace AgileSouthwestCMSAPI.Api.Controllers;
 [Route("[controller]")]
 [Produces("application/json")]
 [SkipTenantResolution]
-public class ContactController(IEmailSender emailSender): ControllerBase
+public class ContactController(IContactService service): ControllerBase
 {
-    private IEmailSender EmailSender { get; } = emailSender;
-
     [HttpPost]
     public async Task<IActionResult> SubmitContactForm(SubmitContactFormRequest request)
     {
+        await service.SubmitContactForm(request);
         return Ok();
     }
     
