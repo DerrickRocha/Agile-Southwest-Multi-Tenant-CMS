@@ -59,6 +59,13 @@ public class ExceptionHandlingMiddleware(RequestDelegate next)
         {
             await WriteProblem(context, StatusCodes.Status400BadRequest, "ContactServiceError", error.Message);
         }
+        catch (OperationCanceledException error) when (context.RequestAborted.IsCancellationRequested)
+        {
+            // Client disconnected. Nobody is listening, so don't write a body.
+           
+            await WriteProblem(context, StatusCodes.Status499ClientClosedRequest, "ContactServiceError", error.Message);
+
+        }
         catch(Exception e)
         {
             await WriteProblem(context, StatusCodes.Status500InternalServerError, "Internal Server Error", "An unexpected error occurred.");
