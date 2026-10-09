@@ -165,6 +165,8 @@ builder.Services.AddSingleton<IS3Service, S3Service>();
 builder.Services.Configure<EmailOptions>(builder.Configuration.GetSection("Email"));
 builder.Services.Configure<ContactOptions>(builder.Configuration.GetSection("Contact"));
 builder.Services.AddScoped<IEmailSender, MailkitEmailSender>();
+builder.Services.AddSingleton<IEmailQueue, EmailQueue>();
+builder.Services.AddHostedService<EmailWorker>();
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ITenantContext, TenantContext>();
