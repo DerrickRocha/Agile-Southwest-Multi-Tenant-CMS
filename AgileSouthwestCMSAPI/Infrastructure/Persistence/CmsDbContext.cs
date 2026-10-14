@@ -78,11 +78,7 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
 
             entity.Property(c => c.RowVersion)
                 .HasColumnName("row_version")
-                .HasColumnType("TIMESTAMP")
-                .HasDefaultValueSql("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
-                .ValueGeneratedOnAddOrUpdate()   // add this
-                .IsRequired()
-                .IsConcurrencyToken();
+                .IsRowVersion();
 
             entity.HasIndex(t => t.SubDomain)
                 .HasDatabaseName("uq_tenants_subdomain")
@@ -688,6 +684,10 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
                 .HasColumnName("row_version")
                 .IsRowVersion();
             
+            entity.HasIndex(s => new { s.TenantId, s.PostalCode })
+                .HasDatabaseName("shipping_rate_tenant_postal_idx");
+            entity.HasQueryFilter(s => s.DeletedAt == null);
+            
             entity.HasOne(s => s.Tenant)
                 .WithMany(t => t.ShippingRates)
                 .HasForeignKey(s => s.TenantId)
@@ -747,9 +747,7 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
 
                 entity.Property(c => c.RowVersion)
                     .HasColumnName("row_version")
-                    .HasColumnType("TIMESTAMP")
-                    .HasDefaultValueSql("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
-                    .IsConcurrencyToken();
+                    .IsRowVersion();
 
                 entity.HasOne(i => i.Tenant)
                     .WithMany(t => t.Images)
@@ -1004,10 +1002,7 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
             // Concurrency
             entity.Property(o => o.RowVersion)
                 .HasColumnName("row_version")
-                .HasColumnType("TIMESTAMP")
-                .HasDefaultValueSql("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
-                .IsRequired()
-                .IsConcurrencyToken();
+                .IsRowVersion();
 
             // Relationships
             entity.HasOne(o => o.Tenant)
@@ -1031,9 +1026,6 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
             // Indexes
             entity.HasIndex(o => o.TenantId)
                 .HasDatabaseName("idx_tenant");
-
-            entity.HasIndex(o => o.OrderNumber)
-                .HasDatabaseName("idx_order_number");
 
             entity.HasIndex(o => o.CustomerId)
                 .HasDatabaseName("idx_customer_id");
@@ -1061,16 +1053,20 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
 
             entity.HasIndex(o => o.DeletedAt)
                 .HasDatabaseName("idx_deleted");
-
-            entity.HasIndex(o => o.CreatedAt)
+            
+            entity.HasIndex(o => new { o.Status, o.CreatedAt })
                 .HasDatabaseName("idx_orders_stale_pending");
 
             entity.HasIndex(o => new { o.CustomerId, o.CreatedAt, o.Status })
                 .HasDatabaseName("idx_customer_orders");
             
-            entity.HasIndex(o => new { o.TenantId, o.Id })
-                .HasDatabaseName("uk_tenant_order")
-                .IsUnique();
+            entity.HasIndex(o => new { o.TenantId, o.IdempotencyKey })
+                .IsUnique()
+                .HasDatabaseName("uk_tenant_idempotency_key");
+            
+            entity.HasIndex(o => new { o.TenantId, o.OrderNumber })
+                .IsUnique()
+                .HasDatabaseName("uk_tenant_order_number");
         });
 
         builder.Entity<OrderItem>(entity =>
@@ -1166,10 +1162,7 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
             // Concurrency
             entity.Property(oi => oi.RowVersion)
                 .HasColumnName("row_version")
-                .HasColumnType("TIMESTAMP")
-                .HasDefaultValueSql("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
-                .IsRequired()
-                .IsConcurrencyToken();
+                .IsRowVersion();
 
             // Relationships
             entity.HasOne(oi => oi.Tenant)
@@ -1302,10 +1295,7 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
             // Concurrency
             entity.Property(pt => pt.RowVersion)
                 .HasColumnName("row_version")
-                .HasColumnType("TIMESTAMP")
-                .HasDefaultValueSql("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
-                .IsRequired()
-                .IsConcurrencyToken();
+                .IsRowVersion();
 
             // Relationships
             entity.HasOne(pt => pt.Tenant)
@@ -1437,10 +1427,7 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
 
                 entity.Property(c => c.RowVersion)
                     .HasColumnName("row_version")
-                    .HasColumnType("TIMESTAMP")
-                    .HasDefaultValueSql("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
-                    .IsRequired()
-                    .IsConcurrencyToken();
+                    .IsRowVersion();
 
                 entity.HasOne(c => c.Tenant)
                     .WithMany(t => t.TaxCategories)
@@ -1510,10 +1497,7 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
                 .IsRequired(false);
             entity.Property(o => o.RowVersion)
                 .HasColumnName("row_version")
-                .HasColumnType("TIMESTAMP")
-                .HasDefaultValueSql("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
-                .IsRequired()
-                .IsConcurrencyToken();
+                .IsRowVersion();
             entity.HasOne(o => o.Tenant)
                 .WithMany(t => t.OrderStatusHistories)
                 .HasForeignKey(o => o.TenantId)

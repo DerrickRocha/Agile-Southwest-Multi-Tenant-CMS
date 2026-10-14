@@ -11,6 +11,6 @@ public record CreateOrderRequest(
     [Required] AddressRequest ShippingAddress,
     AddressRequest? BillingAddress,
     int? ShippingRateId,
-    [StringLength(64)] string? IdempotencyKey,   // new: client-generated GUID per checkout attempt
+    [StringLength(64)] string? IdempotencyKey, 
     string? CustomerNotes
 );
