@@ -8,15 +8,21 @@ using AgileSouthwestCMSAPI.Domain.Entities;
 using AgileSouthwestCMSAPI.Domain.Enums;
 using AgileSouthwestCMSAPI.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using MySql.Data.MySqlClient;
 
 namespace AgileSouthwestCMSAPI.Application.Services;
 
-public class OrdersService(ITenantContext context, CmsDbContext database, IHttpContextAccessor httpContextAccessor)
+public class OrdersService(
+    ITenantContext context,
+    CmsDbContext database,
+    IHttpContextAccessor httpContextAccessor,
+    ILogger<OrdersService> logger
+)
     : IOrderService
 {
-    
     private const string CurrencyCode = "USD";
-    
+    private const int MaxOrderNumberAttempts = 3;
+
     public async Task<CreateOrderResult> CreateOrder(CreateOrderRequest request)
     {
         var tenant = context.Tenant
@@ -259,7 +265,7 @@ public class OrdersService(ITenantContext context, CmsDbContext database, IHttpC
         return new GetOrderResult(
             Id: order.Id,
             TenantId: order.TenantId,
-            ShippingRateId: order.ShippingRateId??0,
+            ShippingRateId: order.ShippingRateId ?? 0,
             OrderNumber: order.OrderNumber,
             CustomerId: order.CustomerId,
             CustomerEmail: order.CustomerEmail,
@@ -430,32 +436,32 @@ public class OrdersService(ITenantContext context, CmsDbContext database, IHttpC
     {
         var tenant = context.Tenant
                      ?? throw new UnauthorizedAccessException("Tenant not resolved.");
-    
+
         var order = await database.Orders
             .FirstOrDefaultAsync(o => o.Id == id && o.TenantId == tenant.Id);
-    
+
         if (order == null)
             throw new KeyNotFoundException($"Order with id {id} not found");
-    
+
         if (order.Status == OrderStatus.Cancelled)
             throw new InvalidOperationException("Order is already cancelled");
-    
+
         if (order.Status == OrderStatus.Completed)
             throw new InvalidOperationException("Cannot cancel a completed order");
-    
+
         // Track old status for history
         var oldStatus = order.Status;
         var oldPaymentStatus = order.PaymentStatus;
         var oldFulfillmentStatus = order.FulfillmentStatus;
-    
+
         // Update order
         order.Status = OrderStatus.Cancelled;
         order.PaymentStatus = PaymentStatus.Refunded;
         order.FulfillmentStatus = FulfillmentStatus.Unfulfilled;
-        order.AdminNotes = string.IsNullOrEmpty(order.AdminNotes) 
-            ? $"Cancelled: {reason}" 
+        order.AdminNotes = string.IsNullOrEmpty(order.AdminNotes)
+            ? $"Cancelled: {reason}"
             : $"{order.AdminNotes}\nCancelled: {reason}";
-    
+
         // Add cancellation to history
         var statusHistory = new OrderStatusHistory
         {
@@ -466,12 +472,12 @@ public class OrdersService(ITenantContext context, CmsDbContext database, IHttpC
             NewStatus = nameof(OrderStatus.Cancelled),
             OldPaymentStatus = oldPaymentStatus.ToString(),
             NewPaymentStatus = nameof(PaymentStatus.Refunded),
-            OldFulfillmentStatus = oldFulfillmentStatus?.ToString()?? "",
+            OldFulfillmentStatus = oldFulfillmentStatus?.ToString() ?? "",
             NewFulfillmentStatus = nameof(FulfillmentStatus.Unfulfilled),
             Reason = reason,
             CreatedAt = DateTime.UtcNow
         };
-    
+
         await database.OrderStatusHistories.AddAsync(statusHistory);
         await database.SaveChangesAsync();
     }
@@ -485,18 +491,18 @@ public class OrdersService(ITenantContext context, CmsDbContext database, IHttpC
     {
         var tenant = context.Tenant
                      ?? throw new UnauthorizedAccessException("Tenant not resolved.");
-    
+
         var order = await database.Orders
             .FirstOrDefaultAsync(o => o.Id == id && o.TenantId == tenant.Id);
-    
+
         if (order == null)
             throw new KeyNotFoundException($"Order with id {id} not found");
-    
+
         var history = await database.OrderStatusHistories
             .Where(h => h.OrderId == id)
             .OrderByDescending(h => h.CreatedAt)
             .ToListAsync();
-    
+
         return history.Select(h => new OrderStatusHistoryResult(
             Id: h.Id,
             OrderId: h.OrderId,
@@ -511,7 +517,54 @@ public class OrdersService(ITenantContext context, CmsDbContext database, IHttpC
             CreatedAt: h.CreatedAt
         ));
     }
-    
+
+    private async Task<Order> PersistAsync(
+        int tenantId,
+        CreateOrderRequest request,
+        string email,
+        string? idempotencyKey,
+        PricedOrder priced,
+        CancellationToken ct)
+    {
+        var http = httpContextAccessor.HttpContext;
+        var ipAddress = http?.Connection.RemoteIpAddress?.ToString(); // needs forwarded headers behind a proxy
+        var userAgent = Clean(http?.Request.Headers.UserAgent.ToString());
+        if (userAgent is { Length: > 512 }) userAgent = userAgent[..512];
+
+        // A single SaveChanges is already atomic (and retried by the execution strategy),
+        // so no explicit transaction is needed until this method does multi-step work
+        // (stock decrement, outbox row, payment record).
+        for (var attempt = 1;; attempt++)
+        {
+            var order = BuildOrder(tenantId, request, email, idempotencyKey, priced, ipAddress, userAgent);
+            database.Orders.Add(order);
+
+            try
+            {
+                await database.SaveChangesAsync(ct);
+                return order;
+            }
+            catch (DbUpdateException ex) when (IsUniqueViolation(ex))
+            {
+                // Discard the failed graph before querying again.
+                database.ChangeTracker.Clear();
+
+                // Duplicate submit or an ambiguous-commit retry: hand back the existing order.
+                if (idempotencyKey is not null)
+                {
+                    var existing = await FindByIdempotencyKeyAsync(tenantId, idempotencyKey, ct);
+                    if (existing is not null) return existing;
+                }
+
+                // Otherwise assume an order number collision and try again with a new number.
+                if (attempt >= MaxOrderNumberAttempts) throw;
+                logger.LogWarning(ex,
+                    "Unique violation creating order for tenant {TenantId}; retrying (attempt {Attempt})",
+                    tenantId, attempt);
+            }
+        }
+    }
+
     private Order BuildOrder(
         int tenantId,
         CreateOrderRequest request,
@@ -588,15 +641,24 @@ public class OrdersService(ITenantContext context, CmsDbContext database, IHttpC
             }).ToList(),
         };
     }
-    
+
     private static string? Clean(string? value) =>
         string.IsNullOrWhiteSpace(value) ? null : value.Trim();
-    
+
     private static List<OrderItemOptionSnapshot> ParseOptions(string? json) =>
         string.IsNullOrEmpty(json)
             ? []
             : JsonSerializer.Deserialize<List<OrderItemOptionSnapshot>>(json) ?? [];
+
+    private static bool IsUniqueViolation(DbUpdateException ex) =>
+        ex.InnerException is MySqlException { Number: 1062 };
     
+    private Task<Order?> FindByIdempotencyKeyAsync(int tenantId, string key, CancellationToken ct) =>
+        database.Orders
+            .AsNoTracking()
+            .Include(o => o.OrderItems)
+            .FirstOrDefaultAsync(o => o.TenantId == tenantId && o.IdempotencyKey == key, ct);
+
     private sealed record PricedItem(
         int ProductId,
         string ProductName,
@@ -608,7 +670,7 @@ public class OrdersService(ITenantContext context, CmsDbContext database, IHttpC
         int? WeightGrams,
         bool RequiresShipping,
         List<OrderItemOptionSnapshot> Options);
-    
+
     private sealed record PricedOrder(
         List<PricedItem> Items,
         int SubtotalCents,
