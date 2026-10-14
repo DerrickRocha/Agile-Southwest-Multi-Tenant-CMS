@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.Security.Cryptography;
+using System.Text.Json;
 using AgileSouthwestCMSAPI.Api.Requests.Orders;
 using AgileSouthwestCMSAPI.Application.DTOs.Orders;
 using AgileSouthwestCMSAPI.Application.Interfaces;
@@ -507,4 +508,29 @@ public class OrdersService(ITenantContext context, CmsDbContext database, IHttpC
             CreatedAt: h.CreatedAt
         ));
     }
+    
+    private static List<OrderItemOptionSnapshot> ParseOptions(string? json) =>
+        string.IsNullOrEmpty(json)
+            ? []
+            : JsonSerializer.Deserialize<List<OrderItemOptionSnapshot>>(json) ?? [];
+    
+    private sealed record PricedItem(
+        int ProductId,
+        string ProductName,
+        int Quantity,
+        int UnitPriceCents,
+        int TotalPriceCents,
+        int? TaxCategoryId,
+        int TaxCents,
+        int? WeightGrams,
+        bool RequiresShipping,
+        List<OrderItemOptionSnapshot> Options);
+    
+    private sealed record PricedOrder(
+        List<PricedItem> Items,
+        int SubtotalCents,
+        int TaxCents,
+        int ShippingCents,
+        int? ShippingRateId,
+        int TotalCents);
 }

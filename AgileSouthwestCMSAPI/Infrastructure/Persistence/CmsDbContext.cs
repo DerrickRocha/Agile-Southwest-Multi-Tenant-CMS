@@ -791,6 +791,10 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
             entity.Property(o => o.ShippingRateId)
                 .HasColumnName("shipping_rate_id")
                 .IsRequired(false);
+            
+            entity.Property(o => o.IdempotencyKey)
+                .HasColumnName("idempotency_key")
+                .HasMaxLength(64);
 
             entity.Property(o => o.CustomerId)
                 .HasColumnName("customer_id")

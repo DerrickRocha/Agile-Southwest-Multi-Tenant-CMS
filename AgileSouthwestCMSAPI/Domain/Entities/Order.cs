@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using AgileSouthwestCMSAPI.Domain.Enums;
 
 namespace AgileSouthwestCMSAPI.Domain.Entities;
@@ -10,6 +11,8 @@ public class Order
     public int? ShippingRateId { get; set; }
     public int? CustomerId { get; set; }
     public string OrderNumber { get; set; }
+    [MaxLength(64)] public string? IdempotencyKey { get; set; }   // new
+
     public string CustomerEmail { get; set; }
     public string CustomerFirstName { get; set; }
     public string CustomerLastName { get; set; }
