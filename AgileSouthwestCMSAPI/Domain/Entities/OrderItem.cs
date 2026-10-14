@@ -14,6 +14,8 @@ public class OrderItem
     public int UnitPriceCents { get; set; }
     public int TotalPriceCents { get; set; }
     public int DiscountCents { get; set; }
+    public int TaxCents { get; set; }    
+
     
     public int? WeightGrams { get; set; }  // Add this
     

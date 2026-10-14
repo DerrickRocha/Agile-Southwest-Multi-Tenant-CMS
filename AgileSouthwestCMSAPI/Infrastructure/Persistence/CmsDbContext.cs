@@ -1098,6 +1098,11 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
             entity.Property(oi => oi.TaxCategoryId)
                 .HasColumnName("tax_category_id")
                 .IsRequired(false);
+            
+            entity.Property(oi => oi.TaxCents)
+                .HasColumnName("tax_cents")
+                .HasDefaultValue(0)
+                .IsRequired();
 
             entity.Property(oi => oi.ProductName)
                 .HasColumnName("product_name")

@@ -509,6 +509,83 @@ public class OrdersService(ITenantContext context, CmsDbContext database, IHttpC
         ));
     }
     
+    private Order BuildOrder(
+        int tenantId,
+        CreateOrderRequest request,
+        string email,
+        string? idempotencyKey,
+        PricedOrder priced,
+        string? ipAddress,
+        string? userAgent)
+    {
+        var shipping = request.ShippingAddress!;
+        var billing = request.BillingAddress ?? shipping; // billing defaults to the shipping address
+
+        return new Order
+        {
+            TenantId = tenantId,
+            OrderNumber = GenerateOrderNumber(),
+            IdempotencyKey = idempotencyKey,
+            ShippingRateId = priced.ShippingRateId,
+
+            CustomerEmail = email,
+            CustomerFirstName = request.CustomerFirstName.Trim(),
+            CustomerLastName = request.CustomerLastName.Trim(),
+            CustomerPhone = Clean(request.CustomerPhone),
+
+            Status = OrderStatus.Pending,
+            PaymentStatus = PaymentStatus.Unpaid, // the payment webhook moves this forward
+            FulfillmentStatus = FulfillmentStatus.Unfulfilled,
+
+            SubtotalCents = priced.SubtotalCents,
+            DiscountCents = 0,
+            CouponCode = null,
+            CouponDiscountCents = 0,
+            TaxCents = priced.TaxCents,
+            ShippingCents = priced.ShippingCents,
+            TotalCents = priced.TotalCents,
+            RefundedAmountCents = 0,
+            PaymentServiceFeeCents = 0,
+            Currency = CurrencyCode,
+
+            ShippingAddressLine1 = shipping.Line1.Trim(),
+            ShippingAddressLine2 = Clean(shipping.Line2),
+            ShippingCity = shipping.City.Trim(),
+            ShippingState = Clean(shipping.State),
+            ShippingPostalCode = shipping.PostalCode.Trim(),
+            ShippingCountry = shipping.Country.Trim(),
+
+            BillingAddressLine1 = billing.Line1.Trim(),
+            BillingAddressLine2 = Clean(billing.Line2),
+            BillingCity = billing.City.Trim(),
+            BillingState = Clean(billing.State),
+            BillingPostalCode = billing.PostalCode.Trim(),
+            BillingCountry = billing.Country.Trim(),
+
+            OrderType = OrderType.Standard,
+
+            IpAddress = ipAddress,
+            UserAgent = userAgent,
+
+            CustomerNotes = Clean(request.CustomerNotes),
+            AdminNotes = null,
+
+            OrderItems = priced.Items.Select(i => new OrderItem
+            {
+                TenantId = tenantId,
+                ProductId = i.ProductId,
+                ProductName = i.ProductName,
+                Quantity = i.Quantity,
+                UnitPriceCents = i.UnitPriceCents,
+                TotalPriceCents = i.TotalPriceCents,
+                TaxCategoryId = i.TaxCategoryId,
+                TaxCents = i.TaxCents,
+                WeightGrams = i.WeightGrams,
+                OptionDetails = i.Options.Count == 0 ? null : JsonSerializer.Serialize(i.Options),
+            }).ToList(),
+        };
+    }
+    
     private static List<OrderItemOptionSnapshot> ParseOptions(string? json) =>
         string.IsNullOrEmpty(json)
             ? []
