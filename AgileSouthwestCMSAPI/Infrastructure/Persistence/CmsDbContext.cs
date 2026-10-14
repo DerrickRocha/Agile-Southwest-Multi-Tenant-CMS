@@ -1475,7 +1475,7 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
                 .IsRequired(false);
             entity.Property(o => o.OldFulfillmentStatus)
                 .HasColumnName("old_fulfillment_status")
-                .IsRequired();
+                .IsRequired(false);
             entity.Property(o => o.Reason)
                 .HasColumnName("reason")
                 .HasMaxLength(255);
