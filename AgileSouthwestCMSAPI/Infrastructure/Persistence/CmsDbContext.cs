@@ -272,8 +272,7 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
 
             entity.Property(o => o.DeletedAt)
                 .HasColumnName("deleted_at")
-                .HasColumnType("DATETIME(6)")
-                .HasDefaultValueSql("CURRENT_TIMESTAMP(6)");
+                .HasColumnType("DATETIME(6)");
 
             entity.Property(t => t.RowVersion)
                 .HasColumnName("row_version")
