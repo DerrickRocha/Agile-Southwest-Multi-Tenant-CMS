@@ -1539,21 +1539,19 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
     private void ApplyTimestamps()
     {
         var now = DateTime.UtcNow;
-        var entries = ChangeTracker.Entries();
-
-        foreach (var entry in entries)
+        foreach (var entry in ChangeTracker.Entries())
         {
+            var hasCreated = entry.Metadata.FindProperty("CreatedAt") is not null;
+            var hasUpdated = entry.Metadata.FindProperty("UpdatedAt") is not null;
+
             if (entry.State == EntityState.Added)
             {
-                if (entry.Property("CreatedAt") != null)
-                    entry.Property("CreatedAt").CurrentValue = now;
-                if (entry.Property("UpdatedAt") != null)
-                    entry.Property("UpdatedAt").CurrentValue = now;
+                if (hasCreated) entry.Property("CreatedAt").CurrentValue = now;
+                if (hasUpdated) entry.Property("UpdatedAt").CurrentValue = now;
             }
-            else if (entry.State == EntityState.Modified)
+            else if (entry.State == EntityState.Modified && hasUpdated)
             {
-                if (entry.Property("UpdatedAt") != null)
-                    entry.Property("UpdatedAt").CurrentValue = now;
+                entry.Property("UpdatedAt").CurrentValue = now;
             }
         }
     }

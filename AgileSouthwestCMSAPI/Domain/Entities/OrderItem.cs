@@ -17,12 +17,10 @@ public class OrderItem
     public int TaxCents { get; set; }    
 
     
-    public int? WeightGrams { get; set; }  // Add this
+    public int? WeightGrams { get; set; }
     
     // Product options snapshot
     public string? OptionDetails { get; set; } // JSON field
-    
-    // Image snapshot
     public string? ImageUrl { get; set; }
     
     // Timestamps
@@ -31,7 +29,7 @@ public class OrderItem
     public DateTime? DeletedAt { get; set; }
     public DateTime RowVersion { get; set; }
 
-    public TaxCategory? TaxCategory { get; set; } = null!;
+    public TaxCategory? TaxCategory { get; set; }
     public Tenant Tenant { get; set; } = null!;
     public Order Order { get; set; } = null!;
     public Product Product { get; set; } = null!;
