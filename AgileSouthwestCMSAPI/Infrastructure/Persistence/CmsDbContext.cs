@@ -790,7 +790,7 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
 
             entity.Property(o => o.ShippingRateId)
                 .HasColumnName("shipping_rate_id")
-                .IsRequired();
+                .IsRequired(false);
 
             entity.Property(o => o.CustomerId)
                 .HasColumnName("customer_id")

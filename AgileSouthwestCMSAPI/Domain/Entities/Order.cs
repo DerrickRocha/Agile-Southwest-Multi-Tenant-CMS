@@ -7,7 +7,7 @@ public class Order
    public int Id { get; set; }
     public int TenantId { get; set; }
     
-    public int ShippingRateId { get; set; }
+    public int? ShippingRateId { get; set; }
     public int? CustomerId { get; set; }
     public string OrderNumber { get; set; }
     public string CustomerEmail { get; set; }

@@ -255,7 +255,7 @@ public class OrdersService(ITenantContext context, CmsDbContext database, IHttpC
         return new GetOrderResult(
             Id: order.Id,
             TenantId: order.TenantId,
-            ShippingRateId: order.ShippingRateId,
+            ShippingRateId: order.ShippingRateId??0,
             OrderNumber: order.OrderNumber,
             CustomerId: order.CustomerId,
             CustomerEmail: order.CustomerEmail,
