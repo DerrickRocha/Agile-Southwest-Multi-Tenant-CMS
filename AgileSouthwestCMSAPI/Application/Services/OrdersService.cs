@@ -14,6 +14,9 @@ namespace AgileSouthwestCMSAPI.Application.Services;
 public class OrdersService(ITenantContext context, CmsDbContext database, IHttpContextAccessor httpContextAccessor)
     : IOrderService
 {
+    
+    private const string CurrencyCode = "USD";
+    
     public async Task<CreateOrderResult> CreateOrder(CreateOrderRequest request)
     {
         var tenant = context.Tenant
@@ -585,6 +588,9 @@ public class OrdersService(ITenantContext context, CmsDbContext database, IHttpC
             }).ToList(),
         };
     }
+    
+    private static string? Clean(string? value) =>
+        string.IsNullOrWhiteSpace(value) ? null : value.Trim();
     
     private static List<OrderItemOptionSnapshot> ParseOptions(string? json) =>
         string.IsNullOrEmpty(json)
