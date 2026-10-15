@@ -11,8 +11,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AgileSouthwestCMSAPI.Migrations
 {
     [DbContext(typeof(CmsDbContext))]
-    [Migration("20261015003237_AddProductShippingFields")]
-    partial class AddProductShippingFields
+    [Migration("20261015012731_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -402,7 +402,8 @@ namespace AgileSouthwestCMSAPI.Migrations
                         .HasColumnName("discount_cents");
 
                     b.Property<string>("FulfillmentStatus")
-                        .HasColumnType("longtext")
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)")
                         .HasColumnName("fulfillment_status");
 
                     b.Property<string>("IdempotencyKey")
@@ -424,7 +425,8 @@ namespace AgileSouthwestCMSAPI.Migrations
                     b.Property<string>("OrderType")
                         .IsRequired()
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("longtext")
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)")
                         .HasDefaultValue("Standard")
                         .HasColumnName("order_type");
 
@@ -437,7 +439,8 @@ namespace AgileSouthwestCMSAPI.Migrations
                     b.Property<string>("PaymentStatus")
                         .IsRequired()
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("varchar(255)")
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)")
                         .HasDefaultValue("Unpaid")
                         .HasColumnName("payment_status");
 
@@ -500,7 +503,8 @@ namespace AgileSouthwestCMSAPI.Migrations
                     b.Property<string>("Status")
                         .IsRequired()
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("varchar(255)")
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)")
                         .HasDefaultValue("Pending")
                         .HasColumnName("status");
 
@@ -802,7 +806,8 @@ namespace AgileSouthwestCMSAPI.Migrations
                     b.Property<string>("Currency")
                         .IsRequired()
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("longtext")
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)")
                         .HasDefaultValue("Usd")
                         .HasColumnName("currency");
 
@@ -826,7 +831,8 @@ namespace AgileSouthwestCMSAPI.Migrations
                     b.Property<string>("GatewayName")
                         .IsRequired()
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("longtext")
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)")
                         .HasDefaultValue("Stripe")
                         .HasColumnName("gateway_name");
 
@@ -852,7 +858,8 @@ namespace AgileSouthwestCMSAPI.Migrations
                     b.Property<string>("Status")
                         .IsRequired()
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("varchar(255)")
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)")
                         .HasDefaultValue("Pending")
                         .HasColumnName("status");
 
@@ -863,7 +870,8 @@ namespace AgileSouthwestCMSAPI.Migrations
                     b.Property<string>("TransactionType")
                         .IsRequired()
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("longtext")
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)")
                         .HasDefaultValue("Authorize")
                         .HasColumnName("transaction_type");
 

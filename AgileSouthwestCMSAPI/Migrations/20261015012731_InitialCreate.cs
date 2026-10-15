@@ -7,7 +7,7 @@ using MySql.EntityFrameworkCore.Metadata;
 namespace AgileSouthwestCMSAPI.Migrations
 {
     /// <inheritdoc />
-    public partial class AddProductShippingFields : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -250,9 +250,9 @@ namespace AgileSouthwestCMSAPI.Migrations
                     customer_first_name = table.Column<string>(type: "varchar(100)", maxLength: 100, nullable: false),
                     customer_last_name = table.Column<string>(type: "varchar(100)", maxLength: 100, nullable: false),
                     customer_phone = table.Column<string>(type: "varchar(50)", maxLength: 50, nullable: true),
-                    status = table.Column<string>(type: "varchar(255)", nullable: false, defaultValue: "Pending"),
-                    payment_status = table.Column<string>(type: "varchar(255)", nullable: false, defaultValue: "Unpaid"),
-                    fulfillment_status = table.Column<string>(type: "longtext", nullable: true),
+                    status = table.Column<string>(type: "varchar(50)", maxLength: 50, nullable: false, defaultValue: "Pending"),
+                    payment_status = table.Column<string>(type: "varchar(50)", maxLength: 50, nullable: false, defaultValue: "Unpaid"),
+                    fulfillment_status = table.Column<string>(type: "varchar(50)", maxLength: 50, nullable: true),
                     subtotal_cents = table.Column<int>(type: "int", nullable: false),
                     discount_cents = table.Column<int>(type: "int", nullable: false, defaultValue: 0),
                     coupon_code = table.Column<string>(type: "varchar(100)", maxLength: 100, nullable: true),
@@ -275,7 +275,7 @@ namespace AgileSouthwestCMSAPI.Migrations
                     billing_state = table.Column<string>(type: "varchar(100)", maxLength: 100, nullable: true),
                     billing_postal_code = table.Column<string>(type: "varchar(20)", maxLength: 20, nullable: false),
                     billing_country = table.Column<string>(type: "varchar(100)", maxLength: 100, nullable: false),
-                    order_type = table.Column<string>(type: "longtext", nullable: false, defaultValue: "Standard"),
+                    order_type = table.Column<string>(type: "varchar(50)", maxLength: 50, nullable: false, defaultValue: "Standard"),
                     ip_address = table.Column<string>(type: "varchar(45)", maxLength: 45, nullable: true),
                     user_agent = table.Column<string>(type: "TEXT", nullable: true),
                     customer_notes = table.Column<string>(type: "TEXT", nullable: true),
@@ -322,7 +322,7 @@ namespace AgileSouthwestCMSAPI.Migrations
                     description = table.Column<string>(type: "longtext", nullable: false),
                     base_price_cents = table.Column<int>(type: "int", nullable: false),
                     weight_grams = table.Column<int>(type: "int", nullable: false),
-                    requires_shipping = table.Column<bool>(type: "tinyint(1)", nullable: true),
+                    requires_shipping = table.Column<bool>(type: "tinyint(1)", nullable: false),
                     is_active = table.Column<bool>(type: "tinyint(1)", nullable: false),
                     is_enhanced_payment_required = table.Column<bool>(type: "tinyint(1)", nullable: false),
                     created_at = table.Column<DateTime>(type: "DATETIME(6)", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP(6)"),
@@ -405,12 +405,12 @@ namespace AgileSouthwestCMSAPI.Migrations
                     tenant_id = table.Column<int>(type: "int", nullable: false),
                     order_id = table.Column<int>(type: "int", nullable: false),
                     amount_cents = table.Column<int>(type: "int", nullable: false),
-                    transaction_type = table.Column<string>(type: "longtext", nullable: false, defaultValue: "Authorize"),
-                    currency = table.Column<string>(type: "longtext", nullable: false, defaultValue: "Usd"),
-                    gateway_name = table.Column<string>(type: "longtext", nullable: false, defaultValue: "Stripe"),
+                    transaction_type = table.Column<string>(type: "varchar(50)", maxLength: 50, nullable: false, defaultValue: "Authorize"),
+                    currency = table.Column<string>(type: "varchar(50)", maxLength: 50, nullable: false, defaultValue: "Usd"),
+                    gateway_name = table.Column<string>(type: "varchar(50)", maxLength: 50, nullable: false, defaultValue: "Stripe"),
                     gateway_transaction_id = table.Column<string>(type: "varchar(255)", maxLength: 255, nullable: true),
                     gateway_fee_cents = table.Column<int>(type: "int", nullable: true),
-                    status = table.Column<string>(type: "varchar(255)", nullable: false, defaultValue: "Pending"),
+                    status = table.Column<string>(type: "varchar(50)", maxLength: 50, nullable: false, defaultValue: "Pending"),
                     error_code = table.Column<string>(type: "varchar(100)", maxLength: 100, nullable: true),
                     raw_gateway_response = table.Column<string>(type: "JSON", nullable: true),
                     error_message = table.Column<string>(type: "TEXT", nullable: true),

@@ -837,18 +837,21 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
             entity.Property(o => o.Status)
                 .HasColumnName("status")
                 .HasConversion<string>()
+                .HasMaxLength(50)
                 .HasDefaultValue(OrderStatus.Pending)
                 .IsRequired();
 
             entity.Property(o => o.PaymentStatus)
                 .HasColumnName("payment_status")
                 .HasConversion<string>()
+                .HasMaxLength(50)
                 .HasDefaultValue(PaymentStatus.Unpaid)
                 .IsRequired();
 
             entity.Property(o => o.FulfillmentStatus)
                 .HasColumnName("fulfillment_status")
                 .HasConversion<string>()
+                .HasMaxLength(50)
                 .IsRequired(false);
 
             // Amounts (in cents)
@@ -966,6 +969,7 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
             entity.Property(o => o.OrderType)
                 .HasColumnName("order_type")
                 .HasConversion<string>()
+                .HasMaxLength(50)
                 .HasDefaultValue(OrderType.Standard)
                 .IsRequired();
 
@@ -1239,18 +1243,21 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
             entity.Property(pt => pt.TransactionType)
                 .HasColumnName("transaction_type")
                 .HasConversion<string>()
+                .HasMaxLength(50)
                 .HasDefaultValue(TransactionType.Authorize)
                 .IsRequired();
 
             entity.Property(pt => pt.Currency)
                 .HasColumnName("currency")
                 .HasConversion<string>()
+                .HasMaxLength(50)
                 .HasDefaultValue(Currency.Usd)
                 .IsRequired();
 
             entity.Property(pt => pt.GatewayName)
                 .HasColumnName("gateway_name")
                 .HasConversion<string>()
+                .HasMaxLength(50)
                 .HasDefaultValue(GatewayName.Stripe)
                 .IsRequired();
 
@@ -1266,6 +1273,7 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
             entity.Property(pt => pt.Status)
                 .HasColumnName("status")
                 .HasConversion<string>()
+                .HasMaxLength(50)
                 .HasDefaultValue(PaymentTransactionStatus.Pending)
                 .IsRequired();
 
