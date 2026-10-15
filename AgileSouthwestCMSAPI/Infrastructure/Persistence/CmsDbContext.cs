@@ -21,7 +21,7 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
     public DbSet<Inventory> Inventory => Set<Inventory>();
 
     public DbSet<Store> Stores => Set<Store>();
-    
+
     public DbSet<ShippingRate> ShippingRates => Set<ShippingRate>();
 
     public DbSet<Order> Orders => Set<Order>();
@@ -29,7 +29,7 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
     public DbSet<OrderItem> OrderItems => Set<OrderItem>();
 
     public DbSet<TaxCategory> TaxCategories => Set<TaxCategory>();
-    
+
     public DbSet<OrderStatusHistory> OrderStatusHistories => Set<OrderStatusHistory>();
 
     protected override void OnModelCreating(ModelBuilder builder)
@@ -122,6 +122,16 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
             entity.Property(p => p.BasePriceCents)
                 .HasColumnName("base_price_cents")
                 .IsRequired();
+
+            entity.Property(p => p.WeightGrams)
+                .HasColumnName("weight_grams")
+                .IsRequired(); // 0 is the CLR default, so HasDefaultValue(0) would also be safe
+
+            entity.Property(p => p.RequiresShipping)
+                .HasColumnName("requires_shipping")
+                .IsRequired();
+            
+            entity.ToTable(t => t.HasCheckConstraint("CK_products_weight_grams", "weight_grams >= 0"));
 
             entity.Property(p => p.IsActive)
                 .HasColumnName("is_active")
@@ -648,7 +658,7 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
             entity.Property(s => s.Id)
                 .HasColumnName("id")
                 .ValueGeneratedOnAdd();
-            
+
             entity.Property(s => s.TenantId)
                 .HasColumnName("tenant_id")
                 .IsRequired();
@@ -683,11 +693,11 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
             entity.Property(s => s.RowVersion)
                 .HasColumnName("row_version")
                 .IsRowVersion();
-            
+
             entity.HasIndex(s => new { s.TenantId, s.PostalCode })
                 .HasDatabaseName("shipping_rate_tenant_postal_idx");
             entity.HasQueryFilter(s => s.DeletedAt == null);
-            
+
             entity.HasOne(s => s.Tenant)
                 .WithMany(t => t.ShippingRates)
                 .HasForeignKey(s => s.TenantId)
@@ -789,7 +799,7 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
             entity.Property(o => o.ShippingRateId)
                 .HasColumnName("shipping_rate_id")
                 .IsRequired(false);
-            
+
             entity.Property(o => o.IdempotencyKey)
                 .HasColumnName("idempotency_key")
                 .HasMaxLength(64);
@@ -1010,7 +1020,7 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
                 .HasForeignKey(o => o.TenantId)
                 .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("orders_tenant_fk");
-            
+
             entity.HasOne(o => o.ShippingRate)
                 .WithMany(sr => sr.Orders)
                 .HasForeignKey(o => o.ShippingRateId)
@@ -1022,7 +1032,7 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
                 .HasForeignKey(o => o.CustomerId)
                 .OnDelete(DeleteBehavior.SetNull)
                 .HasConstraintName("orders_customer_fk");
-            
+
             // Indexes
             entity.HasIndex(o => o.TenantId)
                 .HasDatabaseName("idx_tenant");
@@ -1053,17 +1063,17 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
 
             entity.HasIndex(o => o.DeletedAt)
                 .HasDatabaseName("idx_deleted");
-            
+
             entity.HasIndex(o => new { o.Status, o.CreatedAt })
                 .HasDatabaseName("idx_orders_stale_pending");
 
             entity.HasIndex(o => new { o.CustomerId, o.CreatedAt, o.Status })
                 .HasDatabaseName("idx_customer_orders");
-            
+
             entity.HasIndex(o => new { o.TenantId, o.IdempotencyKey })
                 .IsUnique()
                 .HasDatabaseName("uk_tenant_idempotency_key");
-            
+
             entity.HasIndex(o => new { o.TenantId, o.OrderNumber })
                 .IsUnique()
                 .HasDatabaseName("uk_tenant_order_number");
@@ -1094,7 +1104,7 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
             entity.Property(oi => oi.TaxCategoryId)
                 .HasColumnName("tax_category_id")
                 .IsRequired(false);
-            
+
             entity.Property(oi => oi.TaxCents)
                 .HasColumnName("tax_cents")
                 .HasDefaultValue(0)
@@ -1438,7 +1448,6 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
                     .HasForeignKey(e => e.TaxCategoryId)
                     .OnDelete(DeleteBehavior.Restrict);
             }
-            
         );
 
         builder.Entity<OrderStatusHistory>(entity =>
@@ -1479,7 +1488,7 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
             entity.Property(o => o.Reason)
                 .HasColumnName("reason")
                 .HasMaxLength(255);
-            
+
             entity.Property(o => o.CreatedAt)
                 .HasColumnName("created_at")
                 .HasColumnType("DATETIME(6)")
@@ -1490,7 +1499,7 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
                 .HasColumnType("DATETIME(6)")
                 .HasDefaultValueSql("CURRENT_TIMESTAMP(6)")
                 .IsRequired();
-            
+
             entity.Property(o => o.DeletedAt)
                 .HasColumnName("deleted_at")
                 .HasColumnType("DATETIME(6)")
@@ -1520,7 +1529,6 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
             entity.HasIndex(o => o.ChangedBy)
                 .HasDatabaseName("idx_changed_by_id");
         });
-
     }
 
     // Optional: keep UpdatedAt accurate at app level (since your SQL default doesn’t auto-update it).
