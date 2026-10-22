@@ -179,6 +179,7 @@ builder.Services.AddScoped<ITenantsService, TenantsService>();
 builder.Services.AddScoped<IShippingRateService, ShippingRateService>();
 builder.Services.AddScoped<IProductsService, ProductsService>();
 builder.Services.AddScoped<IProductImagesService, ProductImagesService>();
+builder.Services.AddScoped<IOrderEmailComposer, OrderEmailComposer>();
 builder.Services.AddHostedService<EmailOutboxWorker>();
 builder.Services.AddScoped<IOrderService, OrdersService>();
 builder.Services.AddScoped<ITaxCategoriesService, TaxCategoriesService>();
