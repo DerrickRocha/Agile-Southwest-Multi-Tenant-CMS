@@ -144,6 +144,74 @@ namespace AgileSouthwestCMSAPI.Migrations
                     b.ToTable("customers", (string)null);
                 });
 
+            modelBuilder.Entity("AgileSouthwestCMSAPI.Domain.Entities.EmailOutboxMessage", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("id");
+
+                    b.Property<int>("Attempts")
+                        .HasColumnType("int")
+                        .HasColumnName("attempts");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("DATETIME(6)")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP(6)");
+
+                    b.Property<string>("LastError")
+                        .HasMaxLength(1000)
+                        .HasColumnType("varchar(1000)")
+                        .HasColumnName("last_error");
+
+                    b.Property<DateTime>("NextAttemptAt")
+                        .HasColumnType("DATETIME(6)")
+                        .HasColumnName("next_attempt_at");
+
+                    b.Property<int>("OrderId")
+                        .HasColumnType("int")
+                        .HasColumnName("order_id");
+
+                    b.Property<DateTime?>("SentAt")
+                        .HasColumnType("DATETIME(6)")
+                        .HasColumnName("sent_at");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)")
+                        .HasColumnName("status");
+
+                    b.Property<int>("TenantId")
+                        .HasColumnType("int")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)")
+                        .HasColumnName("type");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("DATETIME(6)")
+                        .HasColumnName("updated_at")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP(6)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrderId", "Type")
+                        .IsUnique()
+                        .HasDatabaseName("uk_email_outbox_order_type");
+
+                    b.HasIndex("Status", "NextAttemptAt")
+                        .HasDatabaseName("idx_email_outbox_pending");
+
+                    b.ToTable("email_outbox", (string)null);
+                });
+
             modelBuilder.Entity("AgileSouthwestCMSAPI.Domain.Entities.Image", b =>
                 {
                     b.Property<int>("Id")
@@ -1481,6 +1549,18 @@ namespace AgileSouthwestCMSAPI.Migrations
                     b.Navigation("CmsUser");
 
                     b.Navigation("Tenant");
+                });
+
+            modelBuilder.Entity("AgileSouthwestCMSAPI.Domain.Entities.EmailOutboxMessage", b =>
+                {
+                    b.HasOne("AgileSouthwestCMSAPI.Domain.Entities.Order", "Order")
+                        .WithMany()
+                        .HasForeignKey("OrderId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("email_outbox_order_fk");
+
+                    b.Navigation("Order");
                 });
 
             modelBuilder.Entity("AgileSouthwestCMSAPI.Domain.Entities.Image", b =>
