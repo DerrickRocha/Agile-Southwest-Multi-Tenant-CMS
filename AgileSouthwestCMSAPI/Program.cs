@@ -1,5 +1,6 @@
 using System.Text.Json;
 using AgileSouthwestCMSAPI.Api.Middleware;
+using AgileSouthwestCMSAPI.Application;
 using AgileSouthwestCMSAPI.Application.DTOs.Tenants;
 using AgileSouthwestCMSAPI.Application.Interfaces;
 using AgileSouthwestCMSAPI.Application.Services;
@@ -178,6 +179,7 @@ builder.Services.AddScoped<ITenantsService, TenantsService>();
 builder.Services.AddScoped<IShippingRateService, ShippingRateService>();
 builder.Services.AddScoped<IProductsService, ProductsService>();
 builder.Services.AddScoped<IProductImagesService, ProductImagesService>();
+builder.Services.AddHostedService<EmailOutboxWorker>();
 builder.Services.AddScoped<IOrderService, OrdersService>();
 builder.Services.AddScoped<ITaxCategoriesService, TaxCategoriesService>();
 builder.Services.AddScoped<IInventoryService, InventoryService>();
