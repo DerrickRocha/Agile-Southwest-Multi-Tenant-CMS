@@ -51,7 +51,7 @@ public class OrdersService(
         var order = await PersistAsync(tenantId, request, email, idempotencyKey, priced, ct);
         return ToResult(order);
     }
-    
+
     private async Task<PricedOrder> PriceOrderAsync(int tenantId, CreateOrderRequest request, CancellationToken ct)
     {
         var productIds = request.Items.Select(i => i.ProductId).Distinct().ToList();
@@ -111,7 +111,7 @@ public class OrdersService(
 
         return new PricedOrder(items, subtotalCents, taxTotalCents, shippingCents, shippingRateId, totalCents);
     }
-    
+
     private async Task<(int? RateId, int Cents)> ResolveShippingAsync(
         int tenantId,
         int? shippingRateId,
@@ -144,17 +144,17 @@ public class OrdersService(
 
         return (rate.Id, rate.PriceCents);
     }
-    
+
     private static string NormalizePostalCode(string value) =>
         new string(value.Where(char.IsLetterOrDigit).ToArray()).ToUpperInvariant();
-    
+
     private static int ToCents(decimal value)
     {
         if (value < 0 || value > int.MaxValue)
             throw new ValidationException("Order total is too large.");
         return (int)value;
     }
-    
+
     private static (int UnitPriceCents, List<OrderItemOptionSnapshot> Options) PriceItem(
         Product product, Dictionary<int, int>? selectedOptions)
     {
@@ -186,7 +186,7 @@ public class OrdersService(
 
         return ((int)unitPrice, snapshot);
     }
-    
+
     private static CreateOrderResult ToResult(Order order) => new(
         Id: order.Id,
         OrderNumber: order.OrderNumber,
@@ -211,7 +211,7 @@ public class OrdersService(
             SelectedOptions: ParseOptions(i.OptionDetails)
                 .Select(o => new CreateOrderItemOptionResult(o.OptionName, o.ChoiceName, o.PriceDeltaCents))
                 .ToList())).ToList());
-    
+
     private static string ValidateRequest(CreateOrderRequest request)
     {
         if (request.Items is not { Count: > 0 and <= MaxItems })
@@ -241,7 +241,7 @@ public class OrdersService(
 
         return email;
     }
-    
+
     private static void ValidateAddress(AddressRequest? address, string label)
     {
         if (address is null) throw new ValidationException($"{label} address is required.");
@@ -256,7 +256,7 @@ public class OrdersService(
         if (address.State is { Length: > 100 })
             throw new ValidationException($"{label} state is too long.");
     }
-    
+
     private static string ParseEmail(string? value)
     {
         var trimmed = value?.Trim();
@@ -266,7 +266,7 @@ public class OrdersService(
 
         return mailbox.Address;
     }
-    
+
     private static void RequireText(string? value, string field, int maxLength)
     {
         var trimmed = value?.Trim();
@@ -627,6 +627,14 @@ public class OrdersService(
             var order = BuildOrder(tenantId, request, email, idempotencyKey, priced, ipAddress, userAgent);
             database.Orders.Add(order);
 
+            database.EmailOutbox.Add(new EmailOutboxMessage
+            {
+                TenantId = tenantId,
+                Order = order, // navigation: EF fills in OrderId after the order is inserted
+                Type = EmailType
+                    .OrderReceived // see notes: usually the receipt is queued by the payment webhook instead
+            });
+            
             try
             {
                 await database.SaveChangesAsync(ct);
@@ -740,7 +748,7 @@ public class OrdersService(
 
     private static bool IsUniqueViolation(DbUpdateException ex) =>
         ex.InnerException is MySqlException { Number: 1062 };
-    
+
     private Task<Order?> FindByIdempotencyKeyAsync(int tenantId, string key, CancellationToken ct) =>
         database.Orders
             .AsNoTracking()
