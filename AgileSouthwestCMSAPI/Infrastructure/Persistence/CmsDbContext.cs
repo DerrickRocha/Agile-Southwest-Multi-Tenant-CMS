@@ -32,6 +32,8 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
 
     public DbSet<OrderStatusHistory> OrderStatusHistories => Set<OrderStatusHistory>();
 
+    public DbSet<EmailOutboxMessage> EmailOutbox => Set<EmailOutboxMessage>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
@@ -130,7 +132,7 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
             entity.Property(p => p.RequiresShipping)
                 .HasColumnName("requires_shipping")
                 .IsRequired();
-            
+
             entity.ToTable(t => t.HasCheckConstraint("CK_products_weight_grams", "weight_grams >= 0"));
 
             entity.Property(p => p.IsActive)
@@ -1537,6 +1539,46 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
             entity.HasIndex(o => o.ChangedBy)
                 .HasDatabaseName("idx_changed_by_id");
         });
+
+        builder.Entity<EmailOutboxMessage>(entity =>
+            {
+                entity.ToTable("email_outbox");
+                entity.HasKey(o => o.Id);
+                entity.Property(o => o.Id)
+                    .HasColumnName("id")
+                    .ValueGeneratedOnAdd();
+                entity.Property(o => o.TenantId)
+                    .HasColumnName("tenant_id")
+                    .IsRequired();
+                entity.Property(o => o.OrderId)
+                    .HasColumnName("order_id")
+                    .IsRequired();
+                // Always set a max length on string-converted enums (longtext + default breaks on MySQL).
+                entity.Property(m => m.Type).HasColumnName("type").HasConversion<string>().HasMaxLength(50)
+                    .IsRequired();
+                entity.Property(m => m.Status).HasColumnName("status").HasConversion<string>().HasMaxLength(50)
+                    .IsRequired();
+
+                entity.Property(m => m.Attempts).HasColumnName("attempts").IsRequired();
+                entity.Property(m => m.NextAttemptAt).HasColumnName("next_attempt_at").HasColumnType("DATETIME(6)")
+                    .IsRequired();
+                entity.Property(m => m.SentAt).HasColumnName("sent_at").HasColumnType("DATETIME(6)");
+                entity.Property(m => m.LastError).HasColumnName("last_error").HasMaxLength(1000);
+                entity.Property(m => m.CreatedAt).HasColumnName("created_at").HasColumnType("DATETIME(6)")
+                    .HasDefaultValueSql("CURRENT_TIMESTAMP(6)").IsRequired();
+                entity.Property(m => m.UpdatedAt).HasColumnName("updated_at").HasColumnType("DATETIME(6)")
+                    .HasDefaultValueSql("CURRENT_TIMESTAMP(6)").IsRequired();
+
+                entity.HasOne(m => m.Order).WithMany().HasForeignKey(m => m.OrderId)
+                    .OnDelete(DeleteBehavior.Restrict).HasConstraintName("email_outbox_order_fk");
+
+                // One email of each type per order: retries and replays can never queue a duplicate.
+                entity.HasIndex(m => new { m.OrderId, m.Type }).IsUnique()
+                    .HasDatabaseName("uk_email_outbox_order_type");
+                // The worker's polling query.
+                entity.HasIndex(m => new { m.Status, m.NextAttemptAt }).HasDatabaseName("idx_email_outbox_pending");
+            }
+        );
     }
 
     // Optional: keep UpdatedAt accurate at app level (since your SQL default doesn’t auto-update it).
