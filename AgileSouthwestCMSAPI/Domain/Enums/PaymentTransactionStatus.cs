@@ -2,7 +2,7 @@ namespace AgileSouthwestCMSAPI.Domain.Enums;
 
 public enum PaymentTransactionStatus
 {
-    Success,
-    Failed,
-    Pending
+    Pending = 0,
+    Success = 1,
+    Failed = 2
 }
