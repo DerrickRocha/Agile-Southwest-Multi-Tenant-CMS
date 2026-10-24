@@ -57,6 +57,10 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
                 .HasColumnName("sub_domain")
                 .IsRequired()
                 .HasMaxLength(100);
+            
+            entity.Property(t => t.NotificationEmail)
+                .HasColumnName("notification_email")
+                .HasMaxLength(254);
 
             entity.Property(t => t.CustomDomain)
                 .HasColumnName("custom_domain")

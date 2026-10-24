@@ -1457,6 +1457,12 @@ namespace AgileSouthwestCMSAPI.Migrations
                         .HasColumnType("varchar(200)")
                         .HasColumnName("name");
 
+                    b.Property<string>("NotificationEmail")
+                        .IsRequired()
+                        .HasMaxLength(254)
+                        .HasColumnType("varchar(254)")
+                        .HasColumnName("notification_email");
+
                     b.Property<DateTime>("RowVersion")
                         .IsConcurrencyToken()
                         .ValueGeneratedOnAddOrUpdate()

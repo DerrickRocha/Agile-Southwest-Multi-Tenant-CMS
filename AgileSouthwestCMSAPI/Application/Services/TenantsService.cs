@@ -3,9 +3,11 @@ using AgileSouthwestCMSAPI.Application.Exceptions;
 using AgileSouthwestCMSAPI.Application.Interfaces;
 using AgileSouthwestCMSAPI.Domain.Entities;
 using AgileSouthwestCMSAPI.Domain.Enums;
+using AgileSouthwestCMSAPI.Domain.Mail;
 using AgileSouthwestCMSAPI.Domain.ValueObjects;
 using AgileSouthwestCMSAPI.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using MimeKit;
 
 namespace AgileSouthwestCMSAPI.Application.Services;
 
@@ -25,7 +27,8 @@ public class TenantsService(CmsDbContext database, ITenantContext context, ICmsU
         {
             Name = request.Name,
             CustomDomain = normalizedCustomDomain,
-            SubDomain = normalizedSubdomain
+            SubDomain = normalizedSubdomain,
+            NotificationEmail = EmailAddressValidator.Normalize(request.NotificationEmail, "Notification email")
         };
         database.Tenants.Add(tenant);
 
