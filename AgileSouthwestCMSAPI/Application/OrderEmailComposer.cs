@@ -175,73 +175,49 @@ public class OrderEmailComposer(CmsDbContext db) : IOrderEmailComposer
 
     // ------------------------------------------------------------------ HTML
 
-    private static string BuildHtml(Order order, string heading, string intro)
+        private static string BuildHtml(Order order, string heading, string intro)
     {
-        var rows = new StringBuilder();
-        foreach (var item in order.OrderItems.OrderBy(i => i.Id))
-        {
-            var options = DescribeOptions(item.OptionDetails);
-            rows.Append($"""
-                         <tr>
-                           <td style="padding:8px 0;border-bottom:1px solid #eeeeee;">
-                             {Enc(item.ProductName)} &times; {item.Quantity}
-                             {(options.Length > 0 ? $"<br /><span style=\"color:#666666;font-size:13px;\">{Enc(options)}</span>" : "")}
-                           </td>
-                           <td align="right" style="padding:8px 0;border-bottom:1px solid #eeeeee;white-space:nowrap;">
-                             {Enc(Money(item.TotalPriceCents))}
-                           </td>
-                         </tr>
-                         """);
-        }
-
-        var totals = new StringBuilder();
-        AppendTotalRow(totals, "Subtotal", order.SubtotalCents);
-        if (order.DiscountCents + order.CouponDiscountCents > 0)
-            AppendTotalRow(totals, "Discount", -(order.DiscountCents + order.CouponDiscountCents));
-        AppendTotalRow(totals, "Tax", order.TaxCents);
-        AppendTotalRow(totals, "Shipping", order.ShippingCents);
-        AppendTotalRow(totals, "Total", order.TotalCents, bold: true);
-
+        var rows = BuildItemRows(order);
+        var totals = BuildTotalRows(order);
+ 
         var shipping = order.ShippingRateId is null
             ? ""
-            : $"""
-               <p style="margin:20px 0 4px 0;"><strong>Shipping to</strong></p>
-               <p style="margin:0;line-height:1.5;">{Enc(ShippingAddressLines(order)).Replace("\n", "<br />")}</p>
-               """;
-
+            : Section("Shipping to", AddressHtml(ShippingAddressLines(order)));
+ 
         return $"""
-                <!DOCTYPE html>
-                <html lang="en">
-                <body style="margin:0;padding:24px;background-color:#f4f5f7;font-family:Arial,Helvetica,sans-serif;color:#222222;">
-                  <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-                    <tr>
-                      <td align="center">
-                        <table role="presentation" width="600" cellpadding="0" cellspacing="0"
-                               style="max-width:600px;background-color:#ffffff;border-radius:6px;padding:24px;">
-                          <tr>
-                            <td>
-                              <h2 style="margin:0 0 16px 0;font-size:20px;">{Enc(heading)}</h2>
-                              <p style="margin:0 0 12px 0;">Hi {Enc(order.CustomerFirstName)},</p>
-                              <p style="margin:0 0 16px 0;">{Enc(intro)}</p>
-                              <p style="margin:0 0 16px 0;"><strong>Order number:</strong> {Enc(order.OrderNumber)}</p>
-                              <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-                                {rows}
-                              </table>
-                              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:12px;">
-                                {totals}
-                              </table>
-                              {shipping}
-                              <p style="margin:24px 0 0 0;color:#666666;font-size:13px;">{Enc(order.Tenant.Name)}</p>
-                            </td>
-                          </tr>
-                        </table>
-                      </td>
-                    </tr>
-                  </table>
-                </body>
-                </html>
-                """;
+            <!DOCTYPE html>
+            <html lang="en">
+            <body style="margin:0;padding:24px;background-color:#f4f5f7;font-family:Arial,Helvetica,sans-serif;color:#222222;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="center">
+                    <table role="presentation" width="600" cellpadding="0" cellspacing="0"
+                           style="max-width:600px;background-color:#ffffff;border-radius:6px;padding:24px;">
+                      <tr>
+                        <td>
+                          <h2 style="margin:0 0 16px 0;font-size:20px;">{Enc(heading)}</h2>
+                          <p style="margin:0 0 12px 0;">Hi {Enc(order.CustomerFirstName)},</p>
+                          <p style="margin:0 0 16px 0;">{Enc(intro)}</p>
+                          <p style="margin:0 0 16px 0;"><strong>Order number:</strong> {Enc(order.OrderNumber)}</p>
+                          <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                            {rows}
+                          </table>
+                          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:12px;">
+                            {totals}
+                          </table>
+                          {shipping}
+                          <p style="margin:24px 0 0 0;color:#666666;font-size:13px;">{Enc(order.Tenant.Name)}</p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </body>
+            </html>
+            """;
     }
+
 
     private static void AppendTotalRow(StringBuilder sb, string label, int cents, bool bold = false)
     {
@@ -254,10 +230,6 @@ public class OrderEmailComposer(CmsDbContext db) : IOrderEmailComposer
                    """);
     }
     
-    
-
-    // ------------------------------------------------------------------ plain text
-
     private static string BuildMerchantText(Order order)
     {
         var sb = new StringBuilder();
@@ -346,36 +318,21 @@ public class OrderEmailComposer(CmsDbContext db) : IOrderEmailComposer
         sb.AppendLine();
         sb.AppendLine($"Order number: {order.OrderNumber}");
         sb.AppendLine();
-
-        foreach (var item in order.OrderItems.OrderBy(i => i.Id))
-        {
-            var options = DescribeOptions(item.OptionDetails);
-            sb.AppendLine($"{item.ProductName} x {item.Quantity}  {Money(item.TotalPriceCents)}");
-            if (options.Length > 0) sb.AppendLine($"  {options}");
-        }
-
-        sb.AppendLine();
-        sb.AppendLine($"Subtotal: {Money(order.SubtotalCents)}");
-        if (order.DiscountCents + order.CouponDiscountCents > 0)
-            sb.AppendLine($"Discount: {Money(-(order.DiscountCents + order.CouponDiscountCents))}");
-        sb.AppendLine($"Tax: {Money(order.TaxCents)}");
-        sb.AppendLine($"Shipping: {Money(order.ShippingCents)}");
-        sb.AppendLine($"Total: {Money(order.TotalCents)}");
-
+ 
+        AppendItemsAndTotals(sb, order);
+ 
         if (order.ShippingRateId is not null)
         {
             sb.AppendLine();
             sb.AppendLine("Shipping to:");
             sb.AppendLine(ShippingAddressLines(order));
         }
-
+ 
         sb.AppendLine();
         sb.AppendLine(order.Tenant.Name);
         return sb.ToString();
     }
-
-    // ------------------------------------------------------------------ helpers
-
+    
     private static string ShippingAddressLines(Order order)
     {
         var lines = new List<string> { order.ShippingAddressLine1 };
