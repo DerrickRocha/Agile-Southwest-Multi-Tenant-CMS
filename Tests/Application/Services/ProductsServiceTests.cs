@@ -52,6 +52,7 @@ public class ProductsServiceTests
             Id = 1,
             Name = "Tenant",
             SubDomain = "tenant",
+            NotificationEmail = "test@test.com"
         };
 
         var tenantContext = new Mock<ITenantContext>();
@@ -85,6 +86,7 @@ public class ProductsServiceTests
             Id = 1,
             Name = "Tenant",
             SubDomain = "tenant",
+            NotificationEmail = "test@test.com"
         };
 
         var tenantContext = new Mock<ITenantContext>();
@@ -117,6 +119,7 @@ public class ProductsServiceTests
             Id = 1,
             Name = "Tenant",
             SubDomain = "tenant",
+            NotificationEmail = "test@test.com"
         };
 
         var tenantContext = new Mock<ITenantContext>();
@@ -164,6 +167,7 @@ public class ProductsServiceTests
             Id = 1,
             Name = "Tenant",
             SubDomain = "tenant",
+            NotificationEmail = "test@test.com"
         };
 
 
@@ -211,6 +215,7 @@ public class ProductsServiceTests
             Id = 1,
             Name = "Tenant",
             SubDomain = "tenant",
+            NotificationEmail = "test@test.com"
         };
 
         var tenantContext = new Mock<ITenantContext>();
@@ -257,6 +262,7 @@ public class ProductsServiceTests
             Id = 1,
             Name = "Tenant",
             SubDomain = "tenant",
+            NotificationEmail = "test@test.com"
         };
 
         var tenantContext = new Mock<ITenantContext>();
@@ -323,7 +329,8 @@ public class ProductsServiceTests
         {
             Id = 1,
             Name = "Tenant",
-            SubDomain = "tenant"
+            SubDomain = "tenant",
+            NotificationEmail = "test@test.com"
         };
 
         db.Products.Add(new Product
@@ -399,7 +406,8 @@ public class ProductsServiceTests
         {
             Id = 1,
             Name = "Tenant",
-            SubDomain = "tenant"
+            SubDomain = "tenant",
+            NotificationEmail = "test@test.com"
         };
 
         var tenantContext = new Mock<ITenantContext>();
@@ -430,7 +438,8 @@ public class ProductsServiceTests
         {
             Id = 1,
             Name = "Tenant",
-            SubDomain = "tenant"
+            SubDomain = "tenant",
+            NotificationEmail = "test@test.com"
         };
 
         db.Products.Add(new Product
@@ -487,7 +496,8 @@ public class ProductsServiceTests
         {
             Id = 1,
             Name = "Tenant",
-            SubDomain = "tenant"
+            SubDomain = "tenant",
+            NotificationEmail = "test@test.com"
         };
 
         var tenantContext = new Mock<ITenantContext>();
@@ -509,7 +519,8 @@ public class ProductsServiceTests
         {
             Id = 1,
             Name = "Tenant",
-            SubDomain = "tenant"
+            SubDomain = "tenant",
+            NotificationEmail = "test@test.com"
         };
 
         db.Products.Add(new Product
@@ -561,7 +572,8 @@ public class ProductsServiceTests
         {
             Id = 1,
             Name = "Tenant",
-            SubDomain = "tenant"
+            SubDomain = "tenant",
+            NotificationEmail = "test@test.com"
         };
 
         db.Products.Add(new Product
@@ -648,7 +660,8 @@ public class ProductsServiceTests
         {
             Id = 1,
             Name = "Tenant",
-            SubDomain = "tenant"
+            SubDomain = "tenant",
+            NotificationEmail = "test@test.com"
         };
 
         db.Products.Add(new Product
@@ -691,7 +704,8 @@ public class ProductsServiceTests
         {
             Id = 1,
             Name = "Tenant",
-            SubDomain = "tenant"
+            SubDomain = "tenant",
+            NotificationEmail = "test@test.com"
         };
 
         var tenantContext = new Mock<ITenantContext>();
@@ -734,8 +748,8 @@ public class ProductsServiceTests
     {
         await using var db = CreateDb();
 
-        var tenant = new Tenant { Id = 1, Name = "Tenant", SubDomain = "tenant" };
-        var otherTenant = new Tenant { Id = 2, Name = "Other", SubDomain = "other" };
+        var tenant = new Tenant { Id = 1, Name = "Tenant", SubDomain = "tenant", NotificationEmail = "test@test.com" };
+        var otherTenant = new Tenant { Id = 2, Name = "Other", SubDomain = "other", NotificationEmail = "test@test.com" };
 
         db.Products.AddRange(
             new Product
@@ -785,7 +799,7 @@ public class ProductsServiceTests
     {
         await using var db = CreateDb();
 
-        var tenant = new Tenant { Id = 1, Name = "Tenant", SubDomain = "tenant" };
+        var tenant = new Tenant { Id = 1, Name = "Tenant", SubDomain = "tenant", NotificationEmail = "test@test.com" };
 
         db.Products.AddRange(
             new Product
@@ -825,7 +839,7 @@ public class ProductsServiceTests
     {
         await using var db = CreateDb();
 
-        var tenant = new Tenant { Id = 1, Name = "Tenant", SubDomain = "tenant" };
+        var tenant = new Tenant { Id = 1, Name = "Tenant", SubDomain = "tenant", NotificationEmail = "test@test.com" };
 
         db.Products.AddRange(
             new Product
@@ -865,7 +879,7 @@ public class ProductsServiceTests
     {
         await using var db = CreateDb();
 
-        var tenant = new Tenant { Id = 1, Name = "Tenant", SubDomain = "tenant" };
+        var tenant = new Tenant { Id = 1, Name = "Tenant", SubDomain = "tenant", NotificationEmail = "test@test.com" };
 
         for (var i = 1; i <= 5; i++)
         {
@@ -902,7 +916,7 @@ public class ProductsServiceTests
     {
         await using var db = CreateDb();
 
-        var tenant = new Tenant { Id = 1, Name = "Tenant", SubDomain = "tenant" };
+        var tenant = new Tenant { Id = 1, Name = "Tenant", SubDomain = "tenant", NotificationEmail = "test@test.com" };
 
         var tenantContext = new Mock<ITenantContext>();
         tenantContext.SetupGet(x => x.Tenant).Returns(tenant);
@@ -930,7 +944,7 @@ public class ProductsServiceTests
     [Fact]
     public async Task DeleteProduct_DeletesProduct()
     {
-        var tenant = new Tenant { Id = 1, Name = "Tenant", SubDomain = "tenant" };
+        var tenant = new Tenant { Id = 1, Name = "Tenant", SubDomain = "tenant", NotificationEmail = "test@test.com" };
 
         var tenantContext = new Mock<ITenantContext>();
         tenantContext.SetupGet(x => x.Tenant).Returns(tenant);
@@ -948,7 +962,7 @@ public class ProductsServiceTests
     
     [Fact]
     public async Task DeleteProduct_ThrowsKeyNotFound_WhenProductMissing() {
-        var tenant = new Tenant { Id = 1, Name = "Tenant", SubDomain = "tenant" };
+        var tenant = new Tenant { Id = 1, Name = "Tenant", SubDomain = "tenant", NotificationEmail = "test@test.com" };
         var tenantContext = new Mock<ITenantContext>();
         tenantContext.SetupGet(x => x.Tenant).Returns(tenant);
         await using var db = CreateDb();
@@ -971,7 +985,7 @@ public class ProductsServiceTests
     
     [Fact]
     public async Task DeleteProduct_ThrowsInvalidOperationException_WhenProductIsDeleted() {
-        var tenant = new Tenant { Id = 1, Name = "Tenant", SubDomain = "tenant" };
+        var tenant = new Tenant { Id = 1, Name = "Tenant", SubDomain = "tenant", NotificationEmail = "test@test.com" };
         var tenantContext = new Mock<ITenantContext>();
         tenantContext.SetupGet(x => x.Tenant).Returns(tenant);
         await using var db = CreateDb();
