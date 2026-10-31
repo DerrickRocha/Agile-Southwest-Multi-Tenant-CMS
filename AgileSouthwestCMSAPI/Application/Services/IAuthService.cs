@@ -2,6 +2,7 @@ using AgileSouthwestCMSAPI.Application.DTOs.Auth;
 using AgileSouthwestCMSAPI.Application.DTOs.Cognito;
 using AgileSouthwestCMSAPI.Domain.Entities;
 using AgileSouthwestCMSAPI.Domain.Enums;
+using AgileSouthwestCMSAPI.Domain.Mail;
 using AgileSouthwestCMSAPI.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -64,17 +65,19 @@ public class AuthService(
 
     private async Task<SignupResult> WriteSignupData(SignupRequest request, string normalizedSubdomain, string cognitoSub, bool userConfirmed)
     {
+        var email = EmailAddressValidator.Normalize(request.Email, "Notification email");
         var tenant = new Tenant
         {
             Name = request.CompanyName,
-            SubDomain = normalizedSubdomain
+            SubDomain = normalizedSubdomain,
+            NotificationEmail = email
         };
         
         var userTenant = new UserTenant { Role = UserTenantRole.Admin, Tenant = tenant};
         var user = new CmsUser
         {
             CognitoUserId = cognitoSub,
-            Email = request.Email,
+            Email = email,
             Role = UserRole.Admin,
             Status = UserStatus.Active,
             UserTenants = [userTenant]

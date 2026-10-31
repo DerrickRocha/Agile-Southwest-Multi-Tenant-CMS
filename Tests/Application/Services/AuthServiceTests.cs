@@ -77,6 +77,7 @@ public class AuthServiceTests
             Id = 1,
             Name = "Existing",
             SubDomain = "test-co",
+            NotificationEmail = "test@test.com",
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         });
@@ -159,6 +160,7 @@ public class AuthServiceTests
             Id = 1,
             Name = "Test",
             SubDomain = "test",
+            NotificationEmail = "test@test.com",
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
@@ -202,6 +204,7 @@ public class AuthServiceTests
             Id = 1,
             Name = "Test",
             SubDomain = "test",
+            NotificationEmail = "test@test.com",
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };

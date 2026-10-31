@@ -45,7 +45,8 @@ public class TenantControllerTests
         var request = new AddTenantRequest
         {
             Name = "Tenant",
-            SubDomain = "tenant"
+            SubDomain = "tenant",
+            NotificationEmail = "tenant@example.com"
         };
         var fixedDate = new DateTime(2024, 1, 15, 10, 30, 0, DateTimeKind.Utc);
 

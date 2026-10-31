@@ -9,6 +9,8 @@ namespace Tests;
 
 public class ApiFactory : WebApplicationFactory<Program>
 {
+    private readonly string _databaseName = $"tests-{Guid.NewGuid():N}";
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Test"); // Important
@@ -26,7 +28,7 @@ public class ApiFactory : WebApplicationFactory<Program>
 
             // Add InMemory for testing
             services.AddDbContext<CmsDbContext>(options =>
-                options.UseInMemoryDatabase(Guid.NewGuid().ToString())
+                options.UseInMemoryDatabase(_databaseName)
             );
 
             // Fake authentication

@@ -14,6 +14,9 @@ public class Tenant
     [Column( "sub_domain" )]
     public required string SubDomain { set; get; }
     
+    [Column( "notification_email" )]
+    public required string NotificationEmail { set; get;}
+    
     [Column( "custom_domain" )]
     public string? CustomDomain { set; get; }
     
