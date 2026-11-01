@@ -10,7 +10,7 @@ using MimeKit;
 namespace AgileSouthwestCMSAPI.Application.Services;
 
 public class ContactService(
-    IEmailQueue queue,
+    IEmailSender sender,
     IOptions<ContactOptions> options,
     ILogger<ContactService> logger
 ) : IContactService
@@ -39,7 +39,7 @@ public class ContactService(
                 TextBody: $"New contact form message\nFrom: {firstName} {lastName}\nEmail: {email}\n\n{message}",
                 ReplyTo: email);
 
-            await queue.EnqueueAsync(emailMessage, ct);
+            await sender.SendAsync(emailMessage, ct);
         }
         catch (OperationCanceledException)
         {

@@ -11,6 +11,6 @@ public record CreateOrderRequest(
     [Required] AddressRequest ShippingAddress,
     AddressRequest? BillingAddress,
     int? ShippingRateId,
-    int? TaxCategoryId,
+    [StringLength(64)] string? IdempotencyKey, 
     string? CustomerNotes
 );

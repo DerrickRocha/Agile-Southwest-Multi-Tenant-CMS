@@ -22,6 +22,12 @@ public class Product
     [Column("base_price_cents")]
     public int BasePriceCents { get; set; }
     
+    [Column("weight_grams")]
+    public int WeightGrams { get; set; }
+    
+    [Column("requires_shipping")]
+    public bool RequiresShipping { get; set; } = true; 
+    
     [Column("is_active")]
     public bool IsActive { get; set; }
     

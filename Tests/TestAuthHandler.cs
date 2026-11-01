@@ -9,18 +9,26 @@ namespace Tests;
 public class TestAuthHandler(
     IOptionsMonitor<AuthenticationSchemeOptions> options,
     ILoggerFactory logger,
-    UrlEncoder encoder,
-    ISystemClock clock)
-    : AuthenticationHandler<AuthenticationSchemeOptions>(options, logger, encoder, clock)
+    UrlEncoder encoder)
+    : AuthenticationHandler<AuthenticationSchemeOptions>(options, logger, encoder)
 {
     protected override Task<AuthenticateResult> HandleAuthenticateAsync()
     {
-        var claims = new[]
+        var userId = Request.Headers.TryGetValue("X-Test-User-Id", out var userIdHeader)
+            ? userIdHeader.ToString()
+            : "test-user";
+
+        var claims = new List<Claim>
         {
-            new Claim(ClaimTypes.NameIdentifier, "test-user"),
-            new Claim("sub", "test-user"),
-            new Claim(ClaimTypes.Role, "Admin")
+            new(ClaimTypes.NameIdentifier, userId),
+            new("sub", userId)
         };
+
+        if (Request.Headers.TryGetValue("X-Test-Role", out var roleHeader) &&
+            !string.IsNullOrWhiteSpace(roleHeader))
+        {
+            claims.Add(new Claim(ClaimTypes.Role, roleHeader.ToString()));
+        }
 
         var identity = new ClaimsIdentity(claims, "Test");
 

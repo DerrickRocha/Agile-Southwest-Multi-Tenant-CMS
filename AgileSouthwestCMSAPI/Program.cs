@@ -1,5 +1,6 @@
 using System.Text.Json;
 using AgileSouthwestCMSAPI.Api.Middleware;
+using AgileSouthwestCMSAPI.Application;
 using AgileSouthwestCMSAPI.Application.DTOs.Tenants;
 using AgileSouthwestCMSAPI.Application.Interfaces;
 using AgileSouthwestCMSAPI.Application.Services;
@@ -165,8 +166,6 @@ builder.Services.AddSingleton<IS3Service, S3Service>();
 builder.Services.Configure<EmailOptions>(builder.Configuration.GetSection("Email"));
 builder.Services.Configure<ContactOptions>(builder.Configuration.GetSection("Contact"));
 builder.Services.AddScoped<IEmailSender, MailkitEmailSender>();
-builder.Services.AddSingleton<IEmailQueue, EmailQueue>();
-builder.Services.AddHostedService<EmailWorker>();
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ITenantContext, TenantContext>();
@@ -178,6 +177,8 @@ builder.Services.AddScoped<ITenantsService, TenantsService>();
 builder.Services.AddScoped<IShippingRateService, ShippingRateService>();
 builder.Services.AddScoped<IProductsService, ProductsService>();
 builder.Services.AddScoped<IProductImagesService, ProductImagesService>();
+builder.Services.AddScoped<IOrderEmailComposer, OrderEmailComposer>();
+builder.Services.AddHostedService<EmailOutboxWorker>();
 builder.Services.AddScoped<IOrderService, OrdersService>();
 builder.Services.AddScoped<ITaxCategoriesService, TaxCategoriesService>();
 builder.Services.AddScoped<IInventoryService, InventoryService>();

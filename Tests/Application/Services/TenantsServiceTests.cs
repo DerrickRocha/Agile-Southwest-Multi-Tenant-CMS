@@ -50,7 +50,8 @@ public class TenantsServiceTests
         var request = new AddTenantRequest
         {
             Name = "Tenant",
-            SubDomain = "Tenant"
+            SubDomain = "Tenant",
+            NotificationEmail = "tenant@example.com"
         };
 
         var result = await service.AddTenant(request);
@@ -76,7 +77,8 @@ public class TenantsServiceTests
         var request = new AddTenantRequest
         {
             Name = "Tenant",
-            SubDomain = "tenant"
+            SubDomain = "tenant",
+            NotificationEmail = "tenant@example.com"
         };
 
         await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
@@ -93,6 +95,7 @@ public class TenantsServiceTests
             Id = 1,
             Name = "Tenant",
             SubDomain = "tenant",
+            NotificationEmail = "tenant@example.com",
             RowVersion = fixedDate
         };
 
@@ -121,6 +124,7 @@ public class TenantsServiceTests
             Id = 1,
             Name = "Old",
             SubDomain = "old",
+            NotificationEmail = "tenant@example.com",
             RowVersion = fixedDate
         };
 
@@ -160,7 +164,8 @@ public class TenantsServiceTests
         {
             Id = 1,
             Name = "Tenant",
-            SubDomain = "tenant"
+            SubDomain = "tenant",
+            NotificationEmail = "tenant@example.com"
         };
 
         var tenantContext = new Mock<ITenantContext>();
@@ -196,6 +201,7 @@ public class TenantsServiceTests
             Id = 1,
             Name = "TenantA",
             SubDomain = "a",
+            NotificationEmail = "tenant@example.com",
             RowVersion = fixedDate
         };
 
@@ -231,6 +237,7 @@ public class TenantsServiceTests
             Id = 1,
             Name = "Tenant",
             SubDomain = "tenant",
+            NotificationEmail = "tenant@example.com",
             RowVersion = fixedDate
         };
 
@@ -271,6 +278,7 @@ public class TenantsServiceTests
             Id = 1,
             Name = "TenantA",
             SubDomain = "a",
+            NotificationEmail = "tenant@example.com",
             RowVersion = fixedDate
         };
 
@@ -279,6 +287,7 @@ public class TenantsServiceTests
             Id = 2,
             Name = "TenantB",
             SubDomain = "b",
+            NotificationEmail = "tenant@example.com",
             RowVersion = fixedDate
         };
 
@@ -321,7 +330,8 @@ public class TenantsServiceTests
         var request = new AddTenantRequest
         {
             Name = "Tenant",
-            SubDomain = "tenant"
+            SubDomain = "tenant",
+            NotificationEmail = "tenant@example.com"
         };
 
         await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>

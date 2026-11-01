@@ -5,7 +5,7 @@ namespace AgileSouthwestCMSAPI.Application.Interfaces;
 
 public interface IOrderService
 {
-    Task<CreateOrderResult> CreateOrder(CreateOrderRequest request);
+    Task<CreateOrderResult> CreateOrder(CreateOrderRequest request, CancellationToken ct = default);
     Task<GetOrderResult> GetOrder(int id);
     Task<IEnumerable<GetOrderResult>> GetOrders(OrderQueryParameters parameters);
     Task<UpdateOrderResult> UpdateOrderStatus(int id, UpdateOrderStatusRequest request);
