@@ -279,61 +279,11 @@ public class OrdersService(
             throw new ValidationException($"{field} must be at most {maxLength} characters.");
     }
 
-    private async Task<int> CalculateShippingCents(
-        int? shippingRateId,
-        int subtotalCents,
-        List<OrderItem> orderItems,
-        AddressRequest shippingAddress)
-    {
-        if (shippingRateId == null) return 0;
-
-        var shippingRate = await database.ShippingRates.FirstOrDefaultAsync(sr => sr.Id == shippingRateId);
-        if (shippingRate == null) throw new InvalidOperationException($"Shipping rate {shippingRate} not found");
-
-        if (shippingRate.MinWeightGrams == 0 && shippingRate.MaxWeightGrams == 0) return shippingRate.PriceCents;
-
-        var weights = orderItems.Select(i => (i.WeightGrams * i.Quantity));
-        var totalWeight = weights.Sum();
-        if (totalWeight < shippingRate.MinWeightGrams || totalWeight > shippingRate.MaxWeightGrams)
-            throw new InvalidOperationException(
-                $"Order weight {totalWeight} is not within the allowed range of {shippingRate.MinWeightGrams} to {shippingRate.MaxWeightGrams} grams");
-
-        return shippingRate.PriceCents;
-    }
-
     private string GenerateOrderNumber()
     {
         var timestamp = DateTime.UtcNow.ToString("yyyyMMddHHmmss");
         var random = RandomNumberGenerator.GetInt32(0, 999999);
         return $"ORD-{timestamp}-{random:D6}";
-    }
-
-    private decimal CalculateTaxCents(int unitPriceCents, int quantity, int taxCategoryId)
-    {
-        var taxCategory = database.TaxCategories.FirstOrDefault(tc => tc.Id == taxCategoryId) ??
-                          throw new InvalidOperationException($"Tax category {taxCategoryId} not found");
-        var taxRatePercentage = taxCategory.TaxRate;
-        return unitPriceCents * quantity * (taxRatePercentage / 100m);
-    }
-
-    private int FindUnitPriceCents(Product product, Dictionary<int, int>? itemSelectedOptions)
-    {
-        var unitPrice = product.BasePriceCents;
-        if (itemSelectedOptions == null || itemSelectedOptions.Count == 0)
-        {
-            return product.BasePriceCents;
-        }
-
-        unitPrice += (from option in itemSelectedOptions
-            let productOption =
-                product.ProductOptions.FirstOrDefault(o => o.Id == option.Key) ??
-                throw new InvalidOperationException($"Product option {option.Key} not found")
-            select productOption.ProductOptionChoices.FirstOrDefault(p => p.Id == option.Value) ??
-                   throw new InvalidOperationException($"Product option choice {option.Value} not found")
-            into choice
-            select choice.PriceDeltaCents).Sum();
-
-        return unitPrice;
     }
 
     public async Task<GetOrderResult> GetOrder(int id)
@@ -636,6 +586,14 @@ public class OrdersService(
                 Order = order, // navigation: EF fills in OrderId after the order is inserted
                 Type = EmailType
                     .OrderReceived // see notes: usually the receipt is queued by the payment webhook instead
+            });
+            
+            database.EmailOutbox.Add(new EmailOutboxMessage
+            {
+                TenantId = tenantId,
+                Order = order, // navigation: EF fills in OrderId after the order is inserted
+                Type = EmailType
+                    .MerchantNewOrder // see notes: usually the receipt is queued by the payment webhook instead
             });
             
             try
