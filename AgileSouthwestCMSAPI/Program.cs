@@ -34,6 +34,10 @@ var connectionString = Environment.GetEnvironmentVariable("DB_HOST") is not null
 // --------------------------------------------------
 
 builder.Services.AddLogging();
+builder.Services.AddDbContext<CmsDbContext>(options =>
+{
+    options.UseMySQL(builder.Configuration.GetConnectionString("Default") ?? "", sql => sql.EnableRetryOnFailure());
+});
 
 var isTest = builder.Environment.EnvironmentName == "Test";
 if (!isTest) // Only add MySQL in non-test environments
