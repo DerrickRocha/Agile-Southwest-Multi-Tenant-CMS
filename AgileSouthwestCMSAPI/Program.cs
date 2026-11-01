@@ -40,7 +40,7 @@ if (!isTest) // Only add MySQL in non-test environments
 {
     builder.Services.AddDbContext<CmsDbContext>(options =>
     {
-        options.UseMySQL(connectionString, sql => sql.EnableRetryOnFailure());
+        options.UseMySQL(builder.Configuration.GetConnectionString("Default") ?? "", sql => sql.EnableRetryOnFailure());
     });
     
     builder.WebHost.ConfigureKestrel(serverOptions =>
