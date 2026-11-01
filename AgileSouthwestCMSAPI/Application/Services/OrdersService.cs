@@ -136,7 +136,7 @@ public class OrdersService(
         if (rate.PostalCode == "*")
             return (rate.Id, rate.PriceCents);
 
-        if (rate.PostalCode != "*" && NormalizePostalCode(rate.PostalCode) != NormalizePostalCode(shippingAddress.PostalCode))
+        if (NormalizePostalCode(rate.PostalCode) != NormalizePostalCode(shippingAddress.PostalCode))
             throw new ValidationException("The selected shipping rate does not apply to this address.");
 
         // MinWeightGrams is always set; a null MaxWeightGrams means no upper limit.
