@@ -26,25 +26,34 @@ var builder = WebApplication.CreateBuilder(args);
 // --------------------------------------------------
 
 
-var connectionString = Environment.GetEnvironmentVariable("DB_HOST") is not null
-    ? $"Server={Environment.GetEnvironmentVariable("DB_HOST")};Port={Environment.GetEnvironmentVariable("DB_PORT")};Database={Environment.GetEnvironmentVariable("DB_NAME")};User={Environment.GetEnvironmentVariable("DB_USER")};Password={Environment.GetEnvironmentVariable("DB_PASSWORD")};"
-    : builder.Configuration.GetConnectionString("DefaultConnection");
+
 // --------------------------------------------------
 // Services
 // --------------------------------------------------
 
 builder.Services.AddLogging();
-builder.Services.AddDbContext<CmsDbContext>(options =>
-{
-    options.UseMySQL(builder.Configuration.GetConnectionString("Default") ?? "", sql => sql.EnableRetryOnFailure());
-});
 
 var isTest = builder.Environment.EnvironmentName == "Test";
 if (!isTest) // Only add MySQL in non-test environments
 {
+    if (Environment.GetEnvironmentVariable("DB_HOST") is not null)
+    {
+        var host = Environment.GetEnvironmentVariable("DB_HOST");
+        Console.WriteLine("host is" + host);
+    }
+    else
+    {
+        var com = builder.Configuration.GetConnectionString("DefaultConnection");
+        Console.WriteLine("ConnectionString is" + com);
+    }
+    
+    var connectionString = Environment.GetEnvironmentVariable("DB_HOST") is not null
+        ? $"Server={Environment.GetEnvironmentVariable("DB_HOST")};Port={Environment.GetEnvironmentVariable("DB_PORT")};Database={Environment.GetEnvironmentVariable("DB_NAME")};User={Environment.GetEnvironmentVariable("DB_USER")};Password={Environment.GetEnvironmentVariable("DB_PASSWORD")};"
+        : builder.Configuration.GetConnectionString("DefaultConnection");
+    
     builder.Services.AddDbContext<CmsDbContext>(options =>
     {
-        options.UseMySQL(builder.Configuration.GetConnectionString("Default") ?? "", sql => sql.EnableRetryOnFailure());
+        options.UseMySQL(connectionString, sql => sql.EnableRetryOnFailure());
     });
     
     builder.WebHost.ConfigureKestrel(serverOptions =>
