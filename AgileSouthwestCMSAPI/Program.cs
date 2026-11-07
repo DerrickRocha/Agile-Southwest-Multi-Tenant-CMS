@@ -44,7 +44,7 @@ if (!isTest) // Only add MySQL in non-test environments
     else
     {
         var com = builder.Configuration.GetConnectionString("DefaultConnection");
-        Console.WriteLine("ConnectionString is" + com);
+        Console.WriteLine("ConnectionString is" + com?? "null");
     }
     
     var connectionString = Environment.GetEnvironmentVariable("DB_HOST") is not null
