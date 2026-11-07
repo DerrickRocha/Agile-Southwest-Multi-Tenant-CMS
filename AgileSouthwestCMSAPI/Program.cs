@@ -36,6 +36,17 @@ builder.Services.AddLogging();
 var isTest = builder.Environment.EnvironmentName == "Test";
 if (!isTest) // Only add MySQL in non-test environments
 {
+    if (Environment.GetEnvironmentVariable("DB_HOST") is not null)
+    {
+        var host = Environment.GetEnvironmentVariable("DB_HOST");
+        Console.WriteLine("host is" + host);
+    }
+    else
+    {
+        var com = builder.Configuration.GetConnectionString("DefaultConnection");
+        Console.WriteLine("ConnectionString is" + com?? "null");
+    }
+    
     var connectionString = Environment.GetEnvironmentVariable("DB_HOST") is not null
         ? $"Server={Environment.GetEnvironmentVariable("DB_HOST")};Port={Environment.GetEnvironmentVariable("DB_PORT")};Database={Environment.GetEnvironmentVariable("DB_NAME")};User={Environment.GetEnvironmentVariable("DB_USER")};Password={Environment.GetEnvironmentVariable("DB_PASSWORD")};"
         : builder.Configuration.GetConnectionString("DefaultConnection");
