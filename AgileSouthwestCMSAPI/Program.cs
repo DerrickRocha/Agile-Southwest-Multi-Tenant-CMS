@@ -18,20 +18,27 @@ using Amazon.CognitoIdentityProvider;
 using Amazon.S3;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.ResponseCompression;
+using Microsoft.Data.SqlClient;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// --------------------------------------------------
-// Configuration
-// --------------------------------------------------
-
-
-var connectionString = Environment.GetEnvironmentVariable("DB_HOST") is not null
-    ? $"Server={Environment.GetEnvironmentVariable("DB_HOST")};Port={Environment.GetEnvironmentVariable("DB_PORT")};Database={Environment.GetEnvironmentVariable("DB_NAME")};User={Environment.GetEnvironmentVariable("DB_USER")};Password={Environment.GetEnvironmentVariable("DB_PASSWORD")};"
-    : builder.Configuration.GetConnectionString("DefaultConnection");
-// --------------------------------------------------
-// Services
-// --------------------------------------------------
+string? connectionString;
+if (Environment.GetEnvironmentVariable("DB_HOST") is { } host)
+{
+    connectionString = new SqlConnectionStringBuilder
+    {
+        DataSource = $"{host},{Environment.GetEnvironmentVariable("DB_PORT") ?? "1433"}",
+        InitialCatalog = Environment.GetEnvironmentVariable("DB_NAME"),
+        UserID = Environment.GetEnvironmentVariable("DB_USER"),
+        Password = Environment.GetEnvironmentVariable("DB_PASSWORD"),
+        Encrypt = true,
+        TrustServerCertificate = true // lab only: SQL Server on Linux uses a self-signed cert
+    }.ConnectionString;
+}
+else
+{
+    connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+}
 
 builder.Services.AddLogging();
 
@@ -40,7 +47,7 @@ if (!isTest) // Only add MySQL in non-test environments
 {
     builder.Services.AddDbContext<CmsDbContext>(options =>
     {
-        options.UseMySQL(connectionString, sql => sql.EnableRetryOnFailure());
+        options.UseSqlServer(connectionString, sql => sql.EnableRetryOnFailure());
     });
     
     builder.WebHost.ConfigureKestrel(serverOptions =>
@@ -52,7 +59,6 @@ if (!isTest) // Only add MySQL in non-test environments
         // serverOptions.Listen(IPAddress.Parse("10.0.0.124"), 5100);
     });
 }
-
 
 // Controllers
 builder.Services.AddControllers()
@@ -121,7 +127,7 @@ builder.Services.AddRateLimiter(options =>
 
 // Health Checks
 builder.Services.AddHealthChecks()
-    .AddDbContextCheck<CmsDbContext>("mysql");
+    .AddDbContextCheck<CmsDbContext>("sqlserver");
 
 // Response Compression
 builder.Services.AddResponseCompression(options =>
