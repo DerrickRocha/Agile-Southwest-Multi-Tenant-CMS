@@ -16,4 +16,4 @@ public class GetTenantResult
     
     public DateTime UpdatedAt { set; get; }
     
-    public DateTime? RowVersion { get; set; }}
+    public byte[]? RowVersion { get; set; }}

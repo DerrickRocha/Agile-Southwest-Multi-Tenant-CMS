@@ -1040,7 +1040,7 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
             entity.HasOne(o => o.Customer)
                 .WithMany(c => c.Orders)
                 .HasForeignKey(o => o.CustomerId)
-                .OnDelete(DeleteBehavior.SetNull)
+                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("orders_customer_fk");
 
             // Indexes
@@ -1188,7 +1188,7 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
             entity.HasOne(oi => oi.Tenant)
                 .WithMany(t => t.OrderItems)
                 .HasForeignKey(oi => oi.TenantId)
-                .OnDelete(DeleteBehavior.Cascade)
+                .OnDelete(DeleteBehavior.Restrict)
                 .HasConstraintName("order_items_tenant_fk");
 
             entity.HasOne(oi => oi.Order)
@@ -1325,7 +1325,7 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
             entity.HasOne(pt => pt.Tenant)
                 .WithMany(t => t.PaymentTransactions)
                 .HasForeignKey(pt => pt.TenantId)
-                .OnDelete(DeleteBehavior.Cascade)
+                .OnDelete(DeleteBehavior.Restrict)
                 .HasConstraintName("payment_transactions_tenant_fk");
 
             entity.HasOne(pt => pt.Order)
@@ -1393,11 +1393,6 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
                 .HasForeignKey(c => c.TenantId)
                 .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("customer_tenant_fk");
-
-            entity.HasMany(c => c.Orders)
-                .WithOne(o => o.Customer)
-                .HasForeignKey(o => o.CustomerId)
-                .OnDelete(DeleteBehavior.SetNull);
 
             // Indexes
             entity.HasIndex(c => new { c.TenantId, c.Email })

@@ -37,5 +37,5 @@ public record GetOrderResult(
     DateTime CreatedAt,
     DateTime UpdatedAt,
     DateTime? DeletedAt,
-    DateTime RowVersion
+    byte[] RowVersion
 );

@@ -7,9 +7,9 @@ using AgileSouthwestCMSAPI.Application.Interfaces;
 using AgileSouthwestCMSAPI.Domain.Entities;
 using AgileSouthwestCMSAPI.Domain.Enums;
 using AgileSouthwestCMSAPI.Infrastructure.Persistence;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using MimeKit;
-using MySql.Data.MySqlClient;
 
 namespace AgileSouthwestCMSAPI.Application.Services;
 
@@ -708,7 +708,7 @@ public class OrdersService(
             : JsonSerializer.Deserialize<List<OrderItemOptionSnapshot>>(json) ?? [];
 
     private static bool IsUniqueViolation(DbUpdateException ex) =>
-        ex.InnerException is MySqlException { Number: 1062 };
+        ex.InnerException is SqlException { Number: 1062 };
 
     private Task<Order?> FindByIdempotencyKeyAsync(int tenantId, string key, CancellationToken ct) =>
         database.Orders
