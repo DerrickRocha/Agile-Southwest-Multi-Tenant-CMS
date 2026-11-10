@@ -68,19 +68,19 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
 
             entity.Property(t => t.CreatedAt)
                 .HasColumnName("created_at")
-                .HasColumnType("DATETIME(6)")
-                .HasDefaultValueSql("CURRENT_TIMESTAMP(6)")
+                .HasColumnType("datetime2(6)")
+                .HasDefaultValueSql("SYSUTCDATETIME()")
                 .IsRequired();
 
             entity.Property(t => t.UpdatedAt)
                 .HasColumnName("updated_at")
-                .HasColumnType("DATETIME(6)")
-                .HasDefaultValueSql("CURRENT_TIMESTAMP(6)")
+                .HasColumnType("datetime2(6)")
+                .HasDefaultValueSql("SYSUTCDATETIME()")
                 .IsRequired();
 
             entity.Property(t => t.DeletedAt)
                 .HasColumnName("deleted_at")
-                .HasColumnType("DATETIME(6)");
+                .HasColumnType("datetime2(6)");
 
             entity.Property(c => c.RowVersion)
                 .HasColumnName("row_version")
@@ -145,19 +145,19 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
 
             entity.Property(u => u.CreatedAt)
                 .HasColumnName("created_at")
-                .HasColumnType("DATETIME(6)")
-                .HasDefaultValueSql("CURRENT_TIMESTAMP(6)")
+                .HasColumnType("")
+                .HasDefaultValueSql("SYSUTCDATETIME()")
                 .IsRequired();
 
             entity.Property(u => u.UpdatedAt)
                 .HasColumnName("updated_at")
-                .HasColumnType("DATETIME(6)")
-                .HasDefaultValueSql("CURRENT_TIMESTAMP(6)")
+                .HasColumnType("datetime2(6)")
+                .HasDefaultValueSql("SYSUTCDATETIME()")
                 .IsRequired();
 
             entity.Property(p => p.DeletedAt)
                 .HasColumnName("deleted_at")
-                .HasColumnType("DATETIME(6)");
+                .HasColumnType("datetime2(6)");
 
             entity.Property(p => p.RowVersion)
                 .HasColumnName("row_version")
@@ -208,17 +208,17 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
 
             entity.Property(o => o.CreatedAt)
                 .HasColumnName("created_at")
-                .HasColumnType("DATETIME(6)")
-                .HasDefaultValueSql("CURRENT_TIMESTAMP(6)");
+                .HasColumnType("datetime2(6)")
+                .HasDefaultValueSql("SYSUTCDATETIME()");
 
             entity.Property(o => o.UpdatedAt)
                 .HasColumnName("updated_at")
-                .HasColumnType("DATETIME(6)")
-                .HasDefaultValueSql("CURRENT_TIMESTAMP(6)");
+                .HasColumnType("datetime2(6)")
+                .HasDefaultValueSql("SYSUTCDATETIME()");
 
             entity.Property(o => o.DeletedAt)
                 .HasColumnName("deleted_at")
-                .HasColumnType("DATETIME(6)");
+                .HasColumnType("datetime2(6)");
 
             entity.Property(o => o.RowVersion)
                 .HasColumnName("row_version")
@@ -270,13 +270,13 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
 
             entity.Property(o => o.CreatedAt)
                 .HasColumnName("created_at")
-                .HasColumnType("DATETIME(6)")
-                .HasDefaultValueSql("CURRENT_TIMESTAMP(6)");
+                .HasColumnType("datetime2(6)")
+                .HasDefaultValueSql("SYSUTCDATETIME()");
 
             entity.Property(o => o.UpdatedAt)
                 .HasColumnName("updated_at")
-                .HasColumnType("DATETIME(6)")
-                .HasDefaultValueSql("CURRENT_TIMESTAMP(6)");
+                .HasColumnType("datetime2(6)")
+                .HasDefaultValueSql("SYSUTCDATETIME()");
 
             entity.Property(o => o.IsActive)
                 .HasColumnName("is_active")
@@ -284,7 +284,7 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
 
             entity.Property(o => o.DeletedAt)
                 .HasColumnName("deleted_at")
-                .HasColumnType("DATETIME(6)");
+                .HasColumnType("datetime2(6)");
 
             entity.Property(t => t.RowVersion)
                 .HasColumnName("row_version")
@@ -333,19 +333,19 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
 
             entity.Property(pi => pi.CreatedAt)
                 .HasColumnName("created_at")
-                .HasColumnType("DATETIME(6)")
-                .HasDefaultValueSql("CURRENT_TIMESTAMP(6)")
+                .HasColumnType("datetime2(6)")
+                .HasDefaultValueSql("SYSUTCDATETIME()")
                 .IsRequired();
 
             entity.Property(pi => pi.UpdatedAt)
                 .HasColumnName("updated_at")
-                .HasColumnType("DATETIME(6)")
-                .HasDefaultValueSql("CURRENT_TIMESTAMP(6)")
+                .HasColumnType("datetime2(6)")
+                .HasDefaultValueSql("SYSUTCDATETIME()")
                 .IsRequired();
 
             entity.Property(pi => pi.DeletedAt)
                 .HasColumnName("deleted_at")
-                .HasColumnType("DATETIME(6)")
+                .HasColumnType("datetime2(6)")
                 .IsRequired(false);
 
             // Relationships
@@ -422,17 +422,17 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
 
             entity.Property(u => u.CreatedAt)
                 .HasColumnName("created_at")
-                .HasColumnType("DATETIME(6)")
-                .HasDefaultValueSql("CURRENT_TIMESTAMP(6)");
+                .HasColumnType("datetime2(6)")
+                .HasDefaultValueSql("SYSUTCDATETIME()");
 
             entity.Property(u => u.UpdatedAt)
                 .HasColumnName("updated_at")
-                .HasColumnType("DATETIME(6)")
-                .HasDefaultValueSql("CURRENT_TIMESTAMP(6)");
+                .HasColumnType("datetime2(6)")
+                .HasDefaultValueSql("SYSUTCDATETIME()");
 
             entity.Property(u => u.DeletedAt)
                 .HasColumnName("deleted_at")
-                .HasColumnType("DATETIME(6)");
+                .HasColumnType("datetime2(6)");
 
             entity.HasIndex(u => u.Email)
                 .HasDatabaseName("uq_cms_users_email")
@@ -468,17 +468,17 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
 
             entity.Property(ut => ut.CreatedAt)
                 .HasColumnName("created_at")
-                .HasColumnType("DATETIME(6)")
-                .HasDefaultValueSql("CURRENT_TIMESTAMP(6)");
+                .HasColumnType("datetime2(6)")
+                .HasDefaultValueSql("SYSUTCDATETIME()");
 
             entity.Property(ut => ut.UpdatedAt)
                 .HasColumnName("updated_at")
-                .HasColumnType("DATETIME(6)")
-                .HasDefaultValueSql("CURRENT_TIMESTAMP(6)");
+                .HasColumnType("datetime2(6)")
+                .HasDefaultValueSql("SYSUTCDATETIME()");
 
             entity.Property(ut => ut.DeletedAt)
                 .HasColumnName("deleted_at")
-                .HasColumnType("DATETIME(6)");
+                .HasColumnType("datetime2(6)");
 
             entity.Property(t => t.RowVersion)
                 .HasColumnName("row_version")
@@ -537,19 +537,19 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
 
             entity.Property(s => s.CreatedAt)
                 .HasColumnName("created_at")
-                .HasColumnType("DATETIME(6)")
-                .HasDefaultValueSql("CURRENT_TIMESTAMP(6)")
+                .HasColumnType("datetime2(6)")
+                .HasDefaultValueSql("SYSUTCDATETIME()")
                 .IsRequired();
 
             entity.Property(s => s.UpdatedAt)
                 .HasColumnName("updated_at")
-                .HasColumnType("DATETIME(6)")
-                .HasDefaultValueSql("CURRENT_TIMESTAMP(6)")
+                .HasColumnType("datetime2(6)")
+                .HasDefaultValueSql("SYSUTCDATETIME()")
                 .IsRequired();
 
             entity.Property(s => s.DeletedAt)
                 .HasColumnName("deleted_at")
-                .HasColumnType("DATETIME(6)");
+                .HasColumnType("datetime2(6)");
 
             entity.Property(t => t.RowVersion)
                 .HasColumnName("row_version")
@@ -593,19 +593,19 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
 
                 entity.Property(i => i.CreatedAt)
                     .HasColumnName("created_at")
-                    .HasColumnType("DATETIME(6)")
-                    .HasDefaultValueSql("CURRENT_TIMESTAMP(6)")
+                    .HasColumnType("datetime2(6)")
+                    .HasDefaultValueSql("SYSUTCDATETIME()")
                     .IsRequired();
 
                 entity.Property(i => i.UpdatedAt)
                     .HasColumnName("updated_at")
-                    .HasColumnType("DATETIME(6)")
-                    .HasDefaultValueSql("CURRENT_TIMESTAMP(6)")
+                    .HasColumnType("datetime2(6)")
+                    .HasDefaultValueSql("SYSUTCDATETIME()")
                     .IsRequired();
 
                 entity.Property(i => i.DeletedAt)
                     .HasColumnName("deleted_at")
-                    .HasColumnType("DATETIME(6)");
+                    .HasColumnType("datetime2(6)");
 
                 entity.Property(i => i.RowVersion)
                     .HasColumnName("row_version")
@@ -687,15 +687,15 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
                 .IsRequired();
             entity.Property(s => s.CreatedAt)
                 .HasColumnName("created_at")
-                .HasColumnType("DATETIME(6)")
-                .HasDefaultValueSql("CURRENT_TIMESTAMP(6)");
+                .HasColumnType("datetime2(6)")
+                .HasDefaultValueSql("SYSUTCDATETIME()");
             entity.Property(s => s.UpdatedAt)
                 .HasColumnName("updated_at")
-                .HasColumnType("DATETIME(6)")
-                .HasDefaultValueSql("CURRENT_TIMESTAMP(6)");
+                .HasColumnType("datetime2(6)")
+                .HasDefaultValueSql("SYSUTCDATETIME()");
             entity.Property(s => s.DeletedAt)
                 .HasColumnName("deleted_at")
-                .HasColumnType("DATETIME(6)");
+                .HasColumnType("datetime2(6)");
             entity.Property(s => s.RowVersion)
                 .HasColumnName("row_version")
                 .IsRowVersion();
@@ -747,19 +747,19 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
 
                 entity.Property(i => i.CreatedAt)
                     .HasColumnName("created_at")
-                    .HasColumnType("DATETIME(6)")
-                    .HasDefaultValueSql("CURRENT_TIMESTAMP(6)")
+                    .HasColumnType("datetime2(6)")
+                    .HasDefaultValueSql("SYSUTCDATETIME()")
                     .IsRequired();
 
                 entity.Property(i => i.UpdatedAt)
                     .HasColumnName("updated_at")
-                    .HasColumnType("DATETIME(6)")
-                    .HasDefaultValueSql("CURRENT_TIMESTAMP(6)")
+                    .HasColumnType("datetime2(6)")
+                    .HasDefaultValueSql("SYSUTCDATETIME()")
                     .IsRequired();
 
                 entity.Property(i => i.DeletedAt)
                     .HasColumnName("deleted_at")
-                    .HasColumnType("DATETIME(6)");
+                    .HasColumnType("datetime2(6)");
 
                 entity.Property(c => c.RowVersion)
                     .HasColumnName("row_version")
@@ -987,36 +987,36 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
 
             entity.Property(o => o.UserAgent)
                 .HasColumnName("user_agent")
-                .HasColumnType("TEXT")
+                .HasColumnType("nvarchar(max)")
                 .IsRequired(false);
 
             // Notes
             entity.Property(o => o.CustomerNotes)
                 .HasColumnName("customer_notes")
-                .HasColumnType("TEXT")
+                .HasColumnType("nvarchar(max)")
                 .IsRequired(false);
 
             entity.Property(o => o.AdminNotes)
                 .HasColumnName("admin_notes")
-                .HasColumnType("TEXT")
+                .HasColumnType("nvarchar(max)")
                 .IsRequired(false);
 
             // Timestamps
             entity.Property(o => o.CreatedAt)
                 .HasColumnName("created_at")
-                .HasColumnType("DATETIME(6)")
-                .HasDefaultValueSql("CURRENT_TIMESTAMP(6)")
+                .HasColumnType("datetime2(6)")
+                .HasDefaultValueSql("SYSUTCDATETIME()")
                 .IsRequired();
 
             entity.Property(o => o.UpdatedAt)
                 .HasColumnName("updated_at")
-                .HasColumnType("DATETIME(6)")
-                .HasDefaultValueSql("CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6)")
+                .HasColumnType("SYSUTCDATETIME()")
+                .HasDefaultValueSql("SYSUTCDATETIME()")
                 .IsRequired();
 
             entity.Property(o => o.DeletedAt)
                 .HasColumnName("deleted_at")
-                .HasColumnType("DATETIME(6)")
+                .HasColumnType("datetime2(6)")
                 .IsRequired(false);
 
             // Concurrency
@@ -1153,7 +1153,7 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
 
             entity.Property(oi => oi.OptionDetails)
                 .HasColumnName("option_details")
-                .HasColumnType("JSON")
+                .HasColumnType("nvarchar(max)")
                 .IsRequired(false);
 
             entity.Property(oi => oi.ImageUrl)
@@ -1164,19 +1164,19 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
             // Timestamps
             entity.Property(oi => oi.CreatedAt)
                 .HasColumnName("created_at")
-                .HasColumnType("DATETIME(6)")
-                .HasDefaultValueSql("CURRENT_TIMESTAMP(6)")
+                .HasColumnType("datetime2(6)")
+                .HasDefaultValueSql("SYSUTCDATETIME()")
                 .IsRequired();
 
             entity.Property(oi => oi.UpdatedAt)
                 .HasColumnName("updated_at")
-                .HasColumnType("DATETIME(6)")
-                .HasDefaultValueSql("CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6)")
+                .HasColumnType("datetime2(6)")
+                .HasDefaultValueSql("SYSUTCDATETIME()")
                 .IsRequired();
 
             entity.Property(oi => oi.DeletedAt)
                 .HasColumnName("deleted_at")
-                .HasColumnType("DATETIME(6)")
+                .HasColumnType("datetime2(6)")
                 .IsRequired(false);
 
             // Concurrency
@@ -1290,30 +1290,30 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
 
             entity.Property(pt => pt.RawGatewayResponse)
                 .HasColumnName("raw_gateway_response")
-                .HasColumnType("JSON")
+                .HasColumnType("nvarchar(max)")
                 .IsRequired(false);
 
             entity.Property(pt => pt.ErrorMessage)
                 .HasColumnName("error_message")
-                .HasColumnType("TEXT")
+                .HasColumnType("nvarchar(max)")
                 .IsRequired(false);
 
             // Timestamps
             entity.Property(pt => pt.CreatedAt)
                 .HasColumnName("created_at")
-                .HasColumnType("DATETIME(6)")
-                .HasDefaultValueSql("CURRENT_TIMESTAMP(6)")
+                .HasColumnType("datetime2(6)")
+                .HasDefaultValueSql("SYSUTCDATETIME()")
                 .IsRequired();
 
             entity.Property(pt => pt.UpdatedAt)
                 .HasColumnName("updated_at")
-                .HasColumnType("DATETIME(6)")
-                .HasDefaultValueSql("CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6)")
+                .HasColumnType("datetime2(6)")
+                .HasDefaultValueSql("SYSUTCDATETIME()")
                 .IsRequired();
 
             entity.Property(pt => pt.DeletedAt)
                 .HasColumnName("deleted_at")
-                .HasColumnType("DATETIME(6)")
+                .HasColumnType("datetime2(6)")
                 .IsRequired(false);
 
             // Concurrency
@@ -1368,19 +1368,19 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
 
             entity.Property(c => c.CreatedAt)
                 .HasColumnName("created_at")
-                .HasColumnType("DATETIME(6)")
-                .HasDefaultValueSql("CURRENT_TIMESTAMP(6)")
+                .HasColumnType("datetime2(6)")
+                .HasDefaultValueSql("SYSUTCDATETIME()")
                 .IsRequired();
 
             entity.Property(c => c.UpdatedAt)
                 .HasColumnName("updated_at")
-                .HasColumnType("DATETIME(6)")
-                .HasDefaultValueSql("CURRENT_TIMESTAMP(6)")
+                .HasColumnType("datetime2(6)")
+                .HasDefaultValueSql("SYSUTCDATETIME()")
                 .IsRequired();
 
             entity.Property(c => c.DeletedAt)
                 .HasColumnName("deleted_at")
-                .HasColumnType("DATETIME(6)")
+                .HasColumnType("datetime2(6)")
                 .IsRequired(false);
 
             entity.Property(c => c.RowVersion)
@@ -1434,19 +1434,19 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
 
                 entity.Property(c => c.CreatedAt)
                     .HasColumnName("created_at")
-                    .HasColumnType("DATETIME(6)")
-                    .HasDefaultValueSql("CURRENT_TIMESTAMP(6)")
+                    .HasColumnType("datetime2(6)")
+                    .HasDefaultValueSql("SYSUTCDATETIME()")
                     .IsRequired();
 
                 entity.Property(c => c.UpdatedAt)
                     .HasColumnName("updated_at")
-                    .HasColumnType("DATETIME(6)")
-                    .HasDefaultValueSql("CURRENT_TIMESTAMP(6)")
+                    .HasColumnType("datetime2(6)")
+                    .HasDefaultValueSql("SYSUTCDATETIME()")
                     .IsRequired();
 
                 entity.Property(c => c.DeletedAt)
                     .HasColumnName("deleted_at")
-                    .HasColumnType("DATETIME(6)")
+                    .HasColumnType("datetime2(6)")
                     .IsRequired(false);
 
                 entity.Property(c => c.RowVersion)
@@ -1505,18 +1505,18 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
 
             entity.Property(o => o.CreatedAt)
                 .HasColumnName("created_at")
-                .HasColumnType("DATETIME(6)")
-                .HasDefaultValueSql("CURRENT_TIMESTAMP(6)")
+                .HasColumnType("datetime2(6)")
+                .HasDefaultValueSql("SYSUTCDATETIME()")
                 .IsRequired();
             entity.Property(o => o.UpdatedAt)
                 .HasColumnName("updated_at")
-                .HasColumnType("DATETIME(6)")
-                .HasDefaultValueSql("CURRENT_TIMESTAMP(6)")
+                .HasColumnType("datetime2(6)")
+                .HasDefaultValueSql("SYSUTCDATETIME()")
                 .IsRequired();
 
             entity.Property(o => o.DeletedAt)
                 .HasColumnName("deleted_at")
-                .HasColumnType("DATETIME(6)")
+                .HasColumnType("datetime2(6)")
                 .IsRequired(false);
             entity.Property(o => o.RowVersion)
                 .HasColumnName("row_version")
@@ -1564,14 +1564,14 @@ public class CmsDbContext(DbContextOptions<CmsDbContext> options) : DbContext(op
                     .IsRequired();
 
                 entity.Property(m => m.Attempts).HasColumnName("attempts").IsRequired();
-                entity.Property(m => m.NextAttemptAt).HasColumnName("next_attempt_at").HasColumnType("DATETIME(6)")
+                entity.Property(m => m.NextAttemptAt).HasColumnName("next_attempt_at").HasColumnType("datetime2(6)")
                     .IsRequired();
-                entity.Property(m => m.SentAt).HasColumnName("sent_at").HasColumnType("DATETIME(6)");
+                entity.Property(m => m.SentAt).HasColumnName("sent_at").HasColumnType("datetime2(6)");
                 entity.Property(m => m.LastError).HasColumnName("last_error").HasMaxLength(1000);
-                entity.Property(m => m.CreatedAt).HasColumnName("created_at").HasColumnType("DATETIME(6)")
-                    .HasDefaultValueSql("CURRENT_TIMESTAMP(6)").IsRequired();
-                entity.Property(m => m.UpdatedAt).HasColumnName("updated_at").HasColumnType("DATETIME(6)")
-                    .HasDefaultValueSql("CURRENT_TIMESTAMP(6)").IsRequired();
+                entity.Property(m => m.CreatedAt).HasColumnName("created_at").HasColumnType("datetime2(6)")
+                    .HasDefaultValueSql("SYSUTCDATETIME()").IsRequired();
+                entity.Property(m => m.UpdatedAt).HasColumnName("updated_at").HasColumnType("datetime2(6)")
+                    .HasDefaultValueSql("SYSUTCDATETIME()").IsRequired();
 
                 entity.HasOne(m => m.Order).WithMany().HasForeignKey(m => m.OrderId)
                     .OnDelete(DeleteBehavior.Restrict).HasConstraintName("email_outbox_order_fk");

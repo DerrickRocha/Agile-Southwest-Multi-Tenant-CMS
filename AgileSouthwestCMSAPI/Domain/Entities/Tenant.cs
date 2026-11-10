@@ -29,7 +29,7 @@ public class Tenant
     [Column("deleted_at")]
     public DateTime? DeletedAt { get; set; }
     
-    public DateTime RowVersion { get; set; }
+    public byte[] RowVersion { get; set; } = null!;
     
     // Navigation
     public ICollection<UserTenant> UserTenants { get; set; } = new List<UserTenant>();

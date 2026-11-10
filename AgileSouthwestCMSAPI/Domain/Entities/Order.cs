@@ -50,7 +50,7 @@ public class Order
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
     public DateTime? DeletedAt { get; set; }
-    public DateTime RowVersion { get; set; }
+    public byte[] RowVersion { get; set; } = null!;
     
     // Navigation properties
     public Tenant Tenant { get; set; }

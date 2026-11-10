@@ -44,7 +44,8 @@ public class Product
     public DateTime? DeletedAt { get; set; }
     
     
-    public DateTime RowVersion { get; set; }
+    public byte[] RowVersion { get; set; } = null!;
+    
     public Tenant Tenant { get; set; } = null!;
     
     public TaxCategory TaxCategory { get; set; } = null!;
